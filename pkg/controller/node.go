@@ -22,7 +22,7 @@ func (c *ControllerManager) RunNodeMonitor(ctx context.Context, nodeMonitorPerio
 			nodes, err := c.nodeService.ListActiveNodes(ctx)
 			if err != nil {
 				if ctx.Err() != nil {
-					return // Context cancelled
+					return
 				}
 				zlog.Error().Err(err).Str("component", "controller").Msg("failed to get nodes")
 				continue
@@ -34,7 +34,7 @@ func (c *ControllerManager) RunNodeMonitor(ctx context.Context, nodeMonitorPerio
 					node.Status.Status = false
 					if err := c.nodeService.PutNode(ctx, node); err != nil {
 						if ctx.Err() != nil {
-							return // Context cancelled
+							return
 						}
 						zlog.Error().Err(err).Str("component", "controller").Msg("failed to update node status")
 						continue
