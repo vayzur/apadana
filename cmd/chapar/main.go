@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -23,7 +22,7 @@ import (
 func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
-	configPath := flag.String("config", filepath.Join(config.ChaparDir, config.ChaparDir), "Path to config file")
+	configPath := flag.String("config", "", "Path to config file")
 	flag.Parse()
 
 	cfg := config.ChaparConfig{}
