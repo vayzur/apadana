@@ -1,4 +1,4 @@
-package distlock
+package leader
 
 import (
 	"context"
@@ -8,17 +8,15 @@ import (
 	"go.etcd.io/etcd/client/v3/concurrency"
 )
 
-func RunAsLeader(ctx context.Context, session *concurrency.Session, key string, callback func(context.Context)) error {
+func Run(ctx context.Context, session *concurrency.Session, key, val string, callback func(context.Context)) error {
 	election := concurrency.NewElection(session, key)
 
 	zlog.Info().Str("key", key).Msg("trying to become leader...")
 
 	// Try to become leader (blocks until we get it)
-	if err := election.Campaign(ctx, "controller"); err != nil {
+	if err := election.Campaign(ctx, val); err != nil {
 		return err
 	}
-
-	zlog.Info().Str("key", key).Msg("I AM THE LEADER! Starting work...")
 
 	go callback(ctx)
 
