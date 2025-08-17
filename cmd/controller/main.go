@@ -11,8 +11,8 @@ import (
 	"github.com/vayzur/apadana/internal/config"
 	chapar "github.com/vayzur/apadana/pkg/chapar/client"
 	"github.com/vayzur/apadana/pkg/controller"
-	"github.com/vayzur/apadana/pkg/distlock"
 	"github.com/vayzur/apadana/pkg/httputil"
+	"github.com/vayzur/apadana/pkg/leader"
 	"github.com/vayzur/apadana/pkg/service"
 
 	"github.com/rs/zerolog"
@@ -83,12 +83,14 @@ func main() {
 
 	controllerManager := controller.NewControllerManager(nodeService, inboundService)
 
+	val := "controller"
+
 	var wg sync.WaitGroup
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := distlock.RunAsLeader(ctx, etcdSession, "/lock/node-controller", func(leaderCtx context.Context) {
+		if err := leader.Run(ctx, etcdSession, "/lock/node-controller", val, func(leaderCtx context.Context) {
 			controllerManager.RunNodeMonitor(leaderCtx, cfg.NodeMonitorPeriod, cfg.NodeMonitorGracePeriod)
 		}); err != nil && ctx.Err() == nil {
 			zlog.Error().Err(err).Msg("node controller leadership failed")
@@ -98,7 +100,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := distlock.RunAsLeader(ctx, etcdSession, "/lock/inbound-controller", func(leaderCtx context.Context) {
+		if err := leader.Run(ctx, etcdSession, "/lock/inbound-controller", val, func(leaderCtx context.Context) {
 			controllerManager.RunInboundMonitor(leaderCtx, cfg.InboundMonitorPeriod)
 		}); err != nil && ctx.Err() == nil {
 			zlog.Error().Err(err).Msg("inbound controller leadership failed")
