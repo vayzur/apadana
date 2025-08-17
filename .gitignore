@@ -1,0 +1,47 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Build output
+/bin/
+/dist/
+
+# Dependencies
+/vendor/
+
+# Go test and coverage files
+*.test
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+
+# env file
+.env
+
+# etcd
+default.etcd/
+
+# apadana binaries
+apadana-apiserver
+apadana-controller
+apadana-chapar
+
+# apadana config files
+apiserver.yml
+chapar.yml
+controller.yml
