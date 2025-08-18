@@ -23,7 +23,7 @@ func (s *Server) GetNodes(c fiber.Ctx) error {
 		)
 	}
 
-	zlog.Info().Str("component", "apiserver").Str("resource", "nodes").Str("action", "list").Int("count", len(nodes)).Msg("retrieved")
+	zlog.Info().Str("component", "chapar").Str("resource", "nodes").Str("action", "list").Int("count", len(nodes)).Msg("retrieved")
 	return c.Status(http.StatusOK).JSON(nodes)
 }
 
@@ -37,7 +37,7 @@ func (s *Server) GetActiveNodes(c fiber.Ctx) error {
 		)
 	}
 
-	zlog.Info().Str("component", "apiserver").Str("resource", "nodes").Str("action", "list").Int("count", len(nodes)).Msg("retrieved")
+	zlog.Info().Str("component", "chapar").Str("resource", "nodes").Str("action", "list").Int("count", len(nodes)).Msg("retrieved")
 	return c.Status(http.StatusOK).JSON(nodes)
 }
 
@@ -67,7 +67,7 @@ func (s *Server) GetNode(c fiber.Ctx) error {
 		)
 	}
 
-	zlog.Info().Str("component", "apiserver").Str("resource", "node").Str("action", "get").Str("nodeID", nodeID).Msg("retrieved")
+	zlog.Info().Str("component", "chapar").Str("resource", "node").Str("action", "get").Str("nodeID", nodeID).Msg("retrieved")
 	return c.Status(http.StatusOK).JSON(node)
 }
 
@@ -92,7 +92,7 @@ func (s *Server) CreateNode(c fiber.Ctx) error {
 		)
 	}
 
-	zlog.Info().Str("component", "apiserver").Str("resource", "node").Str("action", "create").Str("nodeID", node.Metadata.ID).Msg("created")
+	zlog.Info().Str("component", "chapar").Str("resource", "node").Str("action", "create").Str("nodeID", node.Metadata.ID).Msg("created")
 	return c.Status(http.StatusCreated).JSON(node)
 }
 
@@ -121,7 +121,7 @@ func (s *Server) DeleteNode(c fiber.Ctx) error {
 		)
 	}
 
-	zlog.Info().Str("component", "apiserver").Str("resource", "node").Str("action", "delete").Str("nodeID", nodeID).Msg("deleted")
+	zlog.Info().Str("component", "chapar").Str("resource", "node").Str("action", "delete").Str("nodeID", nodeID).Msg("deleted")
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
@@ -152,6 +152,6 @@ func (s *Server) UpdateNodeStatus(c fiber.Ctx) error {
 		)
 	}
 
-	zlog.Info().Str("component", "apiserver").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Msg("updated")
+	zlog.Info().Str("component", "chapar").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Msg("updated")
 	return c.SendStatus(fiber.StatusOK)
 }
