@@ -4,7 +4,8 @@ import (
 	"errors"
 
 	"github.com/gofiber/fiber/v3"
-	v1 "github.com/vayzur/apadana/pkg/api/v1"
+	zlog "github.com/rs/zerolog/log"
+	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
 	"github.com/vayzur/apadana/pkg/errs"
 )
 
@@ -55,6 +56,7 @@ func (s *Server) GetInbound(c fiber.Ctx) error {
 		)
 	}
 
+	zlog.Info().Str("component", "apiserver").Str("resource", "inbound").Str("action", "get").Str("nodeID", nodeID).Str("tag", tag).Msg("retrieved")
 	return c.Status(fiber.StatusOK).JSON(inbound)
 }
 
@@ -68,7 +70,7 @@ func (s *Server) CreateInbound(c fiber.Ctx) error {
 		)
 	}
 
-	inbound := new(v1.Inbound)
+	inbound := new(satrapv1.Inbound)
 	if err := c.Bind().JSON(inbound); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
@@ -104,10 +106,11 @@ func (s *Server) CreateInbound(c fiber.Ctx) error {
 		)
 	}
 
+	zlog.Info().Str("component", "apiserver").Str("resource", "inbound").Str("action", "create").Str("nodeID", nodeID).Str("tag", inbound.Config.Tag).Msg("created")
 	return c.Status(fiber.StatusCreated).JSON(inbound)
 }
 
-func (s *Server) GetAllInbounds(c fiber.Ctx) error {
+func (s *Server) GetInbounds(c fiber.Ctx) error {
 	nodeID := c.Params("nodeID")
 	if nodeID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(
@@ -142,6 +145,7 @@ func (s *Server) GetAllInbounds(c fiber.Ctx) error {
 		)
 	}
 
+	zlog.Info().Str("component", "apiserver").Str("resource", "inbounds").Str("action", "list").Str("nodeID", nodeID).Int("count", len(inbounds)).Msg("retrieved")
 	return c.Status(fiber.StatusOK).JSON(inbounds)
 }
 
@@ -191,5 +195,6 @@ func (s *Server) DeleteInbound(c fiber.Ctx) error {
 		)
 	}
 
+	zlog.Info().Str("component", "apiserver").Str("resource", "inbound").Str("action", "delete").Str("nodeID", nodeID).Str("tag", tag).Msg("deleted")
 	return c.SendStatus(fiber.StatusNoContent)
 }

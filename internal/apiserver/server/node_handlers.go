@@ -9,11 +9,11 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	zlog "github.com/rs/zerolog/log"
-	v1 "github.com/vayzur/apadana/pkg/api/v1"
+	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
 	"github.com/vayzur/apadana/pkg/errs"
 )
 
-func (s *Server) GetAllNodes(c fiber.Ctx) error {
+func (s *Server) GetNodes(c fiber.Ctx) error {
 	nodes, err := s.nodeService.ListNodes(c.RequestCtx())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(
@@ -23,6 +23,7 @@ func (s *Server) GetAllNodes(c fiber.Ctx) error {
 		)
 	}
 
+	zlog.Info().Str("component", "apiserver").Str("resource", "nodes").Str("action", "list").Int("count", len(nodes)).Msg("retrieved")
 	return c.Status(http.StatusOK).JSON(nodes)
 }
 
@@ -36,6 +37,7 @@ func (s *Server) GetActiveNodes(c fiber.Ctx) error {
 		)
 	}
 
+	zlog.Info().Str("component", "apiserver").Str("resource", "nodes").Str("action", "list").Int("count", len(nodes)).Msg("retrieved")
 	return c.Status(http.StatusOK).JSON(nodes)
 }
 
@@ -65,11 +67,12 @@ func (s *Server) GetNode(c fiber.Ctx) error {
 		)
 	}
 
+	zlog.Info().Str("component", "apiserver").Str("resource", "node").Str("action", "get").Str("nodeID", nodeID).Msg("retrieved")
 	return c.Status(http.StatusOK).JSON(node)
 }
 
 func (s *Server) CreateNode(c fiber.Ctx) error {
-	node := new(v1.Node)
+	node := new(corev1.Node)
 	if err := c.Bind().JSON(node); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
@@ -89,6 +92,7 @@ func (s *Server) CreateNode(c fiber.Ctx) error {
 		)
 	}
 
+	zlog.Info().Str("component", "apiserver").Str("resource", "node").Str("action", "create").Str("nodeID", node.Metadata.ID).Msg("created")
 	return c.Status(http.StatusCreated).JSON(node)
 }
 
@@ -117,6 +121,7 @@ func (s *Server) DeleteNode(c fiber.Ctx) error {
 		)
 	}
 
+	zlog.Info().Str("component", "apiserver").Str("resource", "node").Str("action", "delete").Str("nodeID", nodeID).Msg("deleted")
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
@@ -130,7 +135,7 @@ func (s *Server) UpdateNodeStatus(c fiber.Ctx) error {
 		)
 	}
 
-	nodeStatus := new(v1.NodeStatus)
+	nodeStatus := new(corev1.NodeStatus)
 	if err := c.Bind().JSON(nodeStatus); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
@@ -146,6 +151,7 @@ func (s *Server) UpdateNodeStatus(c fiber.Ctx) error {
 			},
 		)
 	}
-	zlog.Info().Str("component", "apiserver").Str("nodeID", nodeID).Msg("node status updated")
+
+	zlog.Info().Str("component", "apiserver").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Msg("updated")
 	return c.SendStatus(fiber.StatusOK)
 }
