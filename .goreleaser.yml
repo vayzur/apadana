@@ -35,8 +35,8 @@ builds:
       - -s -w -X main.version={{.Version}}
 
   -
-    id: "chapar"
-    binary: apadana-chapar
+    id: "satrap"
+    binary: satrap
     goos:
       - linux
       - windows
@@ -46,7 +46,7 @@ builds:
       - arm64
     env:
       - CGO_ENABLED=0
-    main: cmd/chapar/main.go
+    main: cmd/satrap/main.go
     ldflags:
       - -s -w -X main.version={{.Version}}
 
