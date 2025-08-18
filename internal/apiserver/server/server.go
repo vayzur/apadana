@@ -43,7 +43,7 @@ func (s *Server) setupRoutes() {
 	v1 := api.Group("/v1")
 
 	nodes := v1.Group("/nodes")
-	nodes.Get("", s.GetAllNodes)
+	nodes.Get("", s.GetNodes)
 	nodes.Get("/active", s.GetActiveNodes)
 	nodes.Get("/:nodeID", s.GetNode)
 	nodes.Post("", s.CreateNode)
@@ -51,7 +51,7 @@ func (s *Server) setupRoutes() {
 	nodes.Patch("/:nodeID/status", s.UpdateNodeStatus)
 
 	inbounds := nodes.Group("/:nodeID/inbounds")
-	inbounds.Get("", s.GetAllInbounds)
+	inbounds.Get("", s.GetInbounds)
 	inbounds.Get("/:tag", s.GetInbound)
 	inbounds.Post("", s.CreateInbound)
 	inbounds.Delete("/:tag", s.DeleteInbound)
