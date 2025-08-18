@@ -1,4 +1,4 @@
-package controller
+package spasaka
 
 import (
 	"context"
@@ -9,11 +9,11 @@ import (
 	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
 )
 
-func (c *ControllerManager) RunInboundMonitor(ctx context.Context, inboundMonitorPeriod time.Duration) {
+func (c *Spasaka) RunInboundMonitor(ctx context.Context, inboundMonitorPeriod time.Duration) {
 	ticker := time.NewTicker(inboundMonitorPeriod)
 	defer ticker.Stop()
 
-	zlog.Info().Str("component", "controller").Msg("inbound monitor started")
+	zlog.Info().Str("component", "spasaka").Msg("inbound monitor started")
 
 	for {
 		select {
@@ -25,7 +25,7 @@ func (c *ControllerManager) RunInboundMonitor(ctx context.Context, inboundMonito
 				if ctx.Err() != nil {
 					return
 				}
-				zlog.Error().Err(err).Str("component", "controller").Msg("failed to get nodes")
+				zlog.Error().Err(err).Str("component", "spasaka").Msg("failed to get nodes")
 				continue
 			}
 
@@ -46,7 +46,7 @@ func (c *ControllerManager) RunInboundMonitor(ctx context.Context, inboundMonito
 						if ctx.Err() != nil {
 							return
 						}
-						zlog.Error().Err(err).Str("component", "controller").Str("nodeID", node.Metadata.ID).Msg("get inbounds failed")
+						zlog.Error().Err(err).Str("component", "spasaka").Str("nodeID", node.Metadata.ID).Msg("get inbounds failed")
 						return
 					}
 					now := time.Now()
@@ -56,7 +56,7 @@ func (c *ControllerManager) RunInboundMonitor(ctx context.Context, inboundMonito
 								if ctx.Err() != nil {
 									return
 								}
-								zlog.Error().Err(err).Str("component", "controller").Str("nodeID", node.Metadata.ID).Str("tag", inbound.Config.Tag).Msg("delete inbound failed")
+								zlog.Error().Err(err).Str("component", "spasaka").Str("nodeID", node.Metadata.ID).Str("tag", inbound.Config.Tag).Msg("delete inbound failed")
 								return
 							}
 						}
