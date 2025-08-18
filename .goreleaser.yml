@@ -19,8 +19,8 @@ builds:
       - -s -w -X main.version={{.Version}}
 
   -
-    id: "controller"
-    binary: apadana-controller
+    id: "spasaka"
+    binary: spasaka
     goos:
       - linux
       - windows
@@ -30,7 +30,7 @@ builds:
       - arm64
     env:
       - CGO_ENABLED=0
-    main: cmd/controller/main.go
+    main: cmd/spasaka/main.go
     ldflags:
       - -s -w -X main.version={{.Version}}
 

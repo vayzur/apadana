@@ -1,4 +1,4 @@
-package controller
+package spasaka
 
 import (
 	"context"
@@ -9,12 +9,12 @@ import (
 	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
 )
 
-func (c *ControllerManager) RunNodeMonitor(ctx context.Context, nodeMonitorPeriod, nodeMonitorGracePeriod time.Duration) {
+func (c *Spasaka) RunNodeMonitor(ctx context.Context, nodeMonitorPeriod, nodeMonitorGracePeriod time.Duration) {
 	ticker := time.NewTicker(nodeMonitorPeriod)
 	defer ticker.Stop()
 
-	zlog.Info().Str("component", "controller").Msg("node monitor started")
-	defer zlog.Info().Str("component", "controller").Msg("node monitor stopped")
+	zlog.Info().Str("component", "spasaka").Msg("node monitor started")
+	defer zlog.Info().Str("component", "spasaka").Msg("node monitor stopped")
 
 	for {
 		select {
@@ -26,7 +26,7 @@ func (c *ControllerManager) RunNodeMonitor(ctx context.Context, nodeMonitorPerio
 				if ctx.Err() != nil {
 					return
 				}
-				zlog.Error().Err(err).Str("component", "controller").Msg("failed to get nodes")
+				zlog.Error().Err(err).Str("component", "spasaka").Msg("failed to get nodes")
 				continue
 			}
 
@@ -44,7 +44,7 @@ func (c *ControllerManager) RunNodeMonitor(ctx context.Context, nodeMonitorPerio
 							if ctx.Err() != nil {
 								return
 							}
-							zlog.Error().Err(err).Str("component", "controller").Msg("failed to update node status")
+							zlog.Error().Err(err).Str("component", "spasaka").Msg("failed to update node status")
 							return
 						}
 					}

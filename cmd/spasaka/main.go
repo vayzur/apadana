@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/vayzur/apadana/internal/config"
-	"github.com/vayzur/apadana/pkg/controller"
 	"github.com/vayzur/apadana/pkg/httputil"
 	"github.com/vayzur/apadana/pkg/leader"
 	satrap "github.com/vayzur/apadana/pkg/satrap/client"
 	"github.com/vayzur/apadana/pkg/service"
+	"github.com/vayzur/apadana/pkg/spasaka"
 
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
@@ -29,7 +29,7 @@ func main() {
 	configPath := flag.String("config", "", "Path to config file")
 	flag.Parse()
 
-	cfg := config.ControllerConfig{}
+	cfg := config.SpasakaConfig{}
 
 	if err := config.Load(*configPath, &cfg); err != nil {
 		zlog.Fatal().Err(err).Msg("config load failed")
@@ -81,36 +81,36 @@ func main() {
 	inboundService := service.NewInboundService(inboundStore, satrapClient)
 	nodeService := service.NewNodeSerivce(nodeStore)
 
-	controllerManager := controller.NewControllerManager(nodeService, inboundService)
+	spasakaManager := spasaka.NewSpasaka(nodeService, inboundService)
 
-	val := "controller"
+	val := "spasaka"
 
 	var wg sync.WaitGroup
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := leader.Run(ctx, etcdSession, "/lock/node-controller", val, func(leaderCtx context.Context) {
-			controllerManager.RunNodeMonitor(leaderCtx, cfg.NodeMonitorPeriod, cfg.NodeMonitorGracePeriod)
+		if err := leader.Run(ctx, etcdSession, "/lock/node-monitor", val, func(leaderCtx context.Context) {
+			spasakaManager.RunNodeMonitor(leaderCtx, cfg.NodeMonitorPeriod, cfg.NodeMonitorGracePeriod)
 		}); err != nil && ctx.Err() == nil {
-			zlog.Error().Err(err).Msg("node controller leadership failed")
+			zlog.Error().Err(err).Msg("node monitor leadership failed")
 		}
 	}()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := leader.Run(ctx, etcdSession, "/lock/inbound-controller", val, func(leaderCtx context.Context) {
-			controllerManager.RunInboundMonitor(leaderCtx, cfg.InboundMonitorPeriod)
+		if err := leader.Run(ctx, etcdSession, "/lock/inbound-monitor", val, func(leaderCtx context.Context) {
+			spasakaManager.RunInboundMonitor(leaderCtx, cfg.InboundMonitorPeriod)
 		}); err != nil && ctx.Err() == nil {
-			zlog.Error().Err(err).Msg("inbound controller leadership failed")
+			zlog.Error().Err(err).Msg("inbound monitor leadership failed")
 		}
 	}()
 
-	zlog.Info().Str("component", "controller").Msg("controller manager started")
+	zlog.Info().Str("component", "spasaka").Msg("spasaka started")
 
 	<-ctx.Done()
 
 	wg.Wait()
-	zlog.Info().Str("component", "controller").Msg("shutting down gracefully")
+	zlog.Info().Str("component", "spasaka").Msg("shutting down gracefully")
 }
