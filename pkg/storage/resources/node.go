@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	zlog "github.com/rs/zerolog/log"
-	v1 "github.com/vayzur/apadana/pkg/api/v1"
+	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
 	"github.com/vayzur/apadana/pkg/storage"
 )
 
@@ -18,13 +18,13 @@ func NewNodeStore(store storage.Storage) *NodeStore {
 	return &NodeStore{store: store}
 }
 
-func (s *NodeStore) GetNode(ctx context.Context, nodeID string) (*v1.Node, error) {
+func (s *NodeStore) GetNode(ctx context.Context, nodeID string) (*corev1.Node, error) {
 	key := fmt.Sprintf("/nodes/%s", nodeID)
 	resp, err := s.store.Get(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("get node %s: %w", nodeID, err)
 	}
-	var node v1.Node
+	var node corev1.Node
 	if err := json.Unmarshal(resp, &node); err != nil {
 		return nil, fmt.Errorf("unmarshal node %s: %w", nodeID, err)
 	}
@@ -40,7 +40,7 @@ func (s *NodeStore) DelNode(ctx context.Context, nodeID string) error {
 	return nil
 }
 
-func (s *NodeStore) PutNode(ctx context.Context, node *v1.Node) error {
+func (s *NodeStore) PutNode(ctx context.Context, node *corev1.Node) error {
 	val, err := json.Marshal(node)
 	if err != nil {
 		return fmt.Errorf("marshal node %s: %w", node.Metadata.ID, err)
@@ -54,16 +54,16 @@ func (s *NodeStore) PutNode(ctx context.Context, node *v1.Node) error {
 	return nil
 }
 
-func (s *NodeStore) ListNodes(ctx context.Context) ([]*v1.Node, error) {
+func (s *NodeStore) ListNodes(ctx context.Context) ([]*corev1.Node, error) {
 	prefix := "/nodes/"
 	resp, err := s.store.List(ctx, prefix)
 	if err != nil {
 		return nil, fmt.Errorf("list nodes: %w", err)
 	}
 
-	var nodes []*v1.Node
+	var nodes []*corev1.Node
 	for k, v := range resp {
-		var node v1.Node
+		var node corev1.Node
 		if err := json.Unmarshal(v, &node); err != nil {
 			zlog.Error().Err(err).Str("component", "node").Str("nodeID", k).Msg("unmarshal failed")
 			continue
