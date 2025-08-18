@@ -6,7 +6,7 @@ import (
 	"time"
 
 	zlog "github.com/rs/zerolog/log"
-	v1 "github.com/vayzur/apadana/pkg/api/v1"
+	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
 )
 
 func (c *ControllerManager) RunInboundMonitor(ctx context.Context, inboundMonitorPeriod time.Duration) {
@@ -34,7 +34,7 @@ func (c *ControllerManager) RunInboundMonitor(ctx context.Context, inboundMonito
 			for _, node := range nodes {
 				wg.Add(1)
 				currentNode := node
-				go func(node *v1.Node) {
+				go func(node *corev1.Node) {
 					defer wg.Done()
 
 					if ctx.Err() != nil {
