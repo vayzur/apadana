@@ -1,6 +1,6 @@
 package config
 
-type APIServerConfig struct {
+type ChaparConfig struct {
 	Address       string    `mapstructure:"address" yaml:"address"`
 	Port          uint16    `mapstructure:"port" yaml:"port"`
 	Prefork       bool      `mapstructure:"prefork" yaml:"prefork"`

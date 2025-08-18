@@ -56,7 +56,7 @@ func (s *Server) GetInbound(c fiber.Ctx) error {
 		)
 	}
 
-	zlog.Info().Str("component", "apiserver").Str("resource", "inbound").Str("action", "get").Str("nodeID", nodeID).Str("tag", tag).Msg("retrieved")
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "get").Str("nodeID", nodeID).Str("tag", tag).Msg("retrieved")
 	return c.Status(fiber.StatusOK).JSON(inbound)
 }
 
@@ -106,7 +106,7 @@ func (s *Server) CreateInbound(c fiber.Ctx) error {
 		)
 	}
 
-	zlog.Info().Str("component", "apiserver").Str("resource", "inbound").Str("action", "create").Str("nodeID", nodeID).Str("tag", inbound.Config.Tag).Msg("created")
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "create").Str("nodeID", nodeID).Str("tag", inbound.Config.Tag).Msg("created")
 	return c.Status(fiber.StatusCreated).JSON(inbound)
 }
 
@@ -145,7 +145,7 @@ func (s *Server) GetInbounds(c fiber.Ctx) error {
 		)
 	}
 
-	zlog.Info().Str("component", "apiserver").Str("resource", "inbounds").Str("action", "list").Str("nodeID", nodeID).Int("count", len(inbounds)).Msg("retrieved")
+	zlog.Info().Str("component", "chapar").Str("resource", "inbounds").Str("action", "list").Str("nodeID", nodeID).Int("count", len(inbounds)).Msg("retrieved")
 	return c.Status(fiber.StatusOK).JSON(inbounds)
 }
 
@@ -195,6 +195,6 @@ func (s *Server) DeleteInbound(c fiber.Ctx) error {
 		)
 	}
 
-	zlog.Info().Str("component", "apiserver").Str("resource", "inbound").Str("action", "delete").Str("nodeID", nodeID).Str("tag", tag).Msg("deleted")
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "delete").Str("nodeID", nodeID).Str("tag", tag).Msg("deleted")
 	return c.SendStatus(fiber.StatusNoContent)
 }

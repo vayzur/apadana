@@ -3,8 +3,8 @@ project_name: apadana
 
 builds:
   -
-    id: "apiserver"
-    binary: apadana-apiserver
+    id: "chapar"
+    binary: chapar
     goos:
       - linux
       - windows
@@ -14,7 +14,7 @@ builds:
       - arm64
     env:
       - CGO_ENABLED=0
-    main: cmd/apiserver/main.go
+    main: cmd/chapar/main.go
     ldflags:
       - -s -w -X main.version={{.Version}}
 

@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/vayzur/apadana/internal/apiserver/server"
+	"github.com/vayzur/apadana/internal/chapar/server"
 	"github.com/vayzur/apadana/internal/config"
 	"github.com/vayzur/apadana/pkg/httputil"
 	satrap "github.com/vayzur/apadana/pkg/satrap/client"
@@ -27,7 +27,7 @@ func main() {
 	configPath := flag.String("config", "", "Path to config file")
 	flag.Parse()
 
-	cfg := config.APIServerConfig{}
+	cfg := config.ChaparConfig{}
 
 	if err := config.Load(*configPath, &cfg); err != nil {
 		zlog.Fatal().Err(err).Msg("config load failed")
@@ -70,23 +70,23 @@ func main() {
 
 	serverAddr := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
 
-	apiserver := server.NewServer(serverAddr, cfg.Token, cfg.Prefork, inboundService, nodeService)
+	chapar := server.NewServer(serverAddr, cfg.Token, cfg.Prefork, inboundService, nodeService)
 
 	go func() {
 		if cfg.TLS.Enabled {
-			zlog.Fatal().Err(apiserver.StartTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile))
+			zlog.Fatal().Err(chapar.StartTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile))
 		} else {
-			zlog.Fatal().Err(apiserver.Start())
+			zlog.Fatal().Err(chapar.Start())
 		}
 	}()
 
 	defer func() {
-		if err := apiserver.Stop(); err != nil {
-			zlog.Error().Err(err).Msg("failed to stop apiserver")
+		if err := chapar.Stop(); err != nil {
+			zlog.Error().Err(err).Msg("failed to stop chapar")
 		}
 	}()
 
-	zlog.Info().Str("component", "apiserver").Msg("apiserver started")
+	zlog.Info().Str("component", "chapar").Msg("chapar started")
 	<-ctx.Done()
-	zlog.Info().Str("component", "apiserver").Msg("shutting down gracefully")
+	zlog.Info().Str("component", "chapar").Msg("shutting down gracefully")
 }
