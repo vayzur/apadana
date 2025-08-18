@@ -2,9 +2,11 @@ package controller
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	zlog "github.com/rs/zerolog/log"
+	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
 )
 
 func (c *ControllerManager) RunNodeMonitor(ctx context.Context, nodeMonitorPeriod, nodeMonitorGracePeriod time.Duration) {
@@ -28,19 +30,27 @@ func (c *ControllerManager) RunNodeMonitor(ctx context.Context, nodeMonitorPerio
 				continue
 			}
 
+			var wg sync.WaitGroup
+
 			now := time.Now()
 			for _, node := range nodes {
-				if now.Sub(node.Status.LastHeartbeatTime) >= nodeMonitorGracePeriod {
-					node.Status.Status = false
-					if err := c.nodeService.PutNode(ctx, node); err != nil {
-						if ctx.Err() != nil {
+				wg.Add(1)
+				currentNode := node
+				go func(node *corev1.Node) {
+					defer wg.Done()
+					if now.Sub(node.Status.LastHeartbeatTime) >= nodeMonitorGracePeriod {
+						node.Status.Status = false
+						if err := c.nodeService.PutNode(ctx, node); err != nil {
+							if ctx.Err() != nil {
+								return
+							}
+							zlog.Error().Err(err).Str("component", "controller").Msg("failed to update node status")
 							return
 						}
-						zlog.Error().Err(err).Str("component", "controller").Msg("failed to update node status")
-						continue
 					}
-				}
+				}(currentNode)
 			}
+			wg.Wait()
 		}
 	}
 }
