@@ -4,49 +4,53 @@ import (
 	"context"
 	"fmt"
 
-	v1 "github.com/vayzur/apadana/pkg/api/v1"
-	chapar "github.com/vayzur/apadana/pkg/chapar/client"
+	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
+	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
+
+	satrap "github.com/vayzur/apadana/pkg/satrap/client"
 	"github.com/vayzur/apadana/pkg/storage/resources"
 )
 
 type InboundService struct {
 	store        *resources.InboundStore
-	chaparClient *chapar.Client
+	satrapClient *satrap.Client
 }
 
-func NewInboundService(store *resources.InboundStore, chaparClient *chapar.Client) *InboundService {
+func NewInboundService(store *resources.InboundStore, satrapClient *satrap.Client) *InboundService {
 	return &InboundService{
 		store:        store,
-		chaparClient: chaparClient,
+		satrapClient: satrapClient,
 	}
 }
 
-func (s *InboundService) GetInbound(ctx context.Context, node *v1.Node, tag string) (*v1.Inbound, error) {
+func (s *InboundService) GetInbound(ctx context.Context, node *corev1.Node, tag string) (*satrapv1.Inbound, error) {
 	return s.store.GetInbound(ctx, node.Metadata.ID, tag)
 }
 
-func (s *InboundService) DelInbound(ctx context.Context, node *v1.Node, tag string) error {
-	if err := s.chaparClient.RemoveInbound(node, tag); err != nil {
-		return fmt.Errorf("spark delete inbound %s/%s: %w", node.Metadata.ID, tag, err)
+func (s *InboundService) DelInbound(ctx context.Context, node *corev1.Node, tag string) error {
+	if err := s.satrapClient.RemoveInbound(node, tag); err != nil {
+		return fmt.Errorf("inbound delete %s/%s: %w", node.Metadata.ID, tag, err)
 	}
-
-	return s.store.DelInbound(ctx, node.Metadata.ID, tag)
-}
-
-func (s *InboundService) AddInbound(ctx context.Context, inbound *v1.Inbound, node *v1.Node) error {
-	if err := s.chaparClient.AddInbound(&inbound.Config, node); err != nil {
-		return fmt.Errorf("spark add inbound %s/%s: %w", node.Metadata.ID, inbound.Config.Tag, err)
-	}
-
-	if err := s.store.PutInbound(ctx, node.Metadata.ID, inbound); err != nil {
-		if err := s.chaparClient.RemoveInbound(node, inbound.Config.Tag); err != nil {
-			return fmt.Errorf("spark add inbound rollback %s/%s: %w", node.Metadata.ID, inbound.Config.Tag, err)
-		}
-		return err
+	if err := s.store.DelInbound(ctx, node.Metadata.ID, tag); err != nil {
+		return fmt.Errorf("inbound delete store %s/%s: %w", node.Metadata.ID, tag, err)
 	}
 	return nil
 }
 
-func (s *InboundService) ListInbounds(ctx context.Context, node *v1.Node) ([]*v1.Inbound, error) {
+func (s *InboundService) AddInbound(ctx context.Context, inbound *satrapv1.Inbound, node *corev1.Node) error {
+	if err := s.satrapClient.AddInbound(&inbound.Config, node); err != nil {
+		return fmt.Errorf("inbound add %s/%s: %w", node.Metadata.ID, inbound.Config.Tag, err)
+	}
+
+	if err := s.store.PutInbound(ctx, node.Metadata.ID, inbound); err != nil {
+		if rerr := s.satrapClient.RemoveInbound(node, inbound.Config.Tag); rerr != nil {
+			return fmt.Errorf("inbound add rollback %s/%s failed: %w: %w", node.Metadata.ID, inbound.Config.Tag, rerr, err)
+		}
+		return fmt.Errorf("inbound add store %s/%s: %w", node.Metadata.ID, inbound.Config.Tag, err)
+	}
+	return nil
+}
+
+func (s *InboundService) ListInbounds(ctx context.Context, node *corev1.Node) ([]*satrapv1.Inbound, error) {
 	return s.store.ListInbounds(ctx, node.Metadata.ID)
 }

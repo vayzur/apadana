@@ -1,4 +1,4 @@
-package xray
+package client
 
 import (
 	"context"
@@ -45,6 +45,9 @@ func handleXrayError(err error) error {
 	if s.Code() == codes.Unknown {
 		message := s.Message()
 		if strings.Contains(message, "existing tag found") {
+			return errs.ErrConflict
+		}
+		if strings.Contains(message, "existing user found") {
 			return errs.ErrConflict
 		}
 		if strings.Contains(message, "not enough information for making a decision") {

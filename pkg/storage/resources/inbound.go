@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	zlog "github.com/rs/zerolog/log"
-	v1 "github.com/vayzur/apadana/pkg/api/v1"
+	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
 	"github.com/vayzur/apadana/pkg/storage"
 )
 
@@ -18,13 +18,13 @@ func NewInboundStore(store storage.Storage) *InboundStore {
 	return &InboundStore{store: store}
 }
 
-func (s *InboundStore) GetInbound(ctx context.Context, nodeID, tag string) (*v1.Inbound, error) {
+func (s *InboundStore) GetInbound(ctx context.Context, nodeID, tag string) (*satrapv1.Inbound, error) {
 	key := fmt.Sprintf("/inbounds/%s/%s", nodeID, tag)
 	resp, err := s.store.Get(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("get inbound %s/%s: %w", nodeID, tag, err)
 	}
-	var inbound v1.Inbound
+	var inbound satrapv1.Inbound
 	if err := json.Unmarshal(resp, &inbound); err != nil {
 		return nil, fmt.Errorf("unmarshal inbound %s/%s: %w", nodeID, tag, err)
 	}
@@ -32,7 +32,7 @@ func (s *InboundStore) GetInbound(ctx context.Context, nodeID, tag string) (*v1.
 	return &inbound, nil
 }
 
-func (s *InboundStore) PutInbound(ctx context.Context, nodeID string, inbound *v1.Inbound) error {
+func (s *InboundStore) PutInbound(ctx context.Context, nodeID string, inbound *satrapv1.Inbound) error {
 	val, err := json.Marshal(inbound)
 	if err != nil {
 		return fmt.Errorf("marshal inbound %s/%s: %w", nodeID, inbound.Config.Tag, err)
@@ -54,16 +54,16 @@ func (s *InboundStore) DelInbound(ctx context.Context, nodeID, tag string) error
 	return nil
 }
 
-func (s *InboundStore) ListInbounds(ctx context.Context, nodeID string) ([]*v1.Inbound, error) {
+func (s *InboundStore) ListInbounds(ctx context.Context, nodeID string) ([]*satrapv1.Inbound, error) {
 	key := fmt.Sprintf("/inbounds/%s/", nodeID)
 	resp, err := s.store.List(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("list inbounds %s: %w", nodeID, err)
 	}
 
-	var inbounds []*v1.Inbound
+	var inbounds []*satrapv1.Inbound
 	for k, v := range resp {
-		var inbound v1.Inbound
+		var inbound satrapv1.Inbound
 		if err := json.Unmarshal(v, &inbound); err != nil {
 			zlog.Error().Err(err).Str("component", "inbound").Str("nodeID", nodeID).Str("tag", k).Msg("unmarshal failed")
 			continue

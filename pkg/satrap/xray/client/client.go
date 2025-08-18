@@ -1,4 +1,4 @@
-package xray
+package client
 
 import (
 	"fmt"

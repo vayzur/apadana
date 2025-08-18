@@ -10,8 +10,8 @@ import (
 
 	"github.com/vayzur/apadana/internal/apiserver/server"
 	"github.com/vayzur/apadana/internal/config"
-	chapar "github.com/vayzur/apadana/pkg/chapar/client"
 	"github.com/vayzur/apadana/pkg/httputil"
+	satrap "github.com/vayzur/apadana/pkg/satrap/client"
 	"github.com/vayzur/apadana/pkg/service"
 
 	"github.com/rs/zerolog"
@@ -63,9 +63,9 @@ func main() {
 	nodeStore := resources.NewNodeStore(etcdStorege)
 
 	httpClient := httputil.New(time.Second * 5)
-	chaparClient := chapar.New(httpClient)
+	satrapClient := satrap.New(httpClient)
 
-	inboundService := service.NewInboundService(inboundStore, chaparClient)
+	inboundService := service.NewInboundService(inboundStore, satrapClient)
 	nodeService := service.NewNodeSerivce(nodeStore)
 
 	serverAddr := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
@@ -87,8 +87,6 @@ func main() {
 	}()
 
 	zlog.Info().Str("component", "apiserver").Msg("apiserver started")
-	defer zlog.Info().Str("component", "apiserver").Msg("apiserver stopped")
-
 	<-ctx.Done()
-	zlog.Info().Str("component", "apiserver").Msg("shutting down gracefully...")
+	zlog.Info().Str("component", "apiserver").Msg("shutting down gracefully")
 }

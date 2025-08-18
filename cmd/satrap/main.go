@@ -10,13 +10,13 @@ import (
 
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
-	"github.com/vayzur/apadana/internal/chapar/server"
 	"github.com/vayzur/apadana/internal/config"
-	"github.com/vayzur/apadana/pkg/chapar/flock"
-	"github.com/vayzur/apadana/pkg/chapar/health"
-	xray "github.com/vayzur/apadana/pkg/chapar/xray/client"
+	"github.com/vayzur/apadana/internal/satrap/server"
 	apadana "github.com/vayzur/apadana/pkg/client"
 	"github.com/vayzur/apadana/pkg/httputil"
+	"github.com/vayzur/apadana/pkg/satrap/flock"
+	"github.com/vayzur/apadana/pkg/satrap/health"
+	xray "github.com/vayzur/apadana/pkg/satrap/xray/client"
 )
 
 func main() {
@@ -25,7 +25,7 @@ func main() {
 	configPath := flag.String("config", "", "Path to config file")
 	flag.Parse()
 
-	cfg := config.ChaparConfig{}
+	cfg := config.SatrapConfig{}
 
 	if err := config.Load(*configPath, &cfg); err != nil {
 		zlog.Fatal().Err(err).Msg("config load failed")
@@ -75,9 +75,13 @@ func main() {
 		}
 	}()
 
-	defer zlog.Fatal().Err(apiserver.Stop())
+	defer func() {
+		if err := apiserver.Stop(); err != nil {
+			zlog.Error().Err(err).Msg("failed to stop apiserver")
+		}
+	}()
 
 	zlog.Info().Str("component", "chapar").Msg("server started")
 	<-ctx.Done()
-	zlog.Info().Str("component", "chapar").Msg("server stopped")
+	zlog.Info().Str("component", "chapar").Msg("shutting down gracefully")
 }

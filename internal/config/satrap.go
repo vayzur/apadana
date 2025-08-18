@@ -7,7 +7,7 @@ type XrayConfig struct {
 	Port    uint16 `mapstructure:"port" yaml:"port"`
 }
 
-type ChaparConfig struct {
+type SatrapConfig struct {
 	NodeID                    string        `mapstructure:"nodeID" yaml:"nodeID"`
 	Address                   string        `mapstructure:"address" yaml:"address"`
 	Port                      uint16        `mapstructure:"port" yaml:"port"`
