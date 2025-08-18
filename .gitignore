@@ -36,12 +36,7 @@ tmp/
 # etcd
 default.etcd/
 
-# apadana binaries
-apadana-apiserver
-apadana-controller
-apadana-chapar
-
 # apadana config files
-apiserver.yml
 chapar.yml
-controller.yml
+spasaka.yml
+satrap.yml
