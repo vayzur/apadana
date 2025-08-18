@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	zlog "github.com/rs/zerolog/log"
-	v1 "github.com/vayzur/apadana/pkg/api/v1"
+	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
 )
 
-func (c *Client) UpdateNodeStatus(nodeID string, nodeStatus *v1.NodeStatus) error {
+func (c *Client) UpdateNodeStatus(nodeID string, nodeStatus *corev1.NodeStatus) error {
 	url := fmt.Sprintf("%s/api/v1/nodes/%s/status", c.address, nodeID)
 
 	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, nodeStatus)
