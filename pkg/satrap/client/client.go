@@ -1,4 +1,4 @@
-package chapar
+package satrap
 
 import "github.com/vayzur/apadana/pkg/httputil"
 

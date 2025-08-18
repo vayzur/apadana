@@ -1,14 +1,15 @@
-package chapar
+package satrap
 
 import (
 	"fmt"
 	"net/http"
 
-	v1 "github.com/vayzur/apadana/pkg/api/v1"
+	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
+	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
 	"github.com/vayzur/apadana/pkg/errs"
 )
 
-func (c *Client) AddInbound(inbound *v1.InboundConfig, node *v1.Node) error {
+func (c *Client) AddInbound(inbound *satrapv1.InboundConfig, node *corev1.Node) error {
 	if err := inbound.Validate(); err != nil {
 		return fmt.Errorf("validate inbound %s/%s: %w", node.Metadata.ID, inbound.Tag, err)
 	}
@@ -28,7 +29,7 @@ func (c *Client) AddInbound(inbound *v1.InboundConfig, node *v1.Node) error {
 	return nil
 }
 
-func (c *Client) RemoveInbound(node *v1.Node, tag string) error {
+func (c *Client) RemoveInbound(node *corev1.Node, tag string) error {
 	url := fmt.Sprintf("%s/api/v1/inbounds/%s", node.Address, tag)
 	status, resp, err := c.httpClient.Do(http.MethodDelete, url, node.Token, nil)
 	if err != nil {

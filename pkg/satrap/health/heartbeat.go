@@ -6,7 +6,7 @@ import (
 
 	zlog "github.com/rs/zerolog/log"
 
-	v1 "github.com/vayzur/apadana/pkg/api/v1"
+	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
 	apadana "github.com/vayzur/apadana/pkg/client"
 )
 
@@ -25,7 +25,7 @@ func NewHeartbeatManager(apadanaClient *apadana.Client, nodeStatusUpdateFrequenc
 func (h *HeartbeatManager) StartHeartbeat(nodeID string, ctx context.Context) {
 	ticker := time.NewTicker(h.nodeStatusUpdateFrequency)
 	defer ticker.Stop()
-	nodeStatus := new(v1.NodeStatus)
+	nodeStatus := new(corev1.NodeStatus)
 
 	zlog.Info().Str("component", "health").Msg("heartbeat started")
 	for {
