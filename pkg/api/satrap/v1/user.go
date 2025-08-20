@@ -46,33 +46,33 @@ func (a TrojanAccount) ToTypedMessage() *serial.TypedMessage {
 	})
 }
 
-type CreateUserRequest struct {
+type InboundUser struct {
 	Type    string          `json:"type"` // "vless", "vmess", "trojan"
 	Email   string          `json:"email"`
 	Account json.RawMessage `json:"account"`
 }
 
-func (r *CreateUserRequest) ToAccount() (Account, error) {
-	switch r.Type {
+func (u *InboundUser) ToAccount() (Account, error) {
+	switch u.Type {
 	case "vless":
 		var v VlessAccount
-		if err := json.Unmarshal(r.Account, &v); err != nil {
+		if err := json.Unmarshal(u.Account, &v); err != nil {
 			return nil, err
 		}
 		return &v, nil
 	case "vmess":
 		var v VmessAccount
-		if err := json.Unmarshal(r.Account, &v); err != nil {
+		if err := json.Unmarshal(u.Account, &v); err != nil {
 			return nil, err
 		}
 		return &v, nil
 	case "trojan":
 		var t TrojanAccount
-		if err := json.Unmarshal(r.Account, &t); err != nil {
+		if err := json.Unmarshal(u.Account, &t); err != nil {
 			return nil, err
 		}
 		return &t, nil
 	default:
-		return nil, fmt.Errorf("unknown protocol: %s", r.Type)
+		return nil, fmt.Errorf("unknown protocol: %s", u.Type)
 	}
 }

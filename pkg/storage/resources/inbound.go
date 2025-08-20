@@ -73,3 +73,59 @@ func (s *InboundStore) ListInbounds(ctx context.Context, nodeID string) ([]*satr
 
 	return inbounds, nil
 }
+
+func (s *InboundStore) GetUser(ctx context.Context, nodeID, tag, email string) (*satrapv1.InboundUser, error) {
+	key := fmt.Sprintf("/inboundUsers/%s/%s/%s", nodeID, tag, email)
+	resp, err := s.store.Get(ctx, key)
+	if err != nil {
+		return nil, fmt.Errorf("get inbound user %s/%s/%s: %w", nodeID, tag, email, err)
+	}
+	var u satrapv1.InboundUser
+	if err := json.Unmarshal(resp, &u); err != nil {
+		return nil, fmt.Errorf("unmarshal inbound user %s/%s/%s: %w", nodeID, tag, email, err)
+	}
+
+	return &u, nil
+}
+
+func (s *InboundStore) PutUser(ctx context.Context, nodeID, tag string, inboundUser *satrapv1.InboundUser) error {
+	val, err := json.Marshal(inboundUser)
+	if err != nil {
+		return fmt.Errorf("marshal inbound user %s/%s: %w", nodeID, tag, err)
+	}
+
+	key := fmt.Sprintf("/inboundUsers/%s/%s/%s", nodeID, tag, inboundUser.Email)
+	if err := s.store.Put(ctx, key, string(val)); err != nil {
+		return fmt.Errorf("put inbound user %s/%s/%s: %w", nodeID, tag, inboundUser.Email, err)
+	}
+
+	return nil
+}
+
+func (s *InboundStore) DelUser(ctx context.Context, nodeID, tag, email string) error {
+	key := fmt.Sprintf("/inboundUsers/%s/%s/%s", nodeID, tag, email)
+	if err := s.store.Delete(ctx, key); err != nil {
+		return fmt.Errorf("delete inbound user %s/%s/%s: %w", nodeID, tag, email, err)
+	}
+	return nil
+}
+
+func (s *InboundStore) ListUsers(ctx context.Context, nodeID, tag string) ([]*satrapv1.InboundUser, error) {
+	key := fmt.Sprintf("/inboundUsers/%s/%s", nodeID, tag)
+	resp, err := s.store.List(ctx, key)
+	if err != nil {
+		return nil, fmt.Errorf("list inbound users %s: %w", nodeID, err)
+	}
+
+	var users []*satrapv1.InboundUser
+	for k, v := range resp {
+		var u satrapv1.InboundUser
+		if err := json.Unmarshal(v, &u); err != nil {
+			zlog.Error().Err(err).Str("component", "inbound").Str("nodeID", nodeID).Str("tag", k).Msg("user unmarshal failed")
+			continue
+		}
+		users = append(users, &u)
+	}
+
+	return users, nil
+}

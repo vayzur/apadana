@@ -45,9 +45,9 @@ func (c *Client) RemoveInbound(node *corev1.Node, tag string) error {
 	return nil
 }
 
-func (c *Client) AddUser(node *corev1.Node, req satrapv1.CreateUserRequest, tag string) error {
+func (c *Client) AddUser(node *corev1.Node, tag string, user *satrapv1.InboundUser) error {
 	url := fmt.Sprintf("%s/api/v1/inbounds/%s/users", node.Address, tag)
-	status, resp, err := c.httpClient.Do(http.MethodPost, url, node.Token, req)
+	status, resp, err := c.httpClient.Do(http.MethodPost, url, node.Token, user)
 	if err != nil {
 		return fmt.Errorf("add user %s/%s: %w", node.Metadata.ID, tag, err)
 	}
