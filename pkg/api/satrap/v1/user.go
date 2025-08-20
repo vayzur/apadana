@@ -10,78 +10,65 @@ import (
 	"github.com/xtls/xray-core/proxy/vmess"
 )
 
-type UserAccount interface {
+type Account interface {
 	ToTypedMessage() *serial.TypedMessage
-	GetEmail() string
 }
 
-type BaseUser struct {
-	Email string
-}
-
-type VlessUser struct {
-	BaseUser
+type VlessAccount struct {
 	ID   string
 	Flow string
 }
 
-func (u VlessUser) ToTypedMessage() *serial.TypedMessage {
+func (a VlessAccount) ToTypedMessage() *serial.TypedMessage {
 	return serial.ToTypedMessage(&vless.Account{
-		Id:   u.ID,
-		Flow: u.Flow,
+		Id:   a.ID,
+		Flow: a.Flow,
 	})
 }
 
-func (u VlessUser) GetEmail() string { return u.Email }
-
-type VmessUser struct {
-	BaseUser
+type VmessAccount struct {
 	ID string
 }
 
-func (u VmessUser) ToTypedMessage() *serial.TypedMessage {
+func (a VmessAccount) ToTypedMessage() *serial.TypedMessage {
 	return serial.ToTypedMessage(&vmess.Account{
-		Id: u.ID,
+		Id: a.ID,
 	})
 }
 
-func (u VmessUser) GetEmail() string { return u.Email }
-
-type TrojanUser struct {
-	BaseUser
+type TrojanAccount struct {
 	Password string
 }
 
-func (u TrojanUser) ToTypedMessage() *serial.TypedMessage {
+func (a TrojanAccount) ToTypedMessage() *serial.TypedMessage {
 	return serial.ToTypedMessage(&trojan.Account{
-		Password: u.Password,
+		Password: a.Password,
 	})
 }
 
-func (u TrojanUser) GetEmail() string { return u.Email }
-
 type CreateUserRequest struct {
-	Type        string          `json:"type"` // "vless", "vmess", "trojan"
-	UserAccount json.RawMessage `json:"userAccount"`
+	Type    string          `json:"type"` // "vless", "vmess", "trojan"
+	Email   string          `json:"email"`
+	Account json.RawMessage `json:"account"`
 }
 
-func (r *CreateUserRequest) ToUserAccount() (UserAccount, error) {
+func (r *CreateUserRequest) ToAccount() (Account, error) {
 	switch r.Type {
 	case "vless":
-		var v VlessUser
-		if err := json.Unmarshal(r.UserAccount, &v); err != nil {
+		var v VlessAccount
+		if err := json.Unmarshal(r.Account, &v); err != nil {
 			return nil, err
 		}
 		return &v, nil
 	case "vmess":
-		var v VmessUser
-		if err := json.Unmarshal(r.UserAccount, &v); err != nil {
+		var v VmessAccount
+		if err := json.Unmarshal(r.Account, &v); err != nil {
 			return nil, err
 		}
 		return &v, nil
 	case "trojan":
-		var t TrojanUser
-		if err := json.Unmarshal(r.UserAccount, &t); err != nil {
+		var t TrojanAccount
+		if err := json.Unmarshal(r.Account, &t); err != nil {
 			return nil, err
 		}
 		return &t, nil

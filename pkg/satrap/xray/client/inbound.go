@@ -39,13 +39,13 @@ func (c *Client) RemoveInbound(ctx context.Context, tag string) error {
 	return handleXrayError(err)
 }
 
-func (c *Client) AddUser(ctx context.Context, tag string, user satrapv1.UserAccount) error {
+func (c *Client) AddUser(ctx context.Context, tag, email string, account satrapv1.Account) error {
 	_, err := c.hsClient.AlterInbound(ctx, &command.AlterInboundRequest{
 		Tag: tag,
 		Operation: serial.ToTypedMessage(&command.AddUserOperation{
 			User: &protocol.User{
-				Email:   user.GetEmail(),
-				Account: user.ToTypedMessage(),
+				Email:   email,
+				Account: account.ToTypedMessage(),
 			},
 		}),
 	})
