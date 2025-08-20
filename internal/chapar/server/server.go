@@ -59,6 +59,7 @@ func (s *Server) setupRoutes() {
 	inbounds.Delete("/:tag", s.DeleteInbound)
 
 	inboundUsers := inbounds.Group("/:tag/users")
+	inboundUsers.Get("", s.GetInboundUsers)
 	inboundUsers.Post("", s.CreateUser)
 	inboundUsers.Delete("/:email", s.DeleteUser)
 }
