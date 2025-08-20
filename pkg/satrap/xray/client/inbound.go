@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"strings"
 
+	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
 	"github.com/vayzur/apadana/pkg/errs"
 	"github.com/xtls/xray-core/app/proxyman/command"
+	"github.com/xtls/xray-core/common/protocol"
+	"github.com/xtls/xray-core/common/serial"
 	"github.com/xtls/xray-core/infra/conf"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -36,6 +39,29 @@ func (c *Client) RemoveInbound(ctx context.Context, tag string) error {
 	return handleXrayError(err)
 }
 
+func (c *Client) AddUser(ctx context.Context, tag string, user satrapv1.UserAccount) error {
+	_, err := c.hsClient.AlterInbound(ctx, &command.AlterInboundRequest{
+		Tag: tag,
+		Operation: serial.ToTypedMessage(&command.AddUserOperation{
+			User: &protocol.User{
+				Email:   user.GetEmail(),
+				Account: user.ToTypedMessage(),
+			},
+		}),
+	})
+	return handleXrayError(err)
+}
+
+func (c *Client) RemoveUser(ctx context.Context, tag, email string) error {
+	_, err := c.hsClient.AlterInbound(ctx, &command.AlterInboundRequest{
+		Tag: tag,
+		Operation: serial.ToTypedMessage(&command.RemoveUserOperation{
+			Email: email,
+		}),
+	})
+	return handleXrayError(err)
+}
+
 func handleXrayError(err error) error {
 	s, ok := status.FromError(err)
 	if !ok {
@@ -47,10 +73,16 @@ func handleXrayError(err error) error {
 		if strings.Contains(message, "existing tag found") {
 			return errs.ErrConflict
 		}
-		if strings.Contains(message, "existing user found") {
+		if strings.Contains(message, "already exists") {
 			return errs.ErrConflict
 		}
 		if strings.Contains(message, "not enough information for making a decision") {
+			return errs.ErrNotFound
+		}
+		if strings.Contains(message, "handler not found") {
+			return errs.ErrNotFound
+		}
+		if strings.Contains(message, "not found") {
 			return errs.ErrNotFound
 		}
 	}

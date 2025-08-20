@@ -1,6 +1,8 @@
 package server
 
 import (
+	"fmt"
+
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/healthcheck"
 	"github.com/vayzur/apadana/internal/auth"
@@ -40,8 +42,12 @@ func (s *Server) setupRoutes() {
 	v1 := api.Group("/v1")
 
 	inbounds := v1.Group("/inbounds")
-	inbounds.Post("", requireJSON, s.AddInbound)
+	inbounds.Post("", s.requireJSON, s.AddInbound)
 	inbounds.Delete("/:tag", s.RemoveInbound)
+
+	users := inbounds.Group("/:tag/users")
+	users.Post("", s.AddUser)
+	users.Delete(":email", s.RemoveUser)
 }
 
 func (s *Server) StartTLS(certFilePath, keyFilePath string) error {
@@ -76,11 +82,23 @@ func (s *Server) authMiddleware(c fiber.Ctx) error {
 	return c.Next()
 }
 
-func requireJSON(c fiber.Ctx) error {
+func (s *Server) requireJSON(c fiber.Ctx) error {
 	ct := c.Get(fiber.HeaderContentType)
 	if ct != fiber.MIMEApplicationJSON {
 		return c.Status(fiber.StatusUnsupportedMediaType).
 			JSON(fiber.Map{"error": "Content-Type must be application/json"})
 	}
 	return c.Next()
+}
+
+func (s *Server) requiredParams(c fiber.Ctx, keys ...string) (map[string]string, error) {
+	m := make(map[string]string)
+	for _, k := range keys {
+		v := c.Params(k)
+		if v == "" {
+			return nil, fmt.Errorf("%s parameter is required", k)
+		}
+		m[k] = v
+	}
+	return m, nil
 }

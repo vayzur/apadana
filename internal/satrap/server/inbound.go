@@ -1,0 +1,84 @@
+package server
+
+import (
+	"context"
+	"errors"
+
+	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
+
+	"github.com/gofiber/fiber/v3"
+	"github.com/vayzur/apadana/pkg/errs"
+)
+
+func (s *Server) AddInbound(c fiber.Ctx) error {
+	b := c.Body()
+
+	if err := s.xrayClient.AddInbound(context.Background(), b); err != nil {
+		if errors.Is(err, errs.ErrConflict) {
+			return c.SendStatus(fiber.StatusConflict)
+		}
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.SendStatus(fiber.StatusCreated)
+}
+
+func (s *Server) RemoveInbound(c fiber.Ctx) error {
+	tag := c.Params("tag")
+
+	if tag == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "tag parameter is required"})
+	}
+
+	if err := s.xrayClient.RemoveInbound(context.Background(), tag); err != nil {
+		if errors.Is(err, errs.ErrNotFound) {
+			return c.SendStatus(fiber.StatusNotFound)
+		}
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.SendStatus(fiber.StatusNoContent)
+}
+
+func (s *Server) AddUser(c fiber.Ctx) error {
+	tag := c.Params("tag")
+	if tag == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "tag parameter is required"})
+	}
+
+	var req satrapv1.CreateUserRequest
+	if err := c.Bind().JSON(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	ua, err := req.ToUserAccount()
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	if err := s.xrayClient.AddUser(c.RequestCtx(), tag, ua); err != nil {
+		if errors.Is(err, errs.ErrConflict) {
+			return c.SendStatus(fiber.StatusConflict)
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.SendStatus(fiber.StatusCreated)
+}
+
+func (s *Server) RemoveUser(c fiber.Ctx) error {
+	params, err := s.requiredParams(c, "tag", "email")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	if err := s.xrayClient.RemoveUser(context.Background(), params["tag"], params["email"]); err != nil {
+		if errors.Is(err, errs.ErrNotFound) {
+			return c.SendStatus(fiber.StatusNotFound)
+		}
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.SendStatus(fiber.StatusNoContent)
+}

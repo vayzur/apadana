@@ -4,6 +4,8 @@ import (
 	"context"
 	"log"
 
+	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
+
 	xray "github.com/vayzur/apadana/pkg/satrap/xray/client"
 )
 
@@ -17,7 +19,7 @@ func main() {
 	        "settings": {
 	            "clients": [
 	                {
-	                    "id": "inferno"
+	                    "id": "apadana"
 	                }
 	            ],
 	            "decryption": "none",
@@ -40,7 +42,7 @@ func main() {
 	                "tcpNoDelay": true
 	            }
 	        },
-	        "tag": "proxy-10800",
+	        "tag": "proxy0",
 	        "sniffing": {
 	            "enabled": false,
 	            "destOverride": [
@@ -61,6 +63,22 @@ func main() {
 	`
 
 	if err := xrayCli.AddInbound(context.Background(), []byte(inbound)); err != nil {
+		log.Printf("failed: %v", err)
+	}
+
+	ua := satrapv1.VlessUser{
+		BaseUser: satrapv1.BaseUser{
+			Email: "xyz@domain.tld",
+		},
+		ID:   "hello-world",
+		Flow: "",
+	}
+
+	if err := xrayCli.AddUser(context.Background(), "proxy0", ua); err != nil {
+		log.Printf("failed: %v", err)
+	}
+
+	if err := xrayCli.RemoveUser(context.Background(), "proxy0", "xyz@domain.tld"); err != nil {
 		log.Printf("failed: %v", err)
 	}
 

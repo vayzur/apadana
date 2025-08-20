@@ -54,3 +54,17 @@ func (s *InboundService) AddInbound(ctx context.Context, inbound *satrapv1.Inbou
 func (s *InboundService) ListInbounds(ctx context.Context, node *corev1.Node) ([]*satrapv1.Inbound, error) {
 	return s.store.ListInbounds(ctx, node.Metadata.ID)
 }
+
+func (s *InboundService) DelUser(ctx context.Context, node *corev1.Node, tag, email string) error {
+	if err := s.satrapClient.RemoveUser(node, tag, email); err != nil {
+		return fmt.Errorf("user delete %s/%s: %w", node.Metadata.ID, tag, err)
+	}
+	return nil
+}
+
+func (s *InboundService) AddUser(ctx context.Context, node *corev1.Node, tag string, req satrapv1.CreateUserRequest) error {
+	if err := s.satrapClient.AddUser(node, req, tag); err != nil {
+		return fmt.Errorf("user add %s/%s: %w", node.Metadata.ID, tag, err)
+	}
+	return nil
+}
