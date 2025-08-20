@@ -13,35 +13,55 @@ func (c *Client) UpdateNodeStatus(nodeID string, nodeStatus *corev1.NodeStatus) 
 	if nodeID == "" {
 		return fmt.Errorf("nodeID cannot be empty")
 	}
-
 	url := fmt.Sprintf("%s/api/v1/nodes/%s/status", c.address, nodeID)
 	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, nodeStatus)
 	if err != nil {
-		zlog.Error().Err(err).Str("component", "apadana").Msg("failed to send node update status")
+		zlog.Error().Err(err).Str("component", "client").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Msg("failed")
 		return err
 	}
 	if status != http.StatusOK {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resp", string(resp)).Int("status", status).Msg("node status update failed")
+		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
 		return err
 	}
-
 	return nil
+}
+
+func (c *Client) GetNode(nodeID string) (*corev1.Node, error) {
+	if nodeID == "" {
+		return nil, fmt.Errorf("nodeID cannot be empty")
+	}
+	url := fmt.Sprintf("%s/api/v1/nodes/%s", c.address, nodeID)
+	status, resp, err := c.httpClient.Do(http.MethodGet, url, c.token, nil)
+	if err != nil {
+		zlog.Error().Err(err).Str("component", "client").Str("resource", "node").Str("action", "get").Str("nodeID", nodeID).Msg("failed")
+		return nil, err
+	}
+	if status != http.StatusOK {
+		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "get").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return nil, err
+	}
+	node := &corev1.Node{}
+	if err := json.Unmarshal(resp, node); err != nil {
+		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "get").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("unmarshal failed")
+		return nil, err
+	}
+	return node, nil
 }
 
 func (c *Client) GetNodes() ([]*corev1.Node, error) {
 	url := fmt.Sprintf("%s/api/v1/nodes", c.address)
 	status, resp, err := c.httpClient.Do(http.MethodGet, url, c.token, nil)
 	if err != nil {
-		zlog.Error().Err(err).Str("component", "apadana").Msg("failed to send get nodes")
+		zlog.Error().Err(err).Str("component", "client").Str("resource", "nodes").Str("action", "list").Msg("failed")
 		return nil, err
 	}
 	if status != http.StatusOK {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resp", string(resp)).Int("status", status).Msg("get nodes failed")
+		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "nodes").Str("action", "list").Int("status", status).Str("resp", string(resp)).Msg("failed")
 		return nil, err
 	}
-	var nodes []*corev1.Node
+	nodes := []*corev1.Node{}
 	if err := json.Unmarshal(resp, &nodes); err != nil {
-		zlog.Error().Err(err).Str("component", "apadana").Msg("unmarshal nodes failed")
+		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "nodes").Str("action", "list").Int("status", status).Str("resp", string(resp)).Msg("unmarshal failed")
 		return nil, err
 	}
 	return nodes, nil
@@ -51,17 +71,57 @@ func (c *Client) GetActiveNodes() ([]*corev1.Node, error) {
 	url := fmt.Sprintf("%s/api/v1/nodes/active", c.address)
 	status, resp, err := c.httpClient.Do(http.MethodGet, url, c.token, nil)
 	if err != nil {
-		zlog.Error().Err(err).Str("component", "apadana").Msg("failed to send get nodes")
+		zlog.Error().Err(err).Str("component", "client").Str("resource", "nodes").Str("action", "list").Msg("failed")
 		return nil, err
 	}
 	if status != http.StatusOK {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resp", string(resp)).Int("status", status).Msg("get nodes failed")
+		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "nodes").Str("action", "list").Int("status", status).Str("resp", string(resp)).Msg("failed")
 		return nil, err
 	}
-	var nodes []*corev1.Node
+	nodes := []*corev1.Node{}
 	if err := json.Unmarshal(resp, &nodes); err != nil {
-		zlog.Error().Err(err).Str("component", "apadana").Msg("unmarshal nodes failed")
+		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "nodes").Str("action", "list").Int("status", status).Str("resp", string(resp)).Msg("unmarshal failed")
 		return nil, err
 	}
 	return nodes, nil
+}
+
+func (c *Client) CreateNode(node *corev1.Node) (*corev1.Node, error) {
+	url := fmt.Sprintf("%s/api/v1/nodes", c.address)
+	status, resp, err := c.httpClient.Do(http.MethodPost, url, c.token, node)
+	if err != nil {
+		zlog.Error().Err(err).Str("component", "client").Str("resource", "node").Str("action", "create").Msg("failed")
+		return nil, err
+	}
+	if status != http.StatusCreated {
+		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "create").Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return nil, err
+	}
+	n := &corev1.Node{}
+	if err := json.Unmarshal(resp, n); err != nil {
+		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "create").Int("status", status).Str("resp", string(resp)).Msg("unmarshal failed")
+		return nil, err
+	}
+	return n, nil
+}
+
+func (c *Client) DeleteNode(nodeID string) error {
+	if nodeID == "" {
+		return fmt.Errorf("nodeID cannot be empty")
+	}
+	url := fmt.Sprintf("%s/api/v1/nodes/%s", c.address, nodeID)
+	status, resp, err := c.httpClient.Do(http.MethodDelete, url, c.token, nil)
+	if err != nil {
+		zlog.Error().Err(err).Str("component", "client").Str("resource", "node").Str("action", "delete").Str("nodeID", nodeID).Msg("failed")
+		return err
+	}
+	if status == http.StatusNotFound {
+		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "delete").Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return err
+	}
+	if status != http.StatusNoContent {
+		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "delete").Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return err
+	}
+	return nil
 }
