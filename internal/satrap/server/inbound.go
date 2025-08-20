@@ -44,8 +44,8 @@ func (s *Server) AddUser(c fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "tag parameter is required"})
 	}
 
-	var req satrapv1.CreateUserRequest
-	if err := c.Bind().JSON(req); err != nil {
+	var u satrapv1.InboundUser
+	if err := c.Bind().JSON(u); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
 				"error": err.Error(),
@@ -53,12 +53,12 @@ func (s *Server) AddUser(c fiber.Ctx) error {
 		)
 	}
 
-	account, err := req.ToAccount()
+	a, err := u.ToAccount()
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	if err := s.xrayClient.AddUser(c.RequestCtx(), tag, req.Email, account); err != nil {
+	if err := s.xrayClient.AddUser(c.RequestCtx(), tag, u.Email, a); err != nil {
 		if errors.Is(err, errs.ErrConflict) {
 			return c.SendStatus(fiber.StatusConflict)
 		}

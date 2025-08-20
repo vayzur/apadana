@@ -55,16 +55,33 @@ func (s *InboundService) ListInbounds(ctx context.Context, node *corev1.Node) ([
 	return s.store.ListInbounds(ctx, node.Metadata.ID)
 }
 
+func (s *InboundService) GetUser(ctx context.Context, node *corev1.Node, tag, email string) (*satrapv1.InboundUser, error) {
+	return s.store.GetUser(ctx, node.Metadata.ID, tag, email)
+}
+
 func (s *InboundService) DelUser(ctx context.Context, node *corev1.Node, tag, email string) error {
 	if err := s.satrapClient.RemoveUser(node, tag, email); err != nil {
-		return fmt.Errorf("user delete %s/%s: %w", node.Metadata.ID, tag, err)
+		return fmt.Errorf("inbound user delete %s/%s: %w", node.Metadata.ID, tag, err)
+	}
+	if err := s.store.DelUser(ctx, node.Metadata.ID, tag, email); err != nil {
+		return fmt.Errorf("inbound user delete store %s/%s/%s: %w", node.Metadata.ID, tag, email, err)
 	}
 	return nil
 }
 
-func (s *InboundService) AddUser(ctx context.Context, node *corev1.Node, tag string, req satrapv1.CreateUserRequest) error {
-	if err := s.satrapClient.AddUser(node, req, tag); err != nil {
-		return fmt.Errorf("user add %s/%s: %w", node.Metadata.ID, tag, err)
+func (s *InboundService) AddUser(ctx context.Context, node *corev1.Node, tag string, user *satrapv1.InboundUser) error {
+	if err := s.satrapClient.AddUser(node, tag, user); err != nil {
+		return fmt.Errorf("inbound user add %s/%s/%s: %w", node.Metadata.ID, tag, user.Email, err)
+	}
+	if err := s.store.PutUser(ctx, node.Metadata.ID, tag, user); err != nil {
+		if rerr := s.satrapClient.RemoveUser(node, tag, user.Email); rerr != nil {
+			return fmt.Errorf("inbound user add rollback %s/%s/%s failed: %w: %w", node.Metadata.ID, tag, user.Email, rerr, err)
+		}
+		return fmt.Errorf("inbound user add store %s/%s/%s: %w", node.Metadata.ID, tag, user.Email, err)
 	}
 	return nil
+}
+
+func (s *InboundService) ListUsers(ctx context.Context, node *corev1.Node, tag string) ([]*satrapv1.InboundUser, error) {
+	return s.store.ListUsers(ctx, node.Metadata.ID, tag)
 }
