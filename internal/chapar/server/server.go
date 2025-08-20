@@ -1,6 +1,8 @@
 package server
 
 import (
+	"fmt"
+
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/healthcheck"
 	"github.com/vayzur/apadana/internal/auth"
@@ -55,6 +57,10 @@ func (s *Server) setupRoutes() {
 	inbounds.Get("/:tag", s.GetInbound)
 	inbounds.Post("", s.CreateInbound)
 	inbounds.Delete("/:tag", s.DeleteInbound)
+
+	inboundUsers := inbounds.Group("/:tag/users")
+	inboundUsers.Post("", s.CreateUser)
+	inboundUsers.Delete("/:email", s.DeleteUser)
 }
 
 func (s *Server) StartTLS(certFilePath, keyFilePath string) error {
@@ -87,4 +93,16 @@ func (s *Server) authMiddleware(c fiber.Ctx) error {
 		return fiber.ErrUnauthorized
 	}
 	return c.Next()
+}
+
+func (s *Server) requiredParams(c fiber.Ctx, keys ...string) (map[string]string, error) {
+	m := make(map[string]string)
+	for _, k := range keys {
+		v := c.Params(k)
+		if v == "" {
+			return nil, fmt.Errorf("%s parameter is required", k)
+		}
+		m[k] = v
+	}
+	return m, nil
 }
