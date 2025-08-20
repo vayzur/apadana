@@ -53,12 +53,12 @@ func (s *Server) AddUser(c fiber.Ctx) error {
 		)
 	}
 
-	ua, err := req.ToUserAccount()
+	account, err := req.ToAccount()
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	if err := s.xrayClient.AddUser(c.RequestCtx(), tag, ua); err != nil {
+	if err := s.xrayClient.AddUser(c.RequestCtx(), tag, req.Email, account); err != nil {
 		if errors.Is(err, errs.ErrConflict) {
 			return c.SendStatus(fiber.StatusConflict)
 		}

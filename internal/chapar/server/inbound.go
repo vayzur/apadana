@@ -228,7 +228,7 @@ func (s *Server) CreateUser(c fiber.Ctx) error {
 		)
 	}
 
-	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "create").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Str("protocol", req.Type).Str("account", string(req.UserAccount)).Msg("created")
+	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "create").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Str("protocol", req.Type).Str("email", req.Email).Str("account", string(req.Account)).Msg("created")
 	return c.Status(fiber.StatusCreated).JSON(req)
 }
 
