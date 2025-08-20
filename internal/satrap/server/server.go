@@ -17,7 +17,7 @@ type Server struct {
 	xrayClient *xray.Client
 }
 
-func NewServer(addr, token string, xrayClient *xray.Client) *Server {
+func NewServer(addr, token string, prefork bool, xrayClient *xray.Client) *Server {
 	app := fiber.New(fiber.Config{
 		CaseSensitive: true,
 		StrictRouting: true,
@@ -25,6 +25,7 @@ func NewServer(addr, token string, xrayClient *xray.Client) *Server {
 	s := &Server{
 		addr:       addr,
 		token:      token,
+		prefork:    prefork,
 		app:        app,
 		xrayClient: xrayClient,
 	}
