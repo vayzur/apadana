@@ -13,7 +13,6 @@ import (
 	"github.com/vayzur/apadana/internal/config"
 	"github.com/vayzur/apadana/internal/satrap/server"
 	apadana "github.com/vayzur/apadana/pkg/client"
-	"github.com/vayzur/apadana/pkg/httputil"
 	"github.com/vayzur/apadana/pkg/satrap/flock"
 	"github.com/vayzur/apadana/pkg/satrap/health"
 	xray "github.com/vayzur/apadana/pkg/satrap/xray/client"
@@ -28,7 +27,7 @@ func main() {
 	cfg := config.SatrapConfig{}
 
 	if err := config.Load(*configPath, &cfg); err != nil {
-		zlog.Fatal().Err(err).Msg("config load failed")
+		zlog.Fatal().Err(err).Str("component", "config").Str("action", "load").Msg("failed")
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -37,16 +36,19 @@ func main() {
 	xrayAddr := fmt.Sprintf("%s:%d", cfg.Xray.Address, cfg.Xray.Port)
 	xrayClient, err := xray.New(xrayAddr)
 	if err != nil {
-		zlog.Fatal().Err(err).Msg("xray connect failed")
+		zlog.Fatal().Err(err).Str("client", "xray").Str("action", "connect").Msg("failed")
 	}
 
-	defer xrayClient.Close()
+	defer func() {
+		if err := xrayClient.Close(); err != nil {
+			zlog.Error().Err(err).Str("client", "xray").Str("action", "stop").Msg("failed")
+		}
+	}()
 
-	httpClient := httputil.New(time.Second * 5)
 	apadanaClient := apadana.New(
-		httpClient,
 		cfg.Cluster.Server,
 		cfg.Cluster.Token,
+		time.Second*5,
 	)
 
 	hb := health.NewHeartbeatManager(
@@ -76,11 +78,11 @@ func main() {
 
 	defer func() {
 		if err := satrap.Stop(); err != nil {
-			zlog.Error().Err(err).Msg("failed to stop satrap")
+			zlog.Error().Err(err).Str("server", "satrap").Str("action", "stop").Msg("failed")
 		}
 	}()
 
-	zlog.Info().Str("component", "satrap").Msg("server started")
+	zlog.Info().Str("component", "satrap").Str("action", "start").Msg("success")
 	<-ctx.Done()
-	zlog.Info().Str("component", "satrap").Msg("shutting down gracefully")
+	zlog.Info().Str("component", "satrap").Str("action", "stop").Msg("success")
 }
