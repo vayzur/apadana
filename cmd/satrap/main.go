@@ -66,7 +66,7 @@ func main() {
 	}
 
 	serverAddr := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
-	satrap := server.NewServer(serverAddr, cfg.Token, xrayClient)
+	satrap := server.NewServer(serverAddr, cfg.Token, cfg.Prefork, xrayClient)
 
 	go func() {
 		if cfg.TLS.Enabled {
