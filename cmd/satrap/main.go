@@ -55,7 +55,7 @@ func main() {
 	)
 
 	if cfg.Cluster.Enabled {
-		lock := flock.NewFlock("/tmp/chapar-heartbeat.lock")
+		lock := flock.NewFlock("/tmp/satrap-heartbeat.lock")
 
 		if err := lock.TryLock(); err == nil {
 			go hb.StartHeartbeat(cfg.NodeID, ctx)
@@ -64,24 +64,23 @@ func main() {
 	}
 
 	serverAddr := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
-
-	apiserver := server.NewServer(serverAddr, cfg.Token, xrayClient)
+	satrap := server.NewServer(serverAddr, cfg.Token, xrayClient)
 
 	go func() {
 		if cfg.TLS.Enabled {
-			zlog.Fatal().Err(apiserver.StartTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile))
+			zlog.Fatal().Err(satrap.StartTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile))
 		} else {
-			zlog.Fatal().Err(apiserver.Start())
+			zlog.Fatal().Err(satrap.Start())
 		}
 	}()
 
 	defer func() {
-		if err := apiserver.Stop(); err != nil {
-			zlog.Error().Err(err).Msg("failed to stop apiserver")
+		if err := satrap.Stop(); err != nil {
+			zlog.Error().Err(err).Msg("failed to stop satrap")
 		}
 	}()
 
-	zlog.Info().Str("component", "chapar").Msg("server started")
+	zlog.Info().Str("component", "satrap").Msg("server started")
 	<-ctx.Done()
-	zlog.Info().Str("component", "chapar").Msg("shutting down gracefully")
+	zlog.Info().Str("component", "satrap").Msg("shutting down gracefully")
 }
