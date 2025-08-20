@@ -4,8 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
+	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
 	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
+
+	apadana "github.com/vayzur/apadana/pkg/client"
 
 	xray "github.com/vayzur/apadana/pkg/satrap/xray/client"
 )
@@ -88,4 +92,18 @@ func main() {
 		log.Printf("failed: %v", err)
 	}
 
+	apadanaClient := apadana.New("http://127.0.0.1:10200", "cluster-shared-token", time.Second*5)
+
+	n := &corev1.Node{
+		Metadata: corev1.NodeMetadata{
+			Name: "test",
+		},
+		Address: "http://127.0.0.1:10100",
+		Token:   "satrap-shared-token",
+	}
+	node, err := apadanaClient.CreateNode(n)
+	if err != nil {
+		log.Println(err)
+	}
+	fmt.Println(node)
 }
