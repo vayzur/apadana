@@ -12,9 +12,12 @@ import (
 	zlog "github.com/rs/zerolog/log"
 	"github.com/vayzur/apadana/internal/config"
 	"github.com/vayzur/apadana/internal/satrap/server"
+	satrapconfigv1 "github.com/vayzur/apadana/pkg/satrap/config/v1"
+
 	apadana "github.com/vayzur/apadana/pkg/client"
 	"github.com/vayzur/apadana/pkg/satrap/flock"
 	"github.com/vayzur/apadana/pkg/satrap/health"
+	"github.com/vayzur/apadana/pkg/satrap/manager/lease"
 	xray "github.com/vayzur/apadana/pkg/satrap/xray/client"
 )
 
@@ -24,7 +27,7 @@ func main() {
 	configPath := flag.String("config", "", "Path to config file")
 	flag.Parse()
 
-	cfg := config.SatrapConfig{}
+	cfg := satrapconfigv1.Config{}
 
 	if err := config.Load(*configPath, &cfg); err != nil {
 		zlog.Fatal().Err(err).Str("component", "config").Str("action", "load").Msg("failed")
@@ -56,12 +59,22 @@ func main() {
 		cfg.NodeStatusUpdateFrequency,
 	)
 
-	if cfg.Cluster.Enabled {
-		lock := flock.NewFlock("/tmp/satrap-heartbeat.lock")
+	inboundLeaseManager := lease.NewInboundLeaseManager(
+		apadanaClient,
+		cfg.InboundTTLCheckPeriod,
+	)
 
-		if err := lock.TryLock(); err == nil {
-			go hb.StartHeartbeat(cfg.NodeID, ctx)
-			defer lock.Unlock()
+	if cfg.Cluster.Enabled {
+		hbLock := flock.NewFlock("/tmp/satrap-heartbeat.lock")
+		if err := hbLock.TryLock(); err == nil {
+			go hb.Run(ctx, cfg.NodeID)
+			defer hbLock.Unlock()
+		}
+
+		lmLock := flock.NewFlock("/tmp/satrap-inbound-lease-manager.lock")
+		if err := lmLock.TryLock(); err == nil {
+			go inboundLeaseManager.Run(ctx, cfg.NodeID)
+			defer lmLock.Unlock()
 		}
 	}
 
@@ -70,9 +83,14 @@ func main() {
 
 	go func() {
 		if cfg.TLS.Enabled {
-			zlog.Fatal().Err(satrap.StartTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile))
+			if err := satrap.StartTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile); err != nil {
+				zlog.Fatal().Err(err).Str("component", "satrap").Str("action", "start").Msg("failed")
+			}
+
 		} else {
-			zlog.Fatal().Err(satrap.Start())
+			if err := satrap.Start(); err != nil {
+				zlog.Fatal().Err(err).Str("component", "satrap").Str("action", "start").Msg("failed")
+			}
 		}
 	}()
 
