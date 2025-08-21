@@ -13,8 +13,7 @@ func (c *Spasaka) RunNodeMonitor(ctx context.Context, nodeMonitorPeriod, nodeMon
 	ticker := time.NewTicker(nodeMonitorPeriod)
 	defer ticker.Stop()
 
-	zlog.Info().Str("component", "spasaka").Msg("node monitor started")
-	defer zlog.Info().Str("component", "spasaka").Msg("node monitor stopped")
+	zlog.Info().Str("component", "spasaka").Str("resource", "node").Str("action", "monitor").Msg("started")
 
 	for {
 		select {
@@ -26,7 +25,7 @@ func (c *Spasaka) RunNodeMonitor(ctx context.Context, nodeMonitorPeriod, nodeMon
 				if ctx.Err() != nil {
 					return
 				}
-				zlog.Error().Err(err).Str("component", "spasaka").Msg("failed to get nodes")
+				zlog.Error().Err(err).Str("component", "spasaka").Str("resource", "nodes").Str("action", "list").Msg("failed")
 				continue
 			}
 
@@ -39,12 +38,12 @@ func (c *Spasaka) RunNodeMonitor(ctx context.Context, nodeMonitorPeriod, nodeMon
 				go func(node *corev1.Node) {
 					defer wg.Done()
 					if now.Sub(node.Status.LastHeartbeatTime) >= nodeMonitorGracePeriod {
-						node.Status.Status = false
+						node.Status.Ready = false
 						if err := c.nodeService.PutNode(ctx, node); err != nil {
 							if ctx.Err() != nil {
 								return
 							}
-							zlog.Error().Err(err).Str("component", "spasaka").Msg("failed to update node status")
+							zlog.Error().Err(err).Str("component", "spasaka").Str("resource", "node").Str("action", "update").Str("nodeID", node.Metadata.ID).Msg("failed")
 							return
 						}
 					}

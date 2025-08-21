@@ -9,7 +9,7 @@ type NodeMetadata struct {
 }
 
 type NodeStatus struct {
-	Status            bool      `json:"status"`
+	Ready             bool      `json:"ready"`
 	LastHeartbeatTime time.Time `json:"lastHeartbeatTime"`
 }
 
