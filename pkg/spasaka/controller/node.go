@@ -1,4 +1,4 @@
-package spasaka
+package controller
 
 import (
 	"context"
