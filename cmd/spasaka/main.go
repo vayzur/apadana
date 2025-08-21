@@ -9,11 +9,10 @@ import (
 	"time"
 
 	"github.com/vayzur/apadana/internal/config"
-	"github.com/vayzur/apadana/pkg/httputil"
 	"github.com/vayzur/apadana/pkg/leader"
-	satrap "github.com/vayzur/apadana/pkg/satrap/client"
 	"github.com/vayzur/apadana/pkg/service"
-	"github.com/vayzur/apadana/pkg/spasaka"
+	spasakaconfigv1 "github.com/vayzur/apadana/pkg/spasaka/config/v1"
+	"github.com/vayzur/apadana/pkg/spasaka/controller"
 
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
@@ -29,10 +28,10 @@ func main() {
 	configPath := flag.String("config", "", "Path to config file")
 	flag.Parse()
 
-	cfg := config.SpasakaConfig{}
+	cfg := spasakaconfigv1.Config{}
 
 	if err := config.Load(*configPath, &cfg); err != nil {
-		zlog.Fatal().Err(err).Msg("config load failed")
+		zlog.Fatal().Err(err).Str("component", "config").Str("action", "load").Msg("failed")
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -47,12 +46,12 @@ func main() {
 		Context:     etcdCtx,
 	})
 	if err != nil {
-		zlog.Fatal().Err(err).Msg("etcd connect failed")
+		zlog.Fatal().Err(err).Str("etcd", "client").Str("action", "connect").Msg("failed")
 	}
 
 	defer func() {
 		if err := etcdClient.Close(); err != nil {
-			zlog.Error().Err(err).Msg("failed to close etcd client")
+			zlog.Fatal().Err(err).Str("etcd", "client").Str("action", "close").Msg("failed")
 		}
 	}()
 
@@ -63,25 +62,19 @@ func main() {
 
 	etcdSession, err := concurrency.NewSession(etcdClient, concurrency.WithTTL(10), concurrency.WithContext(sessionCtx))
 	if err != nil {
-		zlog.Fatal().Err(err).Msg("failed to create etcd session")
+		zlog.Fatal().Err(err).Str("etcd", "session").Str("action", "create").Msg("failed")
 	}
 
 	defer func() {
 		if err := etcdSession.Close(); err != nil {
-			zlog.Error().Err(err).Msg("failed to close etcd session")
+			zlog.Fatal().Err(err).Str("etcd", "session").Str("action", "close").Msg("failed")
 		}
 	}()
 
-	inboundStore := resources.NewInboundStore(etcdStorage)
 	nodeStore := resources.NewNodeStore(etcdStorage)
-
-	httpClient := httputil.New(time.Second * 5)
-	satrapClient := satrap.New(httpClient)
-
-	inboundService := service.NewInboundService(inboundStore, satrapClient)
 	nodeService := service.NewNodeSerivce(nodeStore)
 
-	spasakaManager := spasaka.NewSpasaka(nodeService, inboundService)
+	spasakaManager := controller.NewSpasaka(nodeService)
 
 	val := "spasaka"
 
@@ -93,24 +86,14 @@ func main() {
 		if err := leader.Run(ctx, etcdSession, "/lock/node-monitor", val, func(leaderCtx context.Context) {
 			spasakaManager.RunNodeMonitor(leaderCtx, cfg.NodeMonitorPeriod, cfg.NodeMonitorGracePeriod)
 		}); err != nil && ctx.Err() == nil {
-			zlog.Error().Err(err).Msg("node monitor leadership failed")
+			zlog.Error().Err(err).Str("spasaka", "leader").Str("resource", "node").Str("action", "run").Msg("failed")
 		}
 	}()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := leader.Run(ctx, etcdSession, "/lock/inbound-monitor", val, func(leaderCtx context.Context) {
-			spasakaManager.RunInboundMonitor(leaderCtx, cfg.InboundMonitorPeriod)
-		}); err != nil && ctx.Err() == nil {
-			zlog.Error().Err(err).Msg("inbound monitor leadership failed")
-		}
-	}()
-
-	zlog.Info().Str("component", "spasaka").Msg("spasaka started")
+	zlog.Info().Str("component", "spasaka").Str("action", "start").Msg("success")
 
 	<-ctx.Done()
 
 	wg.Wait()
-	zlog.Info().Str("component", "spasaka").Msg("shutting down gracefully")
+	zlog.Info().Str("component", "spasaka").Str("action", "stop").Msg("success")
 }

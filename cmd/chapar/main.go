@@ -10,7 +10,7 @@ import (
 
 	"github.com/vayzur/apadana/internal/chapar/server"
 	"github.com/vayzur/apadana/internal/config"
-	"github.com/vayzur/apadana/pkg/httputil"
+	chaparconfigv1 "github.com/vayzur/apadana/pkg/chapar/config/v1"
 	satrap "github.com/vayzur/apadana/pkg/satrap/client"
 	"github.com/vayzur/apadana/pkg/service"
 
@@ -27,10 +27,10 @@ func main() {
 	configPath := flag.String("config", "", "Path to config file")
 	flag.Parse()
 
-	cfg := config.ChaparConfig{}
+	cfg := chaparconfigv1.Config{}
 
 	if err := config.Load(*configPath, &cfg); err != nil {
-		zlog.Fatal().Err(err).Msg("config load failed")
+		zlog.Fatal().Err(err).Str("component", "config").Str("action", "load").Msg("failed")
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -45,16 +45,16 @@ func main() {
 		Context:     etcdCtx,
 	})
 	if err != nil {
-		zlog.Fatal().Err(err).Msg("etcd connect failed")
+		zlog.Fatal().Err(err).Str("etcd", "client").Str("action", "connect").Msg("failed")
 	}
 	defer func() {
 		if err := etcdClient.Close(); err != nil {
-			zlog.Error().Err(err).Msg("failed to close etcd client")
+			zlog.Fatal().Err(err).Str("etcd", "client").Str("action", "close").Msg("failed")
 		}
 	}()
 
 	if err := etcd.CheckEtcdHealth(ctx, etcdClient); err != nil {
-		zlog.Fatal().Err(err).Msg("etcd is not healthy")
+		zlog.Fatal().Err(err).Str("etcd", "client").Str("action", "health").Msg("failed")
 	}
 
 	etcdStorege := etcd.NewEtcdStorage(etcdClient)
@@ -62,8 +62,7 @@ func main() {
 	inboundStore := resources.NewInboundStore(etcdStorege)
 	nodeStore := resources.NewNodeStore(etcdStorege)
 
-	httpClient := httputil.New(time.Second * 5)
-	satrapClient := satrap.New(httpClient)
+	satrapClient := satrap.New(time.Second * 5)
 
 	inboundService := service.NewInboundService(inboundStore, satrapClient)
 	nodeService := service.NewNodeSerivce(nodeStore)
@@ -74,19 +73,24 @@ func main() {
 
 	go func() {
 		if cfg.TLS.Enabled {
-			zlog.Fatal().Err(chapar.StartTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile))
+			if err := chapar.StartTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile); err != nil {
+				zlog.Fatal().Err(err).Str("component", "chapar").Str("action", "start").Msg("failed")
+			}
+
 		} else {
-			zlog.Fatal().Err(chapar.Start())
+			if err := chapar.Start(); err != nil {
+				zlog.Fatal().Err(err).Str("component", "chapar").Str("action", "start").Msg("failed")
+			}
 		}
 	}()
 
 	defer func() {
 		if err := chapar.Stop(); err != nil {
-			zlog.Error().Err(err).Msg("failed to stop chapar")
+			zlog.Fatal().Err(err).Str("component", "chapar").Str("action", "stop").Msg("failed")
 		}
 	}()
 
-	zlog.Info().Str("component", "chapar").Msg("chapar started")
+	zlog.Info().Str("component", "chapar").Str("action", "start").Msg("success")
 	<-ctx.Done()
-	zlog.Info().Str("component", "chapar").Msg("shutting down gracefully")
+	zlog.Info().Str("component", "chapar").Str("action", "stop").Msg("success")
 }
