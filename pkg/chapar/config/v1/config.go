@@ -1,6 +1,12 @@
-package config
+package v1
 
-type ChaparConfig struct {
+type TLSConfig struct {
+	Enabled  bool   `mapstructure:"enabled" yaml:"enabled"`
+	CertFile string `mapstructure:"certFile" yaml:"certFile"`
+	KeyFile  string `mapstructure:"keyFile" yaml:"keyFile"`
+}
+
+type Config struct {
 	Address       string    `mapstructure:"address" yaml:"address"`
 	Port          uint16    `mapstructure:"port" yaml:"port"`
 	Prefork       bool      `mapstructure:"prefork" yaml:"prefork"`
