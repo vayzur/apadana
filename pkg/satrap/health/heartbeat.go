@@ -26,7 +26,7 @@ func (h *HeartbeatManager) StartHeartbeat(nodeID string, ctx context.Context) {
 	ticker := time.NewTicker(h.nodeStatusUpdateFrequency)
 	defer ticker.Stop()
 	nodeStatus := &corev1.NodeStatus{
-		Status: true,
+		Ready: true,
 	}
 
 	zlog.Info().Str("component", "health").Msg("heartbeat started")

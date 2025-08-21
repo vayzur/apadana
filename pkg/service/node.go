@@ -39,7 +39,7 @@ func (s *NodeSerivce) ListActiveNodes(ctx context.Context) ([]*corev1.Node, erro
 
 	var activeNodes []*corev1.Node
 	for _, node := range nodes {
-		if node.Status.Status {
+		if node.Status.Ready {
 			activeNodes = append(activeNodes, node)
 		}
 	}
