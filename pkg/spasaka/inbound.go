@@ -13,7 +13,7 @@ func (c *Spasaka) RunInboundMonitor(ctx context.Context, inboundMonitorPeriod ti
 	ticker := time.NewTicker(inboundMonitorPeriod)
 	defer ticker.Stop()
 
-	zlog.Info().Str("component", "spasaka").Msg("inbound monitor started")
+	zlog.Info().Str("component", "spasaka").Str("resource", "inbound").Str("action", "monitor").Msg("started")
 
 	for {
 		select {
@@ -25,7 +25,7 @@ func (c *Spasaka) RunInboundMonitor(ctx context.Context, inboundMonitorPeriod ti
 				if ctx.Err() != nil {
 					return
 				}
-				zlog.Error().Err(err).Str("component", "spasaka").Msg("failed to get nodes")
+				zlog.Error().Err(err).Str("component", "spasaka").Str("resource", "nodes").Str("action", "list").Msg("failed")
 				continue
 			}
 
@@ -36,17 +36,15 @@ func (c *Spasaka) RunInboundMonitor(ctx context.Context, inboundMonitorPeriod ti
 				currentNode := node
 				go func(node *corev1.Node) {
 					defer wg.Done()
-
 					if ctx.Err() != nil {
 						return
 					}
-
 					inbounds, err := c.inboundService.ListInbounds(ctx, node)
 					if err != nil {
 						if ctx.Err() != nil {
 							return
 						}
-						zlog.Error().Err(err).Str("component", "spasaka").Str("nodeID", node.Metadata.ID).Msg("get inbounds failed")
+						zlog.Error().Err(err).Str("component", "spasaka").Str("resource", "inbounds").Str("action", "list").Msg("failed")
 						return
 					}
 					now := time.Now()
@@ -56,7 +54,7 @@ func (c *Spasaka) RunInboundMonitor(ctx context.Context, inboundMonitorPeriod ti
 								if ctx.Err() != nil {
 									return
 								}
-								zlog.Error().Err(err).Str("component", "spasaka").Str("nodeID", node.Metadata.ID).Str("tag", inbound.Config.Tag).Msg("delete inbound failed")
+								zlog.Error().Err(err).Str("component", "spasaka").Str("resource", "inbound").Str("action", "delete").Str("nodeID", node.Metadata.ID).Str("tag", inbound.Config.Tag).Msg("failed")
 								return
 							}
 						}
