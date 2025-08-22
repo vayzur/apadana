@@ -1,6 +1,7 @@
 package satrap
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -8,6 +9,22 @@ import (
 	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
 	"github.com/vayzur/apadana/pkg/errs"
 )
+
+func (c *Client) InboundsCount(node *corev1.Node) (*satrapv1.Count, error) {
+	url := fmt.Sprintf("%s/api/v1/inbounds/count", node.Address)
+	status, resp, err := c.httpClient.Do(http.MethodGet, url, node.Token, nil)
+	if err != nil {
+		return nil, fmt.Errorf("get inbounds count %s: %w", node.Metadata.ID, err)
+	}
+	if status != http.StatusOK {
+		return nil, fmt.Errorf("get inbounds count %s: status: %d resp: %s", node.Metadata.ID, status, resp)
+	}
+	count := &satrapv1.Count{}
+	if err := json.Unmarshal(resp, count); err != nil {
+		return nil, fmt.Errorf("unmarshal inbounds count %s: status: %d resp: %s", node.Metadata.ID, status, resp)
+	}
+	return count, nil
+}
 
 func (c *Client) AddInbound(inbound *satrapv1.InboundConfig, node *corev1.Node) error {
 	if err := inbound.Validate(); err != nil {
