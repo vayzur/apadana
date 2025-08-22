@@ -18,7 +18,7 @@ type XrayConfig struct {
 	Port    uint16 `mapstructure:"port" yaml:"port"`
 }
 
-type Config struct {
+type SatrapConfig struct {
 	NodeID                    string        `mapstructure:"nodeID" yaml:"nodeID"`
 	Address                   string        `mapstructure:"address" yaml:"address"`
 	Port                      uint16        `mapstructure:"port" yaml:"port"`
@@ -28,5 +28,6 @@ type Config struct {
 	Xray                      XrayConfig    `mapstructure:"xray" yaml:"xray"`
 	Cluster                   ClusterConfig `mapstructure:"cluster" yaml:"cluster"`
 	NodeStatusUpdateFrequency time.Duration `mapstructure:"nodeStatusUpdateFrequency" yaml:"nodeStatusUpdateFrequency"`
-	InboundTTLCheckPeriod     time.Duration `mapstructure:"inboundTTLCheckPeriod" yaml:"inboundTTLCheckPeriod"`
+	SyncFrequency             time.Duration `mapstructure:"syncFrequency" yaml:"syncFrequency"`
+	MaxInbounds               int32         `mapstructure:"maxInbounds" yaml:"maxInbounds"`
 }

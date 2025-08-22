@@ -6,7 +6,7 @@ type TLSConfig struct {
 	KeyFile  string `mapstructure:"keyFile" yaml:"keyFile"`
 }
 
-type Config struct {
+type ChaparConfig struct {
 	Address       string    `mapstructure:"address" yaml:"address"`
 	Port          uint16    `mapstructure:"port" yaml:"port"`
 	Prefork       bool      `mapstructure:"prefork" yaml:"prefork"`
