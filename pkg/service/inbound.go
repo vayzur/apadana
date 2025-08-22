@@ -23,6 +23,10 @@ func NewInboundService(store *resources.InboundStore, satrapClient *satrap.Clien
 	}
 }
 
+func (s *InboundService) InboundsCount(ctx context.Context, node *corev1.Node) (*satrapv1.Count, error) {
+	return s.satrapClient.InboundsCount(node)
+}
+
 func (s *InboundService) GetInbound(ctx context.Context, node *corev1.Node, tag string) (*satrapv1.Inbound, error) {
 	return s.store.GetInbound(ctx, node.Metadata.ID, tag)
 }

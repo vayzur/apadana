@@ -82,6 +82,21 @@ func (s *Server) CreateInbound(c fiber.Ctx) error {
 		)
 	}
 
+	inboundsCount, err := s.inboundService.InboundsCount(c.RequestCtx(), node)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	if inboundsCount.Value >= node.Status.Capacity.MaxInbounds {
+		return c.Status(fiber.StatusTooManyRequests).JSON(
+			fiber.Map{"error": "node capacity exceeded"},
+		)
+	}
+
 	if err := s.inboundService.AddInbound(c.RequestCtx(), inbound, node); err != nil {
 		if errors.Is(err, errs.ErrConflict) {
 			return c.SendStatus(fiber.StatusConflict)

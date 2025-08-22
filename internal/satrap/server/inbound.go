@@ -10,6 +10,19 @@ import (
 	"github.com/vayzur/apadana/pkg/errs"
 )
 
+func (s *Server) InboundsCount(c fiber.Ctx) error {
+	inbounds, err := s.xrayClient.ListInbounds(context.Background())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	count := satrapv1.Count{
+		Value: int32(len(inbounds)),
+	}
+
+	return c.Status(fiber.StatusOK).JSON(count)
+}
+
 func (s *Server) AddInbound(c fiber.Ctx) error {
 	b := c.Body()
 
