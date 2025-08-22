@@ -16,6 +16,24 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+func (c *Client) ListInbounds(ctx context.Context) (map[string]struct{}, error) {
+	req := &command.ListInboundsRequest{IsOnlyTags: true}
+	inbounds, err := c.hsClient.ListInbounds(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("list inbounds failed: %w", err)
+	}
+
+	inbs := make(map[string]struct{}, len(inbounds.Inbounds))
+	for _, inb := range inbounds.Inbounds {
+		inbs[inb.Tag] = satrapv1.Empty
+	}
+
+	// remove the "api" tag in one operation
+	delete(inbs, "api")
+
+	return inbs, nil
+}
+
 func (c *Client) AddInbound(ctx context.Context, inbound []byte) error {
 	conf := new(conf.InboundDetourConfig)
 	if err := json.Unmarshal(inbound, conf); err != nil {
