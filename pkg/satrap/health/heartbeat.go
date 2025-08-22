@@ -13,12 +13,14 @@ import (
 type HeartbeatManager struct {
 	apadanaClient             *apadana.Client
 	nodeStatusUpdateFrequency time.Duration
+	maxInbounds               int32
 }
 
-func NewHeartbeatManager(apadanaClient *apadana.Client, nodeStatusUpdateFrequency time.Duration) *HeartbeatManager {
+func NewHeartbeatManager(apadanaClient *apadana.Client, nodeStatusUpdateFrequency time.Duration, maxInbounds int32) *HeartbeatManager {
 	return &HeartbeatManager{
 		apadanaClient:             apadanaClient,
 		nodeStatusUpdateFrequency: nodeStatusUpdateFrequency,
+		maxInbounds:               maxInbounds,
 	}
 }
 
@@ -26,6 +28,9 @@ func (h *HeartbeatManager) Run(ctx context.Context, nodeID string) {
 	ticker := time.NewTicker(h.nodeStatusUpdateFrequency)
 	defer ticker.Stop()
 	nodeStatus := &corev1.NodeStatus{
+		Capacity: corev1.NodeCapacity{
+			MaxInbounds: h.maxInbounds,
+		},
 		Ready: true,
 	}
 
