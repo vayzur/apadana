@@ -17,7 +17,7 @@ import (
 	apadana "github.com/vayzur/apadana/pkg/client"
 	"github.com/vayzur/apadana/pkg/satrap/flock"
 	"github.com/vayzur/apadana/pkg/satrap/health"
-	"github.com/vayzur/apadana/pkg/satrap/manager/lease"
+	satrapSyncManager "github.com/vayzur/apadana/pkg/satrap/sync"
 	xray "github.com/vayzur/apadana/pkg/satrap/xray/client"
 )
 
@@ -27,7 +27,7 @@ func main() {
 	configPath := flag.String("config", "", "Path to config file")
 	flag.Parse()
 
-	cfg := satrapconfigv1.Config{}
+	cfg := satrapconfigv1.SatrapConfig{}
 
 	if err := config.Load(*configPath, &cfg); err != nil {
 		zlog.Fatal().Err(err).Str("component", "config").Str("action", "load").Msg("failed")
@@ -57,24 +57,26 @@ func main() {
 	hb := health.NewHeartbeatManager(
 		apadanaClient,
 		cfg.NodeStatusUpdateFrequency,
+		cfg.MaxInbounds,
 	)
 
-	inboundLeaseManager := lease.NewInboundLeaseManager(
+	syncManager := satrapSyncManager.NewSyncManager(
+		xrayClient,
 		apadanaClient,
-		cfg.InboundTTLCheckPeriod,
+		cfg.SyncFrequency,
 	)
 
 	if cfg.Cluster.Enabled {
-		hbLock := flock.NewFlock("/tmp/satrap-heartbeat.lock")
-		if err := hbLock.TryLock(); err == nil {
+		hlock := flock.NewFlock("/tmp/satrap-heartbeat.lock")
+		if err := hlock.TryLock(); err == nil {
 			go hb.Run(ctx, cfg.NodeID)
-			defer hbLock.Unlock()
+			defer hlock.Unlock()
 		}
 
-		lmLock := flock.NewFlock("/tmp/satrap-inbound-lease-manager.lock")
-		if err := lmLock.TryLock(); err == nil {
-			go inboundLeaseManager.Run(ctx, cfg.NodeID)
-			defer lmLock.Unlock()
+		slock := flock.NewFlock("/tmp/satrap-sync-manager.lock")
+		if err := slock.TryLock(); err == nil {
+			go syncManager.Run(ctx, cfg.NodeID)
+			defer slock.Unlock()
 		}
 	}
 

@@ -28,7 +28,7 @@ func main() {
 	configPath := flag.String("config", "", "Path to config file")
 	flag.Parse()
 
-	cfg := spasakaconfigv1.Config{}
+	cfg := spasakaconfigv1.SpasakaConfig{}
 
 	if err := config.Load(*configPath, &cfg); err != nil {
 		zlog.Fatal().Err(err).Str("component", "config").Str("action", "load").Msg("failed")

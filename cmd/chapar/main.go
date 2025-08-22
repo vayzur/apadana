@@ -27,7 +27,7 @@ func main() {
 	configPath := flag.String("config", "", "Path to config file")
 	flag.Parse()
 
-	cfg := chaparconfigv1.Config{}
+	cfg := chaparconfigv1.ChaparConfig{}
 
 	if err := config.Load(*configPath, &cfg); err != nil {
 		zlog.Fatal().Err(err).Str("component", "config").Str("action", "load").Msg("failed")
