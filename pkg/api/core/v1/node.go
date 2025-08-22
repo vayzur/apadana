@@ -8,9 +8,14 @@ type NodeMetadata struct {
 	CreationTimestamp time.Time `json:"creationTimestamp"`
 }
 
+type NodeCapacity struct {
+	MaxInbounds int32 `json:"maxInbounds"`
+}
+
 type NodeStatus struct {
-	Ready             bool      `json:"ready"`
-	LastHeartbeatTime time.Time `json:"lastHeartbeatTime"`
+	Capacity          NodeCapacity `json:"capacity"`
+	Ready             bool         `json:"ready"`
+	LastHeartbeatTime time.Time    `json:"lastHeartbeatTime"`
 }
 
 type Node struct {
