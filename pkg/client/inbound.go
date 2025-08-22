@@ -23,6 +23,10 @@ func (c *Client) CreateInbound(nodeID string, inbound *satrapv1.Inbound) error {
 		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "create").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
 		return err
 	}
+	if status == http.StatusTooManyRequests {
+		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "create").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return err
+	}
 	if status != http.StatusCreated {
 		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "create").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
 		return err
