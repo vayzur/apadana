@@ -207,8 +207,8 @@ func (s *Server) CreateUser(c fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	u := new(satrapv1.InboundUser)
-	if err := c.Bind().JSON(u); err != nil {
+	user := &satrapv1.InboundUser{}
+	if err := c.Bind().JSON(user); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
 				"error": err.Error(),
@@ -232,7 +232,7 @@ func (s *Server) CreateUser(c fiber.Ctx) error {
 		)
 	}
 
-	if err := s.inboundService.AddUser(c.RequestCtx(), node, params["tag"], u); err != nil {
+	if err := s.inboundService.AddUser(c.RequestCtx(), node, params["tag"], user); err != nil {
 		if errors.Is(err, errs.ErrConflict) {
 			return c.SendStatus(fiber.StatusConflict)
 		}
@@ -243,8 +243,8 @@ func (s *Server) CreateUser(c fiber.Ctx) error {
 		)
 	}
 
-	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "create").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Str("protocol", u.Type).Str("email", u.Email).Str("account", string(u.Account)).Msg("created")
-	return c.Status(fiber.StatusCreated).JSON(u)
+	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "create").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Str("protocol", user.Type).Str("email", user.Email).Str("account", string(user.Account)).Msg("created")
+	return c.Status(fiber.StatusCreated).JSON(user)
 }
 
 func (s *Server) DeleteUser(c fiber.Ctx) error {
