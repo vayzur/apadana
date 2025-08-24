@@ -26,7 +26,7 @@ func (c *Client) InboundsCount(node *corev1.Node) (*satrapv1.Count, error) {
 	return count, nil
 }
 
-func (c *Client) AddInbound(inbound *satrapv1.InboundConfig, node *corev1.Node) error {
+func (c *Client) AddInbound(node *corev1.Node, inbound *satrapv1.InboundConfig) error {
 	if err := inbound.Validate(); err != nil {
 		return fmt.Errorf("validate inbound %s/%s: %w", node.Metadata.ID, inbound.Tag, err)
 	}

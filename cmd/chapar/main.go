@@ -64,8 +64,8 @@ func main() {
 
 	satrapClient := satrap.New(time.Second * 5)
 
-	inboundService := service.NewInboundService(inboundStore, satrapClient)
 	nodeService := service.NewNodeSerivce(nodeStore)
+	inboundService := service.NewInboundService(inboundStore, nodeService, satrapClient)
 
 	serverAddr := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
 
