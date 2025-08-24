@@ -15,23 +15,7 @@ func (s *Server) GetInbound(c fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	node, err := s.nodeService.GetNode(c.RequestCtx(), params["nodeID"])
-	if err != nil {
-		if errors.Is(err, errs.ErrNotFound) {
-			return c.Status(fiber.StatusNotFound).JSON(
-				fiber.Map{
-					"error": err.Error(),
-				},
-			)
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
-	}
-
-	inbound, err := s.inboundService.GetInbound(c.RequestCtx(), node, params["tag"])
+	inbound, err := s.inboundService.GetInbound(c.RequestCtx(), params["nodeID"], params["tag"])
 	if err != nil {
 		if errors.Is(err, errs.ErrNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
@@ -66,38 +50,10 @@ func (s *Server) CreateInbound(c fiber.Ctx) error {
 		)
 	}
 
-	node, err := s.nodeService.GetNode(c.RequestCtx(), nodeID)
-	if err != nil {
-		if errors.Is(err, errs.ErrNotFound) {
-			return c.Status(fiber.StatusNotFound).JSON(
-				fiber.Map{
-					"error": err.Error(),
-				},
-			)
+	if err := s.inboundService.AddInbound(c.RequestCtx(), nodeID, inbound); err != nil {
+		if errors.Is(err, errs.ErrNodeCapacity) {
+			return c.SendStatus(fiber.StatusTooManyRequests)
 		}
-		return c.Status(fiber.StatusInternalServerError).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
-	}
-
-	inboundsCount, err := s.inboundService.InboundsCount(c.RequestCtx(), node)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
-	}
-
-	if inboundsCount.Value >= node.Status.Capacity.MaxInbounds {
-		return c.Status(fiber.StatusTooManyRequests).JSON(
-			fiber.Map{"error": "node capacity exceeded"},
-		)
-	}
-
-	if err := s.inboundService.AddInbound(c.RequestCtx(), inbound, node); err != nil {
 		if errors.Is(err, errs.ErrConflict) {
 			return c.SendStatus(fiber.StatusConflict)
 		}
@@ -122,23 +78,7 @@ func (s *Server) GetInbounds(c fiber.Ctx) error {
 		)
 	}
 
-	node, err := s.nodeService.GetNode(c.RequestCtx(), nodeID)
-	if err != nil {
-		if errors.Is(err, errs.ErrNotFound) {
-			return c.Status(fiber.StatusNotFound).JSON(
-				fiber.Map{
-					"error": err.Error(),
-				},
-			)
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
-	}
-
-	inbounds, err := s.inboundService.ListInbounds(c.RequestCtx(), node)
+	inbounds, err := s.inboundService.ListInbounds(c.RequestCtx(), nodeID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(
 			fiber.Map{
@@ -170,23 +110,7 @@ func (s *Server) DeleteInbound(c fiber.Ctx) error {
 		)
 	}
 
-	node, err := s.nodeService.GetNode(c.RequestCtx(), nodeID)
-	if err != nil {
-		if errors.Is(err, errs.ErrNotFound) {
-			return c.Status(fiber.StatusNotFound).JSON(
-				fiber.Map{
-					"error": err.Error(),
-				},
-			)
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
-	}
-
-	if err := s.inboundService.DelInbound(c.RequestCtx(), node, tag); err != nil {
+	if err := s.inboundService.DelInbound(c.RequestCtx(), nodeID, tag); err != nil {
 		if errors.Is(err, errs.ErrNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
 		}
@@ -216,23 +140,7 @@ func (s *Server) CreateUser(c fiber.Ctx) error {
 		)
 	}
 
-	node, err := s.nodeService.GetNode(c.RequestCtx(), params["nodeID"])
-	if err != nil {
-		if errors.Is(err, errs.ErrNotFound) {
-			return c.Status(fiber.StatusNotFound).JSON(
-				fiber.Map{
-					"error": err.Error(),
-				},
-			)
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
-	}
-
-	if err := s.inboundService.AddUser(c.RequestCtx(), node, params["tag"], user); err != nil {
+	if err := s.inboundService.AddUser(c.RequestCtx(), params["nodeID"], params["tag"], user); err != nil {
 		if errors.Is(err, errs.ErrConflict) {
 			return c.SendStatus(fiber.StatusConflict)
 		}
@@ -253,23 +161,7 @@ func (s *Server) DeleteUser(c fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	node, err := s.nodeService.GetNode(c.RequestCtx(), params["nodeID"])
-	if err != nil {
-		if errors.Is(err, errs.ErrNotFound) {
-			return c.Status(fiber.StatusNotFound).JSON(
-				fiber.Map{
-					"error": err.Error(),
-				},
-			)
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
-	}
-
-	if err := s.inboundService.DelUser(c.RequestCtx(), node, params["tag"], params["email"]); err != nil {
+	if err := s.inboundService.DelUser(c.RequestCtx(), params["nodeID"], params["tag"], params["email"]); err != nil {
 		if errors.Is(err, errs.ErrNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
 		}
@@ -290,23 +182,7 @@ func (s *Server) GetInboundUsers(c fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	node, err := s.nodeService.GetNode(c.RequestCtx(), params["nodeID"])
-	if err != nil {
-		if errors.Is(err, errs.ErrNotFound) {
-			return c.Status(fiber.StatusNotFound).JSON(
-				fiber.Map{
-					"error": err.Error(),
-				},
-			)
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
-	}
-
-	users, err := s.inboundService.ListUsers(c.RequestCtx(), node, params["tag"])
+	users, err := s.inboundService.ListUsers(c.RequestCtx(), params["nodeID"], params["tag"])
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(
 			fiber.Map{
@@ -317,4 +193,34 @@ func (s *Server) GetInboundUsers(c fiber.Ctx) error {
 
 	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "list").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Int("count", len(users)).Msg("retrieved")
 	return c.Status(fiber.StatusOK).JSON(users)
+}
+
+func (s *Server) InboundRenew(c fiber.Ctx) error {
+	params, err := s.requiredParams(c, "nodeID", "tag")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	renew := &satrapv1.Renew{}
+	if err := c.Bind().JSON(renew); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	if err := s.inboundService.InboundRenew(c.RequestCtx(), params["nodeID"], params["tag"], renew); err != nil {
+		if errors.Is(err, errs.ErrNotFound) {
+			return c.SendStatus(fiber.StatusNotFound)
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "update").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("updated")
+	return c.SendStatus(fiber.StatusOK)
 }
