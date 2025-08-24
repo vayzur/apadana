@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	zlog "github.com/rs/zerolog/log"
@@ -10,6 +9,25 @@ import (
 )
 
 func (c *Spasaka) RunNodeMonitor(ctx context.Context, concurrentNodeSyncs int, nodeMonitorPeriod, nodeMonitorGracePeriod time.Duration) {
+	nodesChan := make(chan *corev1.Node)
+
+	for range concurrentNodeSyncs {
+		go func() {
+			for node := range nodesChan {
+				if time.Since(node.Status.LastHeartbeatTime) >= nodeMonitorGracePeriod {
+					node.Status.Ready = false
+					if err := c.apadanaClient.UpdateNodeStatus(node.Metadata.ID, &node.Status); err != nil {
+						if ctx.Err() != nil {
+							return
+						}
+						zlog.Error().Err(err).Str("component", "spasaka").Str("resource", "node").Str("action", "update").Str("nodeID", node.Metadata.ID).Msg("failed")
+						continue
+					}
+				}
+			}
+		}()
+	}
+
 	ticker := time.NewTicker(nodeMonitorPeriod)
 	defer ticker.Stop()
 
@@ -18,47 +36,27 @@ func (c *Spasaka) RunNodeMonitor(ctx context.Context, concurrentNodeSyncs int, n
 	for {
 		select {
 		case <-ctx.Done():
+			close(nodesChan)
 			return
 		case <-ticker.C:
 			nodes, err := c.apadanaClient.GetActiveNodes()
 			if err != nil {
 				if ctx.Err() != nil {
+					close(nodesChan)
 					return
 				}
-				zlog.Error().Err(err).Str("component", "spasaka").Str("resource", "nodes").Str("action", "list").Msg("failed")
 				continue
 			}
 
-			var wg sync.WaitGroup
-			tasksChan := make(chan *corev1.Node, len(nodes))
-
-			now := time.Now()
-
-			for i := 0; i < concurrentNodeSyncs; i++ {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					for node := range tasksChan {
-						if now.Sub(node.Status.LastHeartbeatTime) >= nodeMonitorGracePeriod {
-							node.Status.Ready = false
-							if err := c.apadanaClient.UpdateNodeStatus(node.Metadata.ID, &node.Status); err != nil {
-								if ctx.Err() != nil {
-									return
-								}
-								zlog.Error().Err(err).Str("component", "spasaka").Str("resource", "node").Str("action", "update").Str("nodeID", node.Metadata.ID).Msg("failed")
-								continue
-							}
-						}
-					}
-				}()
-			}
+			zlog.Info().Int("count", len(nodes)).Msg("retrieved")
 
 			for _, node := range nodes {
-				tasksChan <- node
+				if ctx.Err() != nil {
+					close(nodesChan)
+					return
+				}
+				nodesChan <- node
 			}
-
-			close(tasksChan)
-			wg.Wait()
 		}
 	}
 }
