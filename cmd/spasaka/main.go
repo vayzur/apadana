@@ -9,15 +9,13 @@ import (
 	"time"
 
 	"github.com/vayzur/apadana/internal/config"
+	apadana "github.com/vayzur/apadana/pkg/client"
 	"github.com/vayzur/apadana/pkg/leader"
-	"github.com/vayzur/apadana/pkg/service"
 	spasakaconfigv1 "github.com/vayzur/apadana/pkg/spasaka/config/v1"
 	"github.com/vayzur/apadana/pkg/spasaka/controller"
 
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
-	"github.com/vayzur/apadana/pkg/storage/etcd"
-	"github.com/vayzur/apadana/pkg/storage/resources"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
 )
@@ -55,8 +53,6 @@ func main() {
 		}
 	}()
 
-	etcdStorage := etcd.NewEtcdStorage(etcdClient)
-
 	sessionCtx, sessionCancel := context.WithCancel(ctx)
 	defer sessionCancel()
 
@@ -71,10 +67,8 @@ func main() {
 		}
 	}()
 
-	nodeStore := resources.NewNodeStore(etcdStorage)
-	nodeService := service.NewNodeSerivce(nodeStore)
-
-	spasakaManager := controller.NewSpasaka(nodeService)
+	apadanaClient := apadana.New(cfg.Cluster.Server, cfg.Cluster.Token, time.Second*5)
+	spasakaManager := controller.NewSpasaka(apadanaClient)
 
 	val := "spasaka"
 
@@ -83,15 +77,14 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := leader.Run(ctx, etcdSession, "/lock/node-monitor", val, func(leaderCtx context.Context) {
-			spasakaManager.RunNodeMonitor(leaderCtx, cfg.NodeMonitorPeriod, cfg.NodeMonitorGracePeriod)
+		if err := leader.Run(ctx, etcdSession, "/lock/node-controller", val, func(leaderCtx context.Context) {
+			spasakaManager.RunNodeMonitor(leaderCtx, cfg.ConcurrentNodeSyncs, cfg.NodeMonitorPeriod, cfg.NodeMonitorGracePeriod)
 		}); err != nil && ctx.Err() == nil {
 			zlog.Error().Err(err).Str("spasaka", "leader").Str("resource", "node").Str("action", "run").Msg("failed")
 		}
 	}()
 
 	zlog.Info().Str("component", "spasaka").Str("action", "start").Msg("success")
-
 	<-ctx.Done()
 
 	wg.Wait()
