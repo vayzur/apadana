@@ -15,8 +15,6 @@ func (c *Spasaka) RunNodeMonitor(ctx context.Context, concurrentNodeSyncs int, n
 
 	zlog.Info().Str("component", "spasaka").Str("resource", "node").Str("action", "monitor").Msg("started")
 
-	nodeStatus := &corev1.NodeStatus{Ready: false}
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -42,7 +40,8 @@ func (c *Spasaka) RunNodeMonitor(ctx context.Context, concurrentNodeSyncs int, n
 					defer wg.Done()
 					for node := range tasksChan {
 						if now.Sub(node.Status.LastHeartbeatTime) >= nodeMonitorGracePeriod {
-							if err := c.apadanaClient.UpdateNodeStatus(node.Metadata.ID, nodeStatus); err != nil {
+							node.Status.Ready = false
+							if err := c.apadanaClient.UpdateNodeStatus(node.Metadata.ID, &node.Status); err != nil {
 								if ctx.Err() != nil {
 									return
 								}
