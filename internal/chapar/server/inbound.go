@@ -224,3 +224,29 @@ func (s *Server) InboundRenew(c fiber.Ctx) error {
 	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "update").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("updated")
 	return c.SendStatus(fiber.StatusOK)
 }
+
+func (s *Server) GetRuntimeInboundsCount(c fiber.Ctx) error {
+	nodeID := c.Params("nodeID")
+	if nodeID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(
+			fiber.Map{
+				"error": "nodeID parameter is required",
+			},
+		)
+	}
+
+	count, err := s.inboundService.InboundsCount(c.RequestCtx(), nodeID)
+	if err != nil {
+		if errors.Is(err, errs.ErrNotFound) {
+			return c.SendStatus(fiber.StatusNotFound)
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "list").Str("nodeID", nodeID).Int32("count", count.Value).Msg("retrieved")
+	return c.Status(fiber.StatusOK).JSON(count)
+}

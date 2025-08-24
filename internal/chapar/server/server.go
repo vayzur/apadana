@@ -54,6 +54,7 @@ func (s *Server) setupRoutes() {
 
 	inbounds := nodes.Group("/:nodeID/inbounds")
 	inbounds.Get("", s.GetInbounds)
+	inbounds.Get("/runtime/count", s.GetRuntimeInboundsCount)
 	inbounds.Get("/:tag", s.GetInbound)
 	inbounds.Post("", s.CreateInbound)
 	inbounds.Delete("/:tag", s.DeleteInbound)
