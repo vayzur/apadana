@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
 )
 
 var (
@@ -13,11 +12,6 @@ var (
 	emptyObj   = []byte("{}")
 	emptyArray = []byte("[]")
 )
-
-type InboundMetadata struct {
-	CreationTimestamp time.Time     `json:"creationTimestamp"`
-	TTL               time.Duration `json:"ttl"`
-}
 
 type InboundConfig struct {
 	Tag            string          `json:"tag"`
@@ -31,8 +25,8 @@ type InboundConfig struct {
 }
 
 type Inbound struct {
-	Metadata InboundMetadata `json:"metadata"`
-	Config   InboundConfig   `json:"config"`
+	Metadata Metadata      `json:"metadata"`
+	Config   InboundConfig `json:"config"`
 }
 
 func (c *InboundConfig) Validate() error {

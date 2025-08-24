@@ -47,9 +47,10 @@ func (a TrojanAccount) ToTypedMessage() *serial.TypedMessage {
 }
 
 type InboundUser struct {
-	Type    string          `json:"type"` // "vless", "vmess", "trojan"
-	Email   string          `json:"email"`
-	Account json.RawMessage `json:"account"`
+	Metadata Metadata        `json:"metadata"`
+	Type     string          `json:"type"` // "vless", "vmess", "trojan"
+	Email    string          `json:"email"`
+	Account  json.RawMessage `json:"account"`
 }
 
 func (u *InboundUser) ToAccount() (Account, error) {
