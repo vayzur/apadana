@@ -1,13 +1,15 @@
 package controller
 
-import "github.com/vayzur/apadana/pkg/service"
+import (
+	apadana "github.com/vayzur/apadana/pkg/client"
+)
 
 type Spasaka struct {
-	nodeService *service.NodeSerivce
+	apadanaClient *apadana.Client
 }
 
-func NewSpasaka(nodeService *service.NodeSerivce) *Spasaka {
+func NewSpasaka(apadanaClient *apadana.Client) *Spasaka {
 	return &Spasaka{
-		nodeService: nodeService,
+		apadanaClient: apadanaClient,
 	}
 }
