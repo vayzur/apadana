@@ -225,6 +225,36 @@ func (s *Server) InboundRenew(c fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusOK)
 }
 
+func (s *Server) InboundUserRenew(c fiber.Ctx) error {
+	params, err := s.requiredParams(c, "nodeID", "tag", "email")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	renew := &satrapv1.Renew{}
+	if err := c.Bind().JSON(renew); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	if err := s.inboundService.InboundUserRenew(c.RequestCtx(), params["nodeID"], params["tag"], params["email"], renew); err != nil {
+		if errors.Is(err, errs.ErrNotFound) {
+			return c.SendStatus(fiber.StatusNotFound)
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "update").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("updated")
+	return c.SendStatus(fiber.StatusOK)
+}
+
 func (s *Server) GetRuntimeInboundsCount(c fiber.Ctx) error {
 	nodeID := c.Params("nodeID")
 	if nodeID == "" {

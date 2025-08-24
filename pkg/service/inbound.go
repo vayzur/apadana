@@ -138,3 +138,17 @@ func (s *InboundService) InboundRenew(ctx context.Context, nodeID, tag string, r
 	}
 	return nil
 }
+
+func (s *InboundService) InboundUserRenew(ctx context.Context, nodeID, tag, email string, renew *satrapv1.Renew) error {
+	user, err := s.GetUser(ctx, nodeID, tag, email)
+	if err != nil {
+		return err
+	}
+
+	user.Metadata.TTL = renew.TTL
+
+	if err := s.store.PutUser(ctx, nodeID, tag, user); err != nil {
+		return fmt.Errorf("inbound user renew store %s/%s: %w", nodeID, tag, err)
+	}
+	return nil
+}
