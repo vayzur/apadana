@@ -50,12 +50,16 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 	defer ticker.Stop()
 
 	wg := &sync.WaitGroup{}
+	desiredMap := make(map[string]*satrapv1.Inbound)
 
 	zlog.Info().Str("component", "syncManager").Str("action", "tick").Msg("started")
 
 	for {
 		select {
 		case <-ctx.Done():
+			close(add)
+			close(expire)
+			close(gc)
 			return
 		case <-ticker.C:
 			desiredInbounds, err := m.apadanaClient.GetInbounds(nodeID)
@@ -70,7 +74,7 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 				continue
 			}
 
-			desiredMap := make(map[string]*satrapv1.Inbound, len(desiredInbounds))
+			clear(desiredMap)
 			for _, inbound := range desiredInbounds {
 				if inbound != nil {
 					desiredMap[inbound.Config.Tag] = inbound
