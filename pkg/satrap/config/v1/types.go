@@ -29,5 +29,9 @@ type SatrapConfig struct {
 	Cluster                   ClusterConfig `mapstructure:"cluster" yaml:"cluster"`
 	NodeStatusUpdateFrequency time.Duration `mapstructure:"nodeStatusUpdateFrequency" yaml:"nodeStatusUpdateFrequency"`
 	SyncFrequency             time.Duration `mapstructure:"syncFrequency" yaml:"syncFrequency"`
+	ConcurrentInboundSyncs    int32         `mapstructure:"concurrentInboundSyncs" yaml:"concurrentInboundSyncs"`
+	ConcurrentGCSyncs         int32         `mapstructure:"concurrentGCSyncs" yaml:"concurrentGCSyncs"`
+	ConcurrentExpireSyncs     int32         `mapstructure:"concurrentExpireSyncs" yaml:"concurrentExpireSyncs"`
+	ConcurrentUserSyncs       int32         `mapstructure:"concurrentUserSyncs" yaml:"concurrentUserSyncs"`
 	MaxInbounds               int32         `mapstructure:"maxInbounds" yaml:"maxInbounds"`
 }

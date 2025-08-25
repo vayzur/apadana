@@ -8,9 +8,13 @@ import (
 )
 
 type SyncManager struct {
-	xrayClient    *xray.Client
-	apadanaClient *apadana.Client
-	syncFrequency time.Duration
+	xrayClient             *xray.Client
+	apadanaClient          *apadana.Client
+	syncFrequency          time.Duration
+	concurrentInboundSyncs int32
+	concurrentGCSyncs      int32
+	concurrentExpireSyncs  int32
+	concurrentUserSyncs    int32
 }
 
 func NewSyncManager(xrayClient *xray.Client, apadanaClient *apadana.Client, syncFrequency time.Duration) *SyncManager {
