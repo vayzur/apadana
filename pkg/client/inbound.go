@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	zlog "github.com/rs/zerolog/log"
 	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
+	"github.com/vayzur/apadana/pkg/errs"
 )
 
 func (c *Client) CreateInbound(nodeID string, inbound *satrapv1.Inbound) error {
@@ -20,16 +22,16 @@ func (c *Client) CreateInbound(nodeID string, inbound *satrapv1.Inbound) error {
 		return err
 	}
 	if status == http.StatusConflict {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "create").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return err
+		zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "create").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return errs.ErrConflict
 	}
 	if status == http.StatusTooManyRequests {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "create").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return err
+		zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "create").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return errs.ErrNodeCapacity
 	}
 	if status != http.StatusCreated {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "create").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return err
+		zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "create").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
 	}
 	return nil
 }
@@ -48,12 +50,12 @@ func (c *Client) DeleteInbound(nodeID, tag string) error {
 		return err
 	}
 	if status == http.StatusNotFound {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inbound").Str("action", "delete").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return err
+		zlog.Error().Str("component", "apadana").Str("resource", "inbound").Str("action", "delete").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return errs.ErrNotFound
 	}
 	if status != http.StatusNoContent {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "delete").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return err
+		zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "delete").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("tag", tag).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
 	}
 	return nil
 }
@@ -72,18 +74,18 @@ func (c *Client) GetInbound(nodeID, tag string) (*satrapv1.Inbound, error) {
 		return nil, err
 	}
 	if status == http.StatusNotFound {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inbound").Str("action", "get").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return nil, err
+		zlog.Error().Str("component", "apadana").Str("resource", "inbound").Str("action", "get").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return nil, errs.ErrNotFound
 	}
 	if status != http.StatusOK {
 		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inbound").Str("action", "get").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return nil, err
+		return nil, errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("tag", tag).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
 	}
 
 	inbound := &satrapv1.Inbound{}
 	if err := json.Unmarshal(resp, inbound); err != nil {
 		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inbound").Str("action", "get").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("unmarshal failed")
-		return nil, err
+		return nil, errs.New("unmarshal", "unmarshal failed").WithField("nodeID", nodeID).WithField("tag", tag).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
 	}
 
 	return inbound, nil
@@ -100,13 +102,13 @@ func (c *Client) GetInbounds(nodeID string) ([]*satrapv1.Inbound, error) {
 		return nil, err
 	}
 	if status != http.StatusOK {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inbounds").Str("action", "list").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return nil, err
+		zlog.Error().Str("component", "apadana").Str("resource", "inbounds").Str("action", "list").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return nil, errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
 	}
 	inbounds := []*satrapv1.Inbound{}
 	if err := json.Unmarshal(resp, &inbounds); err != nil {
 		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inbounds").Str("action", "list").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("unmarshal failed")
-		return nil, err
+		return nil, errs.New("unmarshal", "unmarshal failed").WithField("nodeID", nodeID).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
 	}
 	return inbounds, nil
 }
@@ -125,12 +127,12 @@ func (c *Client) RenewInbound(nodeID, tag string, renew *satrapv1.Renew) error {
 		return err
 	}
 	if status == http.StatusNotFound {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inbound").Str("action", "update").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return err
+		zlog.Error().Str("component", "apadana").Str("resource", "inbound").Str("action", "update").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return errs.ErrNotFound
 	}
 	if status != http.StatusOK {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inbound").Str("action", "update").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return err
+		zlog.Error().Str("component", "apadana").Str("resource", "inbound").Str("action", "update").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("tag", tag).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
 	}
 	return nil
 }
@@ -149,13 +151,13 @@ func (c *Client) GetInboundUsers(nodeID, tag string) ([]*satrapv1.InboundUser, e
 		return nil, err
 	}
 	if status != http.StatusOK {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inboundUsers").Str("action", "list").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return nil, err
+		zlog.Error().Str("component", "apadana").Str("resource", "inboundUsers").Str("action", "list").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return nil, errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("tag", tag).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
 	}
 	inboundUsers := []*satrapv1.InboundUser{}
 	if err := json.Unmarshal(resp, &inboundUsers); err != nil {
 		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inboundUsers").Str("action", "list").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("unmarshal failed")
-		return nil, err
+		return nil, errs.New("unmarshal", "unmarshal failed").WithField("nodeID", nodeID).WithField("tag", tag).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
 	}
 	return inboundUsers, nil
 }
@@ -175,11 +177,11 @@ func (c *Client) CreateInboundUser(nodeID, tag string, user *satrapv1.InboundUse
 	}
 	if status == http.StatusConflict {
 		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inboundUsers").Str("action", "create").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return err
+		return errs.ErrConflict
 	}
 	if status != http.StatusCreated {
 		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inboundUsers").Str("action", "create").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return err
+		return errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("tag", tag).WithField("email", user.Email).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
 	}
 	return nil
 }
@@ -201,12 +203,12 @@ func (c *Client) DeleteInboundUser(nodeID, tag, email string) error {
 		return err
 	}
 	if status == http.StatusNotFound {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inboundUsers").Str("action", "delete").Str("nodeID", nodeID).Str("tag", tag).Str("email", email).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return err
+		zlog.Error().Str("component", "apadana").Str("resource", "inboundUsers").Str("action", "delete").Str("nodeID", nodeID).Str("tag", tag).Str("email", email).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return errs.ErrNotFound
 	}
 	if status != http.StatusNoContent {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inboundUsers").Str("action", "delete").Str("nodeID", nodeID).Str("tag", tag).Str("email", email).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return err
+		zlog.Error().Str("component", "apadana").Str("resource", "inboundUsers").Str("action", "delete").Str("nodeID", nodeID).Str("tag", tag).Str("email", email).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("tag", tag).WithField("email", email).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
 	}
 	return nil
 }
@@ -228,12 +230,12 @@ func (c *Client) RenewInboundUser(nodeID, tag, email string, renew *satrapv1.Ren
 		return err
 	}
 	if status == http.StatusNotFound {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inboundUser").Str("action", "update").Str("nodeID", nodeID).Str("tag", tag).Str("email", email).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return err
+		zlog.Error().Str("component", "apadana").Str("resource", "inboundUser").Str("action", "update").Str("nodeID", nodeID).Str("tag", tag).Str("email", email).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return errs.ErrNotFound
 	}
 	if status != http.StatusOK {
 		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inboundUser").Str("action", "update").Str("nodeID", nodeID).Str("tag", tag).Str("email", email).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return err
+		return errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("tag", tag).WithField("email", email).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
 	}
 	return nil
 }
