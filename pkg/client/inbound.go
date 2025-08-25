@@ -111,6 +111,30 @@ func (c *Client) GetInbounds(nodeID string) ([]*satrapv1.Inbound, error) {
 	return inbounds, nil
 }
 
+func (c *Client) RenewInbound(nodeID, tag string, renew *satrapv1.Renew) error {
+	if nodeID == "" {
+		return fmt.Errorf("nodeID cannot be empty")
+	}
+	if tag == "" {
+		return fmt.Errorf("tag cannot be empty")
+	}
+	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds/%s/renew", c.address, nodeID, tag)
+	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, renew)
+	if err != nil {
+		zlog.Error().Err(err).Str("component", "client").Str("resource", "inbound").Str("action", "update").Str("nodeID", nodeID).Str("tag", tag).Msg("failed")
+		return err
+	}
+	if status == http.StatusNotFound {
+		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inbound").Str("action", "update").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return err
+	}
+	if status != http.StatusOK {
+		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inbound").Str("action", "update").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return err
+	}
+	return nil
+}
+
 func (c *Client) GetInboundUsers(nodeID, tag string) ([]*satrapv1.InboundUser, error) {
 	if nodeID == "" {
 		return nil, fmt.Errorf("nodeID cannot be empty")
@@ -182,6 +206,33 @@ func (c *Client) DeleteInboundUser(nodeID, tag, email string) error {
 	}
 	if status != http.StatusNoContent {
 		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inboundUsers").Str("action", "delete").Str("nodeID", nodeID).Str("tag", tag).Str("email", email).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return err
+	}
+	return nil
+}
+
+func (c *Client) RenewInboundUser(nodeID, tag, email string, renew *satrapv1.Renew) error {
+	if nodeID == "" {
+		return fmt.Errorf("nodeID cannot be empty")
+	}
+	if tag == "" {
+		return fmt.Errorf("tag cannot be empty")
+	}
+	if email == "" {
+		return fmt.Errorf("email cannot be empty")
+	}
+	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds/%s/users/%s/renew", c.address, nodeID, tag, email)
+	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, renew)
+	if err != nil {
+		zlog.Error().Err(err).Str("component", "client").Str("resource", "inboundUser").Str("action", "update").Str("nodeID", nodeID).Str("tag", tag).Str("email", email).Msg("failed")
+		return err
+	}
+	if status == http.StatusNotFound {
+		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inboundUser").Str("action", "update").Str("nodeID", nodeID).Str("tag", tag).Str("email", email).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return err
+	}
+	if status != http.StatusOK {
+		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inboundUser").Str("action", "update").Str("nodeID", nodeID).Str("tag", tag).Str("email", email).Int("status", status).Str("resp", string(resp)).Msg("failed")
 		return err
 	}
 	return nil
