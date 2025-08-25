@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/vayzur/apadana/internal/chapar/server"
@@ -28,69 +29,67 @@ func main() {
 	flag.Parse()
 
 	cfg := chaparconfigv1.ChaparConfig{}
-
 	if err := config.Load(*configPath, &cfg); err != nil {
-		zlog.Fatal().Err(err).Str("component", "config").Str("action", "load").Msg("failed")
+		zlog.Fatal().Err(err).Msg("failed to load config")
 	}
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
-
-	etcdCtx, etcdCancel := context.WithCancel(ctx)
-	defer etcdCancel()
 
 	etcdClient, err := clientv3.New(clientv3.Config{
 		Endpoints:   cfg.EtcdEndpoints,
 		DialTimeout: 5 * time.Second,
-		Context:     etcdCtx,
+		Context:     ctx,
 	})
 	if err != nil {
-		zlog.Fatal().Err(err).Str("etcd", "client").Str("action", "connect").Msg("failed")
+		zlog.Fatal().Err(err).Msg("failed to connect etcd")
 	}
+
+	if err := etcd.CheckEtcdHealth(ctx, etcdClient); err != nil {
+		zlog.Fatal().Err(err).Msg("etcd health check failed")
+	}
+
 	defer func() {
+		zlog.Info().Msg("closing etcd client")
 		if err := etcdClient.Close(); err != nil {
-			zlog.Fatal().Err(err).Str("etcd", "client").Str("action", "close").Msg("failed")
+			zlog.Error().Err(err).Msg("etcd client close error")
 		}
 	}()
 
-	if err := etcd.CheckEtcdHealth(ctx, etcdClient); err != nil {
-		zlog.Fatal().Err(err).Str("etcd", "client").Str("action", "health").Msg("failed")
-	}
-
-	etcdStorege := etcd.NewEtcdStorage(etcdClient)
-
-	inboundStore := resources.NewInboundStore(etcdStorege)
-	nodeStore := resources.NewNodeStore(etcdStorege)
-
+	etcdStorage := etcd.NewEtcdStorage(etcdClient)
+	inboundStore := resources.NewInboundStore(etcdStorage)
+	nodeStore := resources.NewNodeStore(etcdStorage)
 	satrapClient := satrap.New(time.Second * 5)
-
-	nodeService := service.NewNodeSerivce(nodeStore)
+	nodeService := service.NewNodeService(nodeStore)
 	inboundService := service.NewInboundService(inboundStore, nodeService, satrapClient)
 
 	serverAddr := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
-
-	chapar := server.NewServer(serverAddr, cfg.Token, cfg.Prefork, inboundService, nodeService)
+	app := server.NewServer(serverAddr, cfg.Token, cfg.Prefork, inboundService, nodeService)
 
 	go func() {
+		var err error
 		if cfg.TLS.Enabled {
-			if err := chapar.StartTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile); err != nil {
-				zlog.Fatal().Err(err).Str("component", "chapar").Str("action", "start").Msg("failed")
-			}
-
+			err = app.StartTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile)
 		} else {
-			if err := chapar.Start(); err != nil {
-				zlog.Fatal().Err(err).Str("component", "chapar").Str("action", "start").Msg("failed")
-			}
+			err = app.Start()
+		}
+		if err != nil {
+			zlog.Fatal().Err(err).Msg("server failed")
 		}
 	}()
+
+	zlog.Info().Str("addr", serverAddr).Msg("server started")
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
 
 	defer func() {
-		if err := chapar.Stop(); err != nil {
-			zlog.Fatal().Err(err).Str("component", "chapar").Str("action", "stop").Msg("failed")
+		zlog.Info().Str("addr", serverAddr).Msg("shutting down server")
+		if err := app.Shutdown(shutdownCtx); err != nil {
+			zlog.Error().Err(err).Str("addr", serverAddr).Msg("server shutdown error")
 		}
+		zlog.Info().Msg("shutdown complete")
 	}()
 
-	zlog.Info().Str("component", "chapar").Str("action", "start").Msg("success")
 	<-ctx.Done()
-	zlog.Info().Str("component", "chapar").Str("action", "stop").Msg("success")
 }

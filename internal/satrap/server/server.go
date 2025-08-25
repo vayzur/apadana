@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/gofiber/fiber/v3"
@@ -68,8 +69,8 @@ func (s *Server) Start() error {
 	})
 }
 
-func (s *Server) Stop() error {
-	return s.app.Shutdown()
+func (s *Server) Shutdown(ctx context.Context) error {
+	return s.app.ShutdownWithContext(ctx)
 }
 
 func (s *Server) authMiddleware(c fiber.Ctx) error {

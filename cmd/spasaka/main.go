@@ -29,7 +29,7 @@ func main() {
 	cfg := spasakaconfigv1.SpasakaConfig{}
 
 	if err := config.Load(*configPath, &cfg); err != nil {
-		zlog.Fatal().Err(err).Str("component", "config").Str("action", "load").Msg("failed")
+		zlog.Fatal().Err(err).Msg("failed to load config")
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -44,26 +44,25 @@ func main() {
 		Context:     etcdCtx,
 	})
 	if err != nil {
-		zlog.Fatal().Err(err).Str("etcd", "client").Str("action", "connect").Msg("failed")
+		zlog.Fatal().Err(err).Msg("failed to connect etcd")
 	}
 
 	defer func() {
+		zlog.Info().Msg("closing etcd client")
 		if err := etcdClient.Close(); err != nil {
-			zlog.Fatal().Err(err).Str("etcd", "client").Str("action", "close").Msg("failed")
+			zlog.Error().Err(err).Msg("etcd client close error")
 		}
 	}()
 
-	sessionCtx, sessionCancel := context.WithCancel(ctx)
-	defer sessionCancel()
-
-	etcdSession, err := concurrency.NewSession(etcdClient, concurrency.WithTTL(10), concurrency.WithContext(sessionCtx))
+	etcdSession, err := concurrency.NewSession(etcdClient, concurrency.WithTTL(10), concurrency.WithContext(ctx))
 	if err != nil {
-		zlog.Fatal().Err(err).Str("etcd", "session").Str("action", "create").Msg("failed")
+		zlog.Error().Err(err).Msg("etcd new session failed")
 	}
 
 	defer func() {
+		zlog.Info().Msg("closing etcd session")
 		if err := etcdSession.Close(); err != nil {
-			zlog.Fatal().Err(err).Str("etcd", "session").Str("action", "close").Msg("failed")
+			zlog.Error().Err(err).Msg("etcd session close error")
 		}
 	}()
 
@@ -80,13 +79,12 @@ func main() {
 		if err := leader.Run(ctx, etcdSession, "/lock/node-controller", val, func(leaderCtx context.Context) {
 			spasakaManager.RunNodeMonitor(leaderCtx, cfg.ConcurrentNodeSyncs, cfg.NodeMonitorPeriod, cfg.NodeMonitorGracePeriod)
 		}); err != nil && ctx.Err() == nil {
-			zlog.Error().Err(err).Str("spasaka", "leader").Str("resource", "node").Str("action", "run").Msg("failed")
+			zlog.Error().Err(err).Msg("failed to start node controller")
 		}
 	}()
 
-	zlog.Info().Str("component", "spasaka").Str("action", "start").Msg("success")
 	<-ctx.Done()
-
+	zlog.Info().Msg("shutting down")
 	wg.Wait()
-	zlog.Info().Str("component", "spasaka").Str("action", "stop").Msg("success")
+	zlog.Info().Msg("shutdown complete")
 }

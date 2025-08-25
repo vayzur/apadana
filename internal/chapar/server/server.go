@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/gofiber/fiber/v3"
@@ -15,10 +16,10 @@ type Server struct {
 	prefork        bool
 	app            *fiber.App
 	inboundService *service.InboundService
-	nodeService    *service.NodeSerivce
+	nodeService    *service.NodeService
 }
 
-func NewServer(addr, token string, prefork bool, inboundService *service.InboundService, nodeSerivce *service.NodeSerivce) *Server {
+func NewServer(addr, token string, prefork bool, inboundService *service.InboundService, nodeService *service.NodeService) *Server {
 	app := fiber.New(fiber.Config{
 		CaseSensitive: true,
 		StrictRouting: true,
@@ -29,7 +30,7 @@ func NewServer(addr, token string, prefork bool, inboundService *service.Inbound
 		prefork:        prefork,
 		app:            app,
 		inboundService: inboundService,
-		nodeService:    nodeSerivce,
+		nodeService:    nodeService,
 	}
 	s.setupRoutes()
 	return s
@@ -83,8 +84,8 @@ func (s *Server) Start() error {
 	})
 }
 
-func (s *Server) Stop() error {
-	return s.app.Shutdown()
+func (s *Server) Shutdown(ctx context.Context) error {
+	return s.app.ShutdownWithContext(ctx)
 }
 
 func (s *Server) authMiddleware(c fiber.Ctx) error {

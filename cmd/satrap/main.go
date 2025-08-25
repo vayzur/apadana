@@ -28,9 +28,8 @@ func main() {
 	flag.Parse()
 
 	cfg := satrapconfigv1.SatrapConfig{}
-
 	if err := config.Load(*configPath, &cfg); err != nil {
-		zlog.Fatal().Err(err).Str("component", "config").Str("action", "load").Msg("failed")
+		zlog.Fatal().Err(err).Msg("failed to load config")
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -39,12 +38,11 @@ func main() {
 	xrayAddr := fmt.Sprintf("%s:%d", cfg.Xray.Address, cfg.Xray.Port)
 	xrayClient, err := xray.New(xrayAddr)
 	if err != nil {
-		zlog.Fatal().Err(err).Str("client", "xray").Str("action", "connect").Msg("failed")
+		zlog.Fatal().Err(err).Msg("failed to connect xray")
 	}
-
 	defer func() {
 		if err := xrayClient.Close(); err != nil {
-			zlog.Error().Err(err).Str("client", "xray").Str("action", "stop").Msg("failed")
+			zlog.Error().Err(err).Msg("xray client close failed")
 		}
 	}()
 
@@ -81,28 +79,32 @@ func main() {
 	}
 
 	serverAddr := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
-	satrap := server.NewServer(serverAddr, cfg.Token, cfg.Prefork, xrayClient)
+	app := server.NewServer(serverAddr, cfg.Token, cfg.Prefork, xrayClient)
 
 	go func() {
+		var err error
 		if cfg.TLS.Enabled {
-			if err := satrap.StartTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile); err != nil {
-				zlog.Fatal().Err(err).Str("component", "satrap").Str("action", "start").Msg("failed")
-			}
-
+			err = app.StartTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile)
 		} else {
-			if err := satrap.Start(); err != nil {
-				zlog.Fatal().Err(err).Str("component", "satrap").Str("action", "start").Msg("failed")
-			}
+			err = app.Start()
+		}
+		if err != nil {
+			zlog.Fatal().Err(err).Msg("server failed")
 		}
 	}()
+
+	zlog.Info().Str("addr", serverAddr).Msg("server started")
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
 
 	defer func() {
-		if err := satrap.Stop(); err != nil {
-			zlog.Error().Err(err).Str("server", "satrap").Str("action", "stop").Msg("failed")
+		zlog.Info().Str("addr", serverAddr).Msg("shutting down server")
+		if err := app.Shutdown(shutdownCtx); err != nil {
+			zlog.Error().Err(err).Str("addr", serverAddr).Msg("server shutdown error")
 		}
+		zlog.Info().Msg("shutdown complete")
 	}()
 
-	zlog.Info().Str("component", "satrap").Str("action", "start").Msg("success")
 	<-ctx.Done()
-	zlog.Info().Str("component", "satrap").Str("action", "stop").Msg("success")
 }
