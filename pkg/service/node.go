@@ -7,31 +7,31 @@ import (
 	"github.com/vayzur/apadana/pkg/storage/resources"
 )
 
-type NodeSerivce struct {
+type NodeService struct {
 	store *resources.NodeStore
 }
 
-func NewNodeSerivce(store *resources.NodeStore) *NodeSerivce {
-	return &NodeSerivce{store: store}
+func NewNodeService(store *resources.NodeStore) *NodeService {
+	return &NodeService{store: store}
 }
 
-func (s *NodeSerivce) GetNode(ctx context.Context, nodeID string) (*corev1.Node, error) {
+func (s *NodeService) GetNode(ctx context.Context, nodeID string) (*corev1.Node, error) {
 	return s.store.GetNode(ctx, nodeID)
 }
 
-func (s *NodeSerivce) DelNode(ctx context.Context, nodeID string) error {
+func (s *NodeService) DelNode(ctx context.Context, nodeID string) error {
 	return s.store.DelNode(ctx, nodeID)
 }
 
-func (s *NodeSerivce) PutNode(ctx context.Context, node *corev1.Node) error {
+func (s *NodeService) PutNode(ctx context.Context, node *corev1.Node) error {
 	return s.store.PutNode(ctx, node)
 }
 
-func (s *NodeSerivce) ListNodes(ctx context.Context) ([]*corev1.Node, error) {
+func (s *NodeService) ListNodes(ctx context.Context) ([]*corev1.Node, error) {
 	return s.store.ListNodes(ctx)
 }
 
-func (s *NodeSerivce) ListActiveNodes(ctx context.Context) ([]*corev1.Node, error) {
+func (s *NodeService) ListActiveNodes(ctx context.Context) ([]*corev1.Node, error) {
 	nodes, err := s.ListNodes(ctx)
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (s *NodeSerivce) ListActiveNodes(ctx context.Context) ([]*corev1.Node, erro
 	return activeNodes, nil
 }
 
-func (s *NodeSerivce) UpdateNodeStatus(ctx context.Context, nodeID string, status *corev1.NodeStatus) error {
+func (s *NodeService) UpdateNodeStatus(ctx context.Context, nodeID string, status *corev1.NodeStatus) error {
 	node, err := s.GetNode(ctx, nodeID)
 	if err != nil {
 		return err

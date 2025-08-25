@@ -13,11 +13,11 @@ import (
 
 type InboundService struct {
 	store        *resources.InboundStore
-	nodeService  *NodeSerivce
+	nodeService  *NodeService
 	satrapClient *satrap.Client
 }
 
-func NewInboundService(store *resources.InboundStore, nodeService *NodeSerivce, satrapClient *satrap.Client) *InboundService {
+func NewInboundService(store *resources.InboundStore, nodeService *NodeService, satrapClient *satrap.Client) *InboundService {
 	return &InboundService{
 		store:        store,
 		nodeService:  nodeService,
