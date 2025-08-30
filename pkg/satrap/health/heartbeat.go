@@ -34,7 +34,7 @@ func (h *HeartbeatManager) Run(ctx context.Context, nodeID string) {
 		Ready: true,
 	}
 
-	zlog.Info().Str("component", "health").Str("resource", "node").Str("action", "heartbeat").Msg("started")
+	zlog.Info().Str("component", "heartbeat").Msg("started")
 	for {
 		select {
 		case <-ctx.Done():
