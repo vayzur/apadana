@@ -19,19 +19,20 @@ type XrayConfig struct {
 }
 
 type SatrapConfig struct {
-	NodeID                    string        `mapstructure:"nodeID" yaml:"nodeID"`
-	Address                   string        `mapstructure:"address" yaml:"address"`
-	Port                      uint16        `mapstructure:"port" yaml:"port"`
-	Prefork                   bool          `mapstructure:"prefork" yaml:"prefork"`
-	Token                     string        `mapstructure:"token" yaml:"token"`
-	TLS                       TLSConfig     `mapstructure:"tls" yaml:"tls"`
-	Xray                      XrayConfig    `mapstructure:"xray" yaml:"xray"`
-	Cluster                   ClusterConfig `mapstructure:"cluster" yaml:"cluster"`
-	NodeStatusUpdateFrequency time.Duration `mapstructure:"nodeStatusUpdateFrequency" yaml:"nodeStatusUpdateFrequency"`
-	SyncFrequency             time.Duration `mapstructure:"syncFrequency" yaml:"syncFrequency"`
-	ConcurrentInboundSyncs    int32         `mapstructure:"concurrentInboundSyncs" yaml:"concurrentInboundSyncs"`
-	ConcurrentGCSyncs         int32         `mapstructure:"concurrentGCSyncs" yaml:"concurrentGCSyncs"`
-	ConcurrentExpireSyncs     int32         `mapstructure:"concurrentExpireSyncs" yaml:"concurrentExpireSyncs"`
-	ConcurrentUserSyncs       int32         `mapstructure:"concurrentUserSyncs" yaml:"concurrentUserSyncs"`
-	MaxInbounds               int32         `mapstructure:"maxInbounds" yaml:"maxInbounds"`
+	NodeID                       string        `mapstructure:"nodeID" yaml:"nodeID"`
+	Address                      string        `mapstructure:"address" yaml:"address"`
+	Port                         uint16        `mapstructure:"port" yaml:"port"`
+	Prefork                      bool          `mapstructure:"prefork" yaml:"prefork"`
+	Token                        string        `mapstructure:"token" yaml:"token"`
+	TLS                          TLSConfig     `mapstructure:"tls" yaml:"tls"`
+	Xray                         XrayConfig    `mapstructure:"xray" yaml:"xray"`
+	Cluster                      ClusterConfig `mapstructure:"cluster" yaml:"cluster"`
+	NodeStatusUpdateFrequency    time.Duration `mapstructure:"nodeStatusUpdateFrequency" yaml:"nodeStatusUpdateFrequency"`
+	SyncFrequency                time.Duration `mapstructure:"syncFrequency" yaml:"syncFrequency"`
+	ConcurrentInboundSyncs       int32         `mapstructure:"concurrentInboundSyncs" yaml:"concurrentInboundSyncs"`
+	ConcurrentInboundExpireSyncs int32         `mapstructure:"concurrentInboundExpireSyncs" yaml:"concurrentInboundExpireSyncs"`
+	ConcurrentInboundGCSyncs     int32         `mapstructure:"concurrentInboundGCSyncs" yaml:"concurrentInboundGCSyncs"`
+	ConcurrentUserSyncs          int32         `mapstructure:"concurrentUserSyncs" yaml:"concurrentUserSyncs"`
+	ConcurrentUserExpireSyncs    int32         `mapstructure:"concurrentUserExpireSyncs" yaml:"concurrentUserExpireSyncs"`
+	MaxInbounds                  int32         `mapstructure:"maxInbounds" yaml:"maxInbounds"`
 }
