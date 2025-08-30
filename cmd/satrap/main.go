@@ -62,6 +62,11 @@ func main() {
 		xrayClient,
 		apadanaClient,
 		cfg.SyncFrequency,
+		cfg.ConcurrentInboundSyncs,
+		cfg.ConcurrentInboundExpireSyncs,
+		cfg.ConcurrentInboundGCSyncs,
+		cfg.ConcurrentUserSyncs,
+		cfg.ConcurrentUserExpireSyncs,
 	)
 
 	if cfg.Cluster.Enabled {
