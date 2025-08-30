@@ -16,7 +16,6 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 
 	createUserCh := make(chan *satrapv1.InboundUser, 256)
 	expireUserCh := make(chan *satrapv1.InboundUser, 256)
-	gcUserCh := make(chan *satrapv1.InboundUser, 256)
 
 	for range m.concurrentInboundSyncs {
 		go func() {
@@ -43,7 +42,7 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 		}()
 	}
 
-	for range m.concurrentExpireSyncs {
+	for range m.concurrentInboundExpireSyncs {
 		go func() {
 			for inb := range expireInboundCh {
 				if err := m.apadanaClient.DeleteInbound(nodeID, inb.Config.Tag); err != nil {
@@ -55,7 +54,7 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 		}()
 	}
 
-	for range m.concurrentGCSyncs {
+	for range m.concurrentInboundGCSyncs {
 		go func() {
 			for tag := range gcInboundCh {
 				if err := m.xrayClient.RemoveInbound(ctx, tag); err != nil {
@@ -78,7 +77,7 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 		}()
 	}
 
-	for range m.concurrentExpireSyncs {
+	for range m.concurrentUserExpireSyncs {
 		go func() {
 			for user := range expireUserCh {
 				if err := m.apadanaClient.DeleteInboundUser(nodeID, user.InboundTag, user.Email); err != nil {
@@ -90,26 +89,13 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 		}()
 	}
 
-	for range m.concurrentGCSyncs {
-		go func() {
-			for user := range gcUserCh {
-				if err := m.xrayClient.RemoveUser(ctx, user.InboundTag, user.Email); err != nil {
-					zlog.Error().Err(err).Str("component", "syncManager").Str("controller", "gc").
-						Str("resource", "user").Str("action", "delete").
-						Str("nodeID", nodeID).Str("tag", user.InboundTag).Str("user", user.Email).Msg("failed")
-					continue
-				}
-			}
-		}()
-	}
-
 	ticker := time.NewTicker(m.syncFrequency)
 	defer ticker.Stop()
 
 	wg := &sync.WaitGroup{}
 	desiredInboundMap := make(map[string]*satrapv1.Inbound)
 
-	zlog.Info().Str("component", "syncManager").Str("action", "tick").Msg("started")
+	zlog.Info().Str("component", "syncManager").Msg("started")
 
 	for {
 		select {
@@ -119,7 +105,6 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 			close(gcInboundCh)
 			close(createUserCh)
 			close(expireUserCh)
-			close(gcUserCh)
 			return
 
 		case <-ticker.C:
@@ -148,14 +133,12 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 			go func() {
 				defer wg.Done()
 				for tag, inbound := range desiredInboundMap {
-					if _, ok := currentInbounds[tag]; !ok {
-						createInboundCh <- inbound
-						continue
-					}
-
 					if time.Since(inbound.Metadata.CreationTimestamp) >= inbound.Metadata.TTL {
 						expireInboundCh <- inbound
 						continue
+					}
+					if _, ok := currentInbounds[tag]; !ok {
+						createInboundCh <- inbound
 					}
 				}
 			}()
