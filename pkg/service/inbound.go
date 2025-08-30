@@ -67,7 +67,7 @@ func (s *InboundService) AddInbound(ctx context.Context, nodeID string, inbound 
 	}
 
 	if err := s.satrapClient.AddInbound(node, &inbound.Config); err != nil {
-		return fmt.Errorf("inbound add %s/%s: %w", nodeID, inbound.Config.Tag, err)
+			return fmt.Errorf("inbound add %s/%s: %w", nodeID, inbound.Config.Tag, err)
 	}
 
 	if err := s.store.PutInbound(ctx, nodeID, inbound); err != nil {
