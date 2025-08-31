@@ -48,7 +48,7 @@ func (c *Spasaka) RunNodeMonitor(ctx context.Context, concurrentNodeSyncs int, n
 				continue
 			}
 
-			zlog.Info().Int("count", len(nodes)).Msg("retrieved")
+			zlog.Info().Str("component", "nodeController").Int("count", len(nodes)).Msg("retrieved")
 
 			for _, node := range nodes {
 				if ctx.Err() != nil {
