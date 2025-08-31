@@ -50,7 +50,7 @@ func (s *Server) CreateInbound(c fiber.Ctx) error {
 		)
 	}
 
-	if err := s.inboundService.AddInbound(c.RequestCtx(), nodeID, inbound); err != nil {
+	if err := s.inboundService.CreateInbound(c.RequestCtx(), nodeID, inbound); err != nil {
 		if errors.Is(err, errs.ErrNodeCapacity) {
 			return c.SendStatus(fiber.StatusTooManyRequests)
 		}
