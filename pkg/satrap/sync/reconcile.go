@@ -84,7 +84,7 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 					continue
 				}
 				zlog.Info().Str("component", "syncManager").Str("resource", "user").
-					Str("nodeID", nodeID).Str("tag", user.InboundTag).Str("user", user.Email).Msg("expired")
+					Str("nodeID", nodeID).Str("tag", user.InboundTag).Str("email", user.Email).Msg("expired")
 			}
 		}()
 	}
