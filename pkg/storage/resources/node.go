@@ -32,7 +32,7 @@ func (s *NodeStore) GetNode(ctx context.Context, nodeID string) (*corev1.Node, e
 	return &node, nil
 }
 
-func (s *NodeStore) DelNode(ctx context.Context, nodeID string) error {
+func (s *NodeStore) DeleteNode(ctx context.Context, nodeID string) error {
 	key := fmt.Sprintf("/nodes/%s", nodeID)
 	if err := s.store.Delete(ctx, key); err != nil {
 		return fmt.Errorf("delete node %s: %w", nodeID, err)
@@ -40,23 +40,23 @@ func (s *NodeStore) DelNode(ctx context.Context, nodeID string) error {
 	return nil
 }
 
-func (s *NodeStore) PutNode(ctx context.Context, node *corev1.Node) error {
+func (s *NodeStore) CreateNode(ctx context.Context, node *corev1.Node) error {
 	val, err := json.Marshal(node)
 	if err != nil {
 		return fmt.Errorf("marshal node %s: %w", node.Metadata.ID, err)
 	}
 
 	key := fmt.Sprintf("/nodes/%s", node.Metadata.ID)
-	if err := s.store.Put(ctx, key, string(val)); err != nil {
-		return fmt.Errorf("put node %s: %w", node.Metadata.ID, err)
+	if err := s.store.Create(ctx, key, string(val)); err != nil {
+		return fmt.Errorf("create node %s: %w", node.Metadata.ID, err)
 	}
 
 	return nil
 }
 
-func (s *NodeStore) ListNodes(ctx context.Context) ([]*corev1.Node, error) {
+func (s *NodeStore) GetNodes(ctx context.Context) ([]*corev1.Node, error) {
 	prefix := "/nodes/"
-	resp, err := s.store.List(ctx, prefix)
+	resp, err := s.store.GetList(ctx, prefix)
 	if err != nil {
 		return nil, fmt.Errorf("list nodes: %w", err)
 	}

@@ -32,21 +32,21 @@ func (s *InboundStore) GetInbound(ctx context.Context, nodeID, tag string) (*sat
 	return &inbound, nil
 }
 
-func (s *InboundStore) PutInbound(ctx context.Context, nodeID string, inbound *satrapv1.Inbound) error {
+func (s *InboundStore) CreateInbound(ctx context.Context, nodeID string, inbound *satrapv1.Inbound) error {
 	val, err := json.Marshal(inbound)
 	if err != nil {
 		return fmt.Errorf("marshal inbound %s/%s: %w", nodeID, inbound.Config.Tag, err)
 	}
 
 	key := fmt.Sprintf("/inbounds/%s/%s", nodeID, inbound.Config.Tag)
-	if err := s.store.Put(ctx, key, string(val)); err != nil {
-		return fmt.Errorf("put inbound %s/%s: %w", nodeID, inbound.Config.Tag, err)
+	if err := s.store.Create(ctx, key, string(val)); err != nil {
+		return fmt.Errorf("create inbound %s/%s: %w", nodeID, inbound.Config.Tag, err)
 	}
 
 	return nil
 }
 
-func (s *InboundStore) DelInbound(ctx context.Context, nodeID, tag string) error {
+func (s *InboundStore) DeleteInbound(ctx context.Context, nodeID, tag string) error {
 	key := fmt.Sprintf("/inbounds/%s/%s", nodeID, tag)
 	if err := s.store.Delete(ctx, key); err != nil {
 		return fmt.Errorf("delete inbound %s/%s: %w", nodeID, tag, err)
@@ -54,9 +54,9 @@ func (s *InboundStore) DelInbound(ctx context.Context, nodeID, tag string) error
 	return nil
 }
 
-func (s *InboundStore) ListInbounds(ctx context.Context, nodeID string) ([]*satrapv1.Inbound, error) {
+func (s *InboundStore) GetInbounds(ctx context.Context, nodeID string) ([]*satrapv1.Inbound, error) {
 	key := fmt.Sprintf("/inbounds/%s/", nodeID)
-	resp, err := s.store.List(ctx, key)
+	resp, err := s.store.GetList(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("list inbounds %s: %w", nodeID, err)
 	}
@@ -88,21 +88,21 @@ func (s *InboundStore) GetUser(ctx context.Context, nodeID, tag, email string) (
 	return &u, nil
 }
 
-func (s *InboundStore) PutUser(ctx context.Context, nodeID, tag string, inboundUser *satrapv1.InboundUser) error {
+func (s *InboundStore) CreateUser(ctx context.Context, nodeID, tag string, inboundUser *satrapv1.InboundUser) error {
 	val, err := json.Marshal(inboundUser)
 	if err != nil {
 		return fmt.Errorf("marshal inbound user %s/%s: %w", nodeID, tag, err)
 	}
 
 	key := fmt.Sprintf("/inboundUsers/%s/%s/%s", nodeID, tag, inboundUser.Email)
-	if err := s.store.Put(ctx, key, string(val)); err != nil {
-		return fmt.Errorf("put inbound user %s/%s/%s: %w", nodeID, tag, inboundUser.Email, err)
+	if err := s.store.Create(ctx, key, string(val)); err != nil {
+		return fmt.Errorf("create inbound user %s/%s/%s: %w", nodeID, tag, inboundUser.Email, err)
 	}
 
 	return nil
 }
 
-func (s *InboundStore) DelUser(ctx context.Context, nodeID, tag, email string) error {
+func (s *InboundStore) DeleteUser(ctx context.Context, nodeID, tag, email string) error {
 	key := fmt.Sprintf("/inboundUsers/%s/%s/%s", nodeID, tag, email)
 	if err := s.store.Delete(ctx, key); err != nil {
 		return fmt.Errorf("delete inbound user %s/%s/%s: %w", nodeID, tag, email, err)
@@ -110,9 +110,9 @@ func (s *InboundStore) DelUser(ctx context.Context, nodeID, tag, email string) e
 	return nil
 }
 
-func (s *InboundStore) ListUsers(ctx context.Context, nodeID, tag string) ([]*satrapv1.InboundUser, error) {
-	key := fmt.Sprintf("/inboundUsers/%s/%s", nodeID, tag)
-	resp, err := s.store.List(ctx, key)
+func (s *InboundStore) GetUsers(ctx context.Context, nodeID, tag string) ([]*satrapv1.InboundUser, error) {
+	key := fmt.Sprintf("/inboundUsers/%s/%s/", nodeID, tag)
+	resp, err := s.store.GetList(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("list inbound users %s: %w", nodeID, err)
 	}
