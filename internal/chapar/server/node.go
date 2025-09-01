@@ -14,7 +14,7 @@ import (
 )
 
 func (s *Server) GetNodes(c fiber.Ctx) error {
-	nodes, err := s.nodeService.ListNodes(c.RequestCtx())
+	nodes, err := s.nodeService.GetNodes(c.RequestCtx())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(
 			fiber.Map{
@@ -28,7 +28,7 @@ func (s *Server) GetNodes(c fiber.Ctx) error {
 }
 
 func (s *Server) GetActiveNodes(c fiber.Ctx) error {
-	nodes, err := s.nodeService.ListActiveNodes(c.RequestCtx())
+	nodes, err := s.nodeService.GetActiveNodes(c.RequestCtx())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(
 			fiber.Map{
@@ -84,7 +84,7 @@ func (s *Server) CreateNode(c fiber.Ctx) error {
 	node.Metadata.ID = uuid.NewString()
 	node.Metadata.CreationTimestamp = time.Now()
 
-	if err := s.nodeService.PutNode(c.RequestCtx(), node); err != nil {
+	if err := s.nodeService.CreateNode(c.RequestCtx(), node); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(
 			fiber.Map{
 				"error": err.Error(),
@@ -106,7 +106,7 @@ func (s *Server) DeleteNode(c fiber.Ctx) error {
 		)
 	}
 
-	if err := s.nodeService.DelNode(context.Background(), nodeID); err != nil {
+	if err := s.nodeService.DeleteNode(context.Background(), nodeID); err != nil {
 		if errors.Is(err, errs.ErrNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(
 				fiber.Map{

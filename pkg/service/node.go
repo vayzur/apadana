@@ -19,20 +19,20 @@ func (s *NodeService) GetNode(ctx context.Context, nodeID string) (*corev1.Node,
 	return s.store.GetNode(ctx, nodeID)
 }
 
-func (s *NodeService) DelNode(ctx context.Context, nodeID string) error {
-	return s.store.DelNode(ctx, nodeID)
+func (s *NodeService) DeleteNode(ctx context.Context, nodeID string) error {
+	return s.store.DeleteNode(ctx, nodeID)
 }
 
-func (s *NodeService) PutNode(ctx context.Context, node *corev1.Node) error {
-	return s.store.PutNode(ctx, node)
+func (s *NodeService) CreateNode(ctx context.Context, node *corev1.Node) error {
+	return s.store.CreateNode(ctx, node)
 }
 
-func (s *NodeService) ListNodes(ctx context.Context) ([]*corev1.Node, error) {
-	return s.store.ListNodes(ctx)
+func (s *NodeService) GetNodes(ctx context.Context) ([]*corev1.Node, error) {
+	return s.store.GetNodes(ctx)
 }
 
-func (s *NodeService) ListActiveNodes(ctx context.Context) ([]*corev1.Node, error) {
-	nodes, err := s.ListNodes(ctx)
+func (s *NodeService) GetActiveNodes(ctx context.Context) ([]*corev1.Node, error) {
+	nodes, err := s.GetNodes(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -54,5 +54,5 @@ func (s *NodeService) UpdateNodeStatus(ctx context.Context, nodeID string, statu
 	}
 
 	node.Status = *status
-	return s.PutNode(ctx, node)
+	return s.CreateNode(ctx, node)
 }
