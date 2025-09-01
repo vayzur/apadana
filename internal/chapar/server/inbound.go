@@ -78,7 +78,7 @@ func (s *Server) GetInbounds(c fiber.Ctx) error {
 		)
 	}
 
-	inbounds, err := s.inboundService.ListInbounds(c.RequestCtx(), nodeID)
+	inbounds, err := s.inboundService.GetInbounds(c.RequestCtx(), nodeID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(
 			fiber.Map{
@@ -110,7 +110,7 @@ func (s *Server) DeleteInbound(c fiber.Ctx) error {
 		)
 	}
 
-	if err := s.inboundService.DelInbound(c.RequestCtx(), nodeID, tag); err != nil {
+	if err := s.inboundService.DeleteInbound(c.RequestCtx(), nodeID, tag); err != nil {
 		if errors.Is(err, errs.ErrNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
 		}
@@ -140,7 +140,7 @@ func (s *Server) CreateUser(c fiber.Ctx) error {
 		)
 	}
 
-	if err := s.inboundService.AddUser(c.RequestCtx(), params["nodeID"], params["tag"], user); err != nil {
+	if err := s.inboundService.CreateUser(c.RequestCtx(), params["nodeID"], params["tag"], user); err != nil {
 		if errors.Is(err, errs.ErrConflict) {
 			return c.SendStatus(fiber.StatusConflict)
 		}
@@ -161,7 +161,7 @@ func (s *Server) DeleteUser(c fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	if err := s.inboundService.DelUser(c.RequestCtx(), params["nodeID"], params["tag"], params["email"]); err != nil {
+	if err := s.inboundService.DeleteUser(c.RequestCtx(), params["nodeID"], params["tag"], params["email"]); err != nil {
 		if errors.Is(err, errs.ErrNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
 		}
@@ -182,7 +182,21 @@ func (s *Server) GetInboundUsers(c fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	users, err := s.inboundService.ListUsers(c.RequestCtx(), params["nodeID"], params["tag"])
+	state := c.Query("state", "all") // default = "all"
+
+	var users []*satrapv1.InboundUser
+
+	switch state {
+	case "active":
+		users, err = s.inboundService.GetActiveUsers(c.RequestCtx(), params["nodeID"], params["tag"])
+	case "expired":
+		users, err = s.inboundService.GetExpiredUsers(c.RequestCtx(), params["nodeID"], params["tag"])
+	case "all":
+		fallthrough
+	default:
+		users, err = s.inboundService.GetUsers(c.RequestCtx(), params["nodeID"], params["tag"])
+	}
+
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(
 			fiber.Map{
@@ -265,7 +279,7 @@ func (s *Server) GetRuntimeInboundsCount(c fiber.Ctx) error {
 		)
 	}
 
-	count, err := s.inboundService.InboundsCount(c.RequestCtx(), nodeID)
+	count, err := s.inboundService.GetInboundsCount(c.RequestCtx(), nodeID)
 	if err != nil {
 		if errors.Is(err, errs.ErrNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)

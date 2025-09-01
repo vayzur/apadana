@@ -137,14 +137,17 @@ func (c *Client) RenewInbound(nodeID, tag string, renew *satrapv1.Renew) error {
 	return nil
 }
 
-func (c *Client) GetInboundUsers(nodeID, tag string) ([]*satrapv1.InboundUser, error) {
+func (c *Client) GetInboundUsers(nodeID, tag string, state satrapv1.State) ([]*satrapv1.InboundUser, error) {
 	if nodeID == "" {
 		return nil, fmt.Errorf("nodeID cannot be empty")
 	}
 	if tag == "" {
 		return nil, fmt.Errorf("tag cannot be empty")
 	}
-	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds/%s/users", c.address, nodeID, tag)
+	if state == "" {
+		state = satrapv1.All
+	}
+	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds/%s/users?state=%s", c.address, nodeID, tag, state)
 	status, resp, err := c.httpClient.Do(http.MethodGet, url, c.token, nil)
 	if err != nil {
 		zlog.Error().Err(err).Str("component", "client").Str("resource", "inboundUsers").Str("action", "list").Str("nodeID", nodeID).Str("tag", tag).Msg("failed")

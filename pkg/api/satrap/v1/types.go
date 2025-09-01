@@ -2,6 +2,14 @@ package v1
 
 import "time"
 
+type State string
+
+const (
+	All     State = "all"
+	Active  State = "active"
+	Expired State = "expired"
+)
+
 type Metadata struct {
 	CreationTimestamp time.Time     `json:"creationTimestamp"`
 	TTL               time.Duration `json:"ttl"`
