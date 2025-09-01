@@ -33,7 +33,7 @@ func (e *EtcdStorage) Get(ctx context.Context, key string) ([]byte, error) {
 	return resp.Kvs[0].Value, nil
 }
 
-func (e *EtcdStorage) Put(ctx context.Context, key string, value string) error {
+func (e *EtcdStorage) Create(ctx context.Context, key string, value string) error {
 	_, err := e.client.Put(ctx, key, value)
 	if err != nil {
 		return fmt.Errorf("%q: %w", key, err)
@@ -42,7 +42,13 @@ func (e *EtcdStorage) Put(ctx context.Context, key string, value string) error {
 }
 
 func (e *EtcdStorage) Delete(ctx context.Context, key string) error {
-	resp, err := e.client.Delete(ctx, key)
+	opts := []clientv3.OpOption{}
+
+	if strings.HasSuffix(key, "/") {
+		opts = append(opts, clientv3.WithPrefix())
+	}
+
+	resp, err := e.client.Delete(ctx, key, opts...)
 	if err != nil {
 		return fmt.Errorf("%q: %w", key, err)
 	}
@@ -54,7 +60,7 @@ func (e *EtcdStorage) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
-func (e *EtcdStorage) List(ctx context.Context, prefix string) (map[string][]byte, error) {
+func (e *EtcdStorage) GetList(ctx context.Context, prefix string) (map[string][]byte, error) {
 	resp, err := e.client.Get(ctx, prefix, clientv3.WithPrefix())
 	if err != nil {
 		return nil, fmt.Errorf("%q: %w", prefix, err)
@@ -69,10 +75,10 @@ func (e *EtcdStorage) List(ctx context.Context, prefix string) (map[string][]byt
 	return result, nil
 }
 
-func CheckEtcdHealth(ctx context.Context, client *clientv3.Client) error {
-	healthCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+func (e *EtcdStorage) ReadinessCheck() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := client.Status(healthCtx, client.Endpoints()[0])
+	_, err := e.client.Status(ctx, e.client.Endpoints()[0])
 	return err
 }
