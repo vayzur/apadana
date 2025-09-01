@@ -25,16 +25,12 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 				}
 
 				go func(inb *satrapv1.Inbound) {
-					desiredUsers, err := m.apadanaClient.GetInboundUsers(nodeID, inb.Config.Tag)
+					desiredUsers, err := m.apadanaClient.GetInboundUsers(nodeID, inb.Config.Tag, satrapv1.Active)
 					if err != nil {
 						return
 					}
 
 					for _, user := range desiredUsers {
-						if time.Since(user.Metadata.CreationTimestamp) >= user.Metadata.TTL {
-							expireUserCh <- user
-							continue
-						}
 						createUserCh <- user
 					}
 				}(inb)
@@ -139,6 +135,11 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 					}
 					if _, ok := currentInbounds[tag]; !ok {
 						createInboundCh <- inbound
+					}
+
+					desiredUsers, _ := m.apadanaClient.GetInboundUsers(nodeID, inbound.Config.Tag, satrapv1.Expired)
+					for _, user := range desiredUsers {
+						expireUserCh <- user
 					}
 				}
 			}()
