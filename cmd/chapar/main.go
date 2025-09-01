@@ -45,10 +45,6 @@ func main() {
 		zlog.Fatal().Err(err).Msg("failed to connect etcd")
 	}
 
-	if err := etcd.CheckEtcdHealth(ctx, etcdClient); err != nil {
-		zlog.Fatal().Err(err).Msg("etcd health check failed")
-	}
-
 	defer func() {
 		zlog.Info().Msg("closing etcd client")
 		if err := etcdClient.Close(); err != nil {
@@ -57,6 +53,11 @@ func main() {
 	}()
 
 	etcdStorage := etcd.NewEtcdStorage(etcdClient)
+
+	if err := etcdStorage.ReadinessCheck(); err != nil {
+		zlog.Fatal().Err(err).Msg("etcd not ready")
+	}
+
 	inboundStore := resources.NewInboundStore(etcdStorage)
 	nodeStore := resources.NewNodeStore(etcdStorage)
 	satrapClient := satrap.New(time.Second * 5)
