@@ -4,11 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	zlog "github.com/rs/zerolog/log"
 	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
 	"github.com/vayzur/apadana/pkg/storage"
 )
+
+var nodePool = sync.Pool{
+	New: func() any { return &corev1.Node{} },
+}
 
 type NodeStore struct {
 	store storage.Storage
@@ -55,20 +60,24 @@ func (s *NodeStore) CreateNode(ctx context.Context, node *corev1.Node) error {
 }
 
 func (s *NodeStore) GetNodes(ctx context.Context) ([]*corev1.Node, error) {
-	prefix := "/nodes/"
-	resp, err := s.store.GetList(ctx, prefix)
+	key := "/nodes/"
+	resp, err := s.store.GetList(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("list nodes: %w", err)
 	}
 
-	var nodes []*corev1.Node
+	nodes := make([]*corev1.Node, 0, len(resp))
+
 	for k, v := range resp {
-		var node corev1.Node
-		if err := json.Unmarshal(v, &node); err != nil {
-			zlog.Error().Err(err).Str("component", "node").Str("nodeID", k).Msg("unmarshal failed")
+		node := nodePool.Get().(*corev1.Node)
+		*node = corev1.Node{}
+
+		if err := json.Unmarshal(v, node); err != nil {
+			zlog.Error().Err(err).Str("component", "store").Str("resource", "node").Str("nodeID", k).Msg("unmarshal failed")
+			nodePool.Put(node)
 			continue
 		}
-		nodes = append(nodes, &node)
+		nodes = append(nodes, node)
 	}
 
 	return nodes, nil

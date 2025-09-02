@@ -60,16 +60,18 @@ func (e *EtcdStorage) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
-func (e *EtcdStorage) GetList(ctx context.Context, prefix string) (map[string][]byte, error) {
-	resp, err := e.client.Get(ctx, prefix, clientv3.WithPrefix())
+func (e *EtcdStorage) GetList(ctx context.Context, key string) (map[string][]byte, error) {
+	resp, err := e.client.Get(ctx, key, clientv3.WithPrefix())
 	if err != nil {
-		return nil, fmt.Errorf("%q: %w", prefix, err)
+		return nil, fmt.Errorf("%q: %w", key, err)
 	}
 
 	result := make(map[string][]byte, len(resp.Kvs))
+	keyLen := len(key)
+
 	for _, kv := range resp.Kvs {
-		key := strings.TrimPrefix(string(kv.Key), prefix)
-		result[key] = kv.Value
+		k := string(kv.Key[keyLen:])
+		result[k] = kv.Value
 	}
 
 	return result, nil
