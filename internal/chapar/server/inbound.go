@@ -78,7 +78,22 @@ func (s *Server) GetInbounds(c fiber.Ctx) error {
 		)
 	}
 
-	inbounds, err := s.inboundService.GetInbounds(c.RequestCtx(), nodeID)
+	state := c.Query("state", "all") // default = "all"
+
+	var inbounds []*satrapv1.Inbound
+	var err error
+
+	switch state {
+	case "active":
+		inbounds, err = s.inboundService.GetActiveInbounds(c.RequestCtx(), nodeID)
+	case "expired":
+		inbounds, err = s.inboundService.GetExpiredInbounds(c.RequestCtx(), nodeID)
+	case "all":
+		fallthrough
+	default:
+		inbounds, err = s.inboundService.GetInbounds(c.RequestCtx(), nodeID)
+	}
+
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(
 			fiber.Map{

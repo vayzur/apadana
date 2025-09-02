@@ -91,11 +91,14 @@ func (c *Client) GetInbound(nodeID, tag string) (*satrapv1.Inbound, error) {
 	return inbound, nil
 }
 
-func (c *Client) GetInbounds(nodeID string) ([]*satrapv1.Inbound, error) {
+func (c *Client) GetInbounds(nodeID string, state satrapv1.State) ([]*satrapv1.Inbound, error) {
 	if nodeID == "" {
 		return nil, fmt.Errorf("nodeID cannot be empty")
 	}
-	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds", c.address, nodeID)
+	if state == "" {
+		state = satrapv1.All
+	}
+	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds?state=%s", c.address, nodeID, state)
 	status, resp, err := c.httpClient.Do(http.MethodGet, url, c.token, nil)
 	if err != nil {
 		zlog.Error().Err(err).Str("component", "client").Str("resource", "inbounds").Str("action", "list").Str("nodeID", nodeID).Msg("failed")
