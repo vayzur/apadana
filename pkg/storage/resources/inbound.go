@@ -110,6 +110,14 @@ func (s *InboundStore) DeleteUser(ctx context.Context, nodeID, tag, email string
 	return nil
 }
 
+func (s *InboundStore) DeleteUsers(ctx context.Context, nodeID, tag string) error {
+	key := fmt.Sprintf("/inboundUsers/%s/%s/", nodeID, tag)
+	if err := s.store.Delete(ctx, key); err != nil {
+		return fmt.Errorf("delete inbound users %s/%s: %w", nodeID, tag, err)
+	}
+	return nil
+}
+
 func (s *InboundStore) GetUsers(ctx context.Context, nodeID, tag string) ([]*satrapv1.InboundUser, error) {
 	key := fmt.Sprintf("/inboundUsers/%s/%s/", nodeID, tag)
 	resp, err := s.store.GetList(ctx, key)

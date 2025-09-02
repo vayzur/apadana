@@ -44,11 +44,14 @@ func (s *InboundService) DeleteInbound(ctx context.Context, nodeID, tag string) 
 	if err != nil {
 		return err
 	}
+	if err := s.store.DeleteUsers(ctx, nodeID, tag); err != nil && !errors.Is(err, errs.ErrNotFound) {
+		return fmt.Errorf("inbound delete store %s/%s: %w", nodeID, tag, err)
+	}
+	if err := s.store.DeleteInbound(ctx, nodeID, tag); err != nil && !errors.Is(err, errs.ErrNotFound) {
+		return fmt.Errorf("inbound delete store %s/%s: %w", nodeID, tag, err)
+	}
 	if err := s.satrapClient.RemoveInbound(node, tag); err != nil && !errors.Is(err, errs.ErrNotFound) {
 		return fmt.Errorf("inbound delete %s/%s: %w", nodeID, tag, err)
-	}
-	if err := s.store.DeleteInbound(ctx, nodeID, tag); err != nil {
-		return fmt.Errorf("inbound delete store %s/%s: %w", nodeID, tag, err)
 	}
 	return nil
 }
@@ -79,6 +82,42 @@ func (s *InboundService) CreateInbound(ctx context.Context, nodeID string, inbou
 
 func (s *InboundService) GetInbounds(ctx context.Context, nodeID string) ([]*satrapv1.Inbound, error) {
 	return s.store.GetInbounds(ctx, nodeID)
+}
+
+func (s *InboundService) GetExpiredInbounds(ctx context.Context, nodeID string) ([]*satrapv1.Inbound, error) {
+	inbounds, err := s.GetInbounds(ctx, nodeID)
+	if err != nil {
+		return nil, err
+	}
+
+	expired := make([]*satrapv1.Inbound, 0, len(inbounds)) // preallocated, no zeroing
+	now := time.Now()                                      // only once
+
+	for i := 0; i < len(inbounds); i++ {
+		if now.Sub(inbounds[i].Metadata.CreationTimestamp) >= inbounds[i].Metadata.TTL {
+			expired = append(expired, inbounds[i])
+		}
+	}
+
+	return expired, nil
+}
+
+func (s *InboundService) GetActiveInbounds(ctx context.Context, nodeID string) ([]*satrapv1.Inbound, error) {
+	inbounds, err := s.GetInbounds(ctx, nodeID)
+	if err != nil {
+		return nil, err
+	}
+
+	active := make([]*satrapv1.Inbound, 0, len(inbounds)) // preallocated, no zeroing
+	now := time.Now()                                     // only once
+
+	for i := 0; i < len(inbounds); i++ {
+		if now.Sub(inbounds[i].Metadata.CreationTimestamp) < inbounds[i].Metadata.TTL {
+			active = append(active, inbounds[i])
+		}
+	}
+
+	return active, nil
 }
 
 func (s *InboundService) GetUser(ctx context.Context, nodeID, tag, email string) (*satrapv1.InboundUser, error) {
@@ -125,12 +164,16 @@ func (s *InboundService) GetExpiredUsers(ctx context.Context, nodeID, tag string
 	if err != nil {
 		return nil, err
 	}
-	expired := make([]*satrapv1.InboundUser, 0, len(users))
-	for _, user := range users {
-		if time.Since(user.Metadata.CreationTimestamp) >= user.Metadata.TTL {
-			expired = append(expired, user)
+
+	expired := make([]*satrapv1.InboundUser, 0, len(users)) // preallocated, no zeroing
+	now := time.Now()
+
+	for i := 0; i < len(users); i++ {
+		if now.Sub(users[i].Metadata.CreationTimestamp) >= users[i].Metadata.TTL {
+			expired = append(expired, users[i])
 		}
 	}
+
 	return expired, nil
 }
 
@@ -140,12 +183,15 @@ func (s *InboundService) GetActiveUsers(ctx context.Context, nodeID, tag string)
 		return nil, err
 	}
 
-	active := make([]*satrapv1.InboundUser, 0, len(users))
-	for _, user := range users {
-		if time.Since(user.Metadata.CreationTimestamp) < user.Metadata.TTL {
-			active = append(active, user)
+	active := make([]*satrapv1.InboundUser, 0, len(users)) // preallocated, no zeroing
+	now := time.Now()
+
+	for i := 0; i < len(users); i++ {
+		if now.Sub(users[i].Metadata.CreationTimestamp) < users[i].Metadata.TTL {
+			active = append(active, users[i])
 		}
 	}
+
 	return active, nil
 }
 
