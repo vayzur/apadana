@@ -104,7 +104,7 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 			return
 
 		case <-ticker.C:
-			desiredInbounds, err := m.apadanaClient.GetInbounds(nodeID)
+			desiredInbounds, err := m.apadanaClient.GetInbounds(nodeID, satrapv1.Active)
 			if err != nil {
 				zlog.Error().Err(err).Str("component", "syncManager").Str("nodeID", nodeID).
 					Msg("failed to get desired inbounds")
@@ -128,17 +128,32 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
+
+				expiredInbounds, err := m.apadanaClient.GetInbounds(nodeID, satrapv1.Expired)
+				if err != nil {
+					zlog.Error().Err(err).Str("component", "syncManager").Str("nodeID", nodeID).
+						Msg("failed to get expired inbounds")
+					return
+				}
+
+				for _, inbound := range expiredInbounds {
+					expireInboundCh <- inbound
+				}
+			}()
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
 				for tag, inbound := range desiredInboundMap {
-					if time.Since(inbound.Metadata.CreationTimestamp) >= inbound.Metadata.TTL {
-						expireInboundCh <- inbound
-						continue
-					}
 					if _, ok := currentInbounds[tag]; !ok {
 						createInboundCh <- inbound
 					}
 
-					desiredUsers, _ := m.apadanaClient.GetInboundUsers(nodeID, inbound.Config.Tag, satrapv1.Expired)
-					for _, user := range desiredUsers {
+					expiredUsers, err := m.apadanaClient.GetInboundUsers(nodeID, inbound.Config.Tag, satrapv1.Expired)
+					if err != nil {
+						continue
+					}
+					for _, user := range expiredUsers {
 						expireUserCh <- user
 					}
 				}
