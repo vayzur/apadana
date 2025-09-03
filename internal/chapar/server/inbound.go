@@ -41,7 +41,7 @@ func (s *Server) CreateInbound(c fiber.Ctx) error {
 		)
 	}
 
-	inbound := new(satrapv1.Inbound)
+	inbound := &satrapv1.Inbound{}
 	if err := c.Bind().JSON(inbound); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
@@ -51,11 +51,11 @@ func (s *Server) CreateInbound(c fiber.Ctx) error {
 	}
 
 	if err := s.inboundService.CreateInbound(c.RequestCtx(), nodeID, inbound); err != nil {
-		if errors.Is(err, errs.ErrNodeCapacity) {
-			return c.SendStatus(fiber.StatusTooManyRequests)
-		}
 		if errors.Is(err, errs.ErrConflict) {
 			return c.SendStatus(fiber.StatusConflict)
+		}
+		if errors.Is(err, errs.ErrNodeCapacity) {
+			return c.SendStatus(fiber.StatusTooManyRequests)
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(
 			fiber.Map{
