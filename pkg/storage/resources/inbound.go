@@ -4,10 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	zlog "github.com/rs/zerolog/log"
 	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
 	"github.com/vayzur/apadana/pkg/storage"
+)
+
+var (
+	inboundPool = sync.Pool{
+		New: func() any { return &satrapv1.Inbound{} },
+	}
+	userPool = sync.Pool{
+		New: func() any { return &satrapv1.InboundUser{} },
+	}
 )
 
 type InboundStore struct {
@@ -61,14 +71,18 @@ func (s *InboundStore) GetInbounds(ctx context.Context, nodeID string) ([]*satra
 		return nil, fmt.Errorf("list inbounds %s: %w", nodeID, err)
 	}
 
-	var inbounds []*satrapv1.Inbound
+	inbounds := make([]*satrapv1.Inbound, 0, len(resp))
+
 	for k, v := range resp {
-		var inbound satrapv1.Inbound
-		if err := json.Unmarshal(v, &inbound); err != nil {
+		inbound := inboundPool.Get().(*satrapv1.Inbound)
+		*inbound = satrapv1.Inbound{}
+
+		if err := json.Unmarshal(v, inbound); err != nil {
 			zlog.Error().Err(err).Str("component", "inbound").Str("nodeID", nodeID).Str("tag", k).Msg("unmarshal failed")
+			inboundPool.Put(inbound)
 			continue
 		}
-		inbounds = append(inbounds, &inbound)
+		inbounds = append(inbounds, inbound)
 	}
 
 	return inbounds, nil
@@ -125,14 +139,18 @@ func (s *InboundStore) GetUsers(ctx context.Context, nodeID, tag string) ([]*sat
 		return nil, fmt.Errorf("list inbound users %s: %w", nodeID, err)
 	}
 
-	var users []*satrapv1.InboundUser
+	users := make([]*satrapv1.InboundUser, 0, len(resp))
+
 	for k, v := range resp {
-		var u satrapv1.InboundUser
-		if err := json.Unmarshal(v, &u); err != nil {
+		user := userPool.Get().(*satrapv1.InboundUser)
+		*user = satrapv1.InboundUser{}
+
+		if err := json.Unmarshal(v, user); err != nil {
 			zlog.Error().Err(err).Str("component", "inbound").Str("nodeID", nodeID).Str("tag", k).Msg("user unmarshal failed")
+			userPool.Put(user)
 			continue
 		}
-		users = append(users, &u)
+		users = append(users, user)
 	}
 
 	return users, nil

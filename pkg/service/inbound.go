@@ -93,9 +93,11 @@ func (s *InboundService) GetExpiredInbounds(ctx context.Context, nodeID string) 
 	expired := make([]*satrapv1.Inbound, 0, len(inbounds)) // preallocated, no zeroing
 	now := time.Now()                                      // only once
 
-	for i := 0; i < len(inbounds); i++ {
-		if now.Sub(inbounds[i].Metadata.CreationTimestamp) >= inbounds[i].Metadata.TTL {
-			expired = append(expired, inbounds[i])
+	n := len(inbounds)
+	for i := 0; i < n; i++ {
+		inbound := inbounds[i]
+		if now.Sub(inbound.Metadata.CreationTimestamp) >= inbound.Metadata.TTL {
+			expired = append(expired, inbound)
 		}
 	}
 
@@ -111,9 +113,11 @@ func (s *InboundService) GetActiveInbounds(ctx context.Context, nodeID string) (
 	active := make([]*satrapv1.Inbound, 0, len(inbounds)) // preallocated, no zeroing
 	now := time.Now()                                     // only once
 
-	for i := 0; i < len(inbounds); i++ {
-		if now.Sub(inbounds[i].Metadata.CreationTimestamp) < inbounds[i].Metadata.TTL {
-			active = append(active, inbounds[i])
+	n := len(inbounds)
+	for i := 0; i < n; i++ {
+		inbound := inbounds[i]
+		if now.Sub(inbound.Metadata.CreationTimestamp) < inbound.Metadata.TTL {
+			active = append(active, inbound)
 		}
 	}
 
@@ -168,9 +172,11 @@ func (s *InboundService) GetExpiredUsers(ctx context.Context, nodeID, tag string
 	expired := make([]*satrapv1.InboundUser, 0, len(users)) // preallocated, no zeroing
 	now := time.Now()
 
-	for i := 0; i < len(users); i++ {
-		if now.Sub(users[i].Metadata.CreationTimestamp) >= users[i].Metadata.TTL {
-			expired = append(expired, users[i])
+	n := len(users)
+	for i := 0; i < n; i++ {
+		user := users[i]
+		if now.Sub(user.Metadata.CreationTimestamp) >= user.Metadata.TTL {
+			expired = append(expired, user)
 		}
 	}
 
@@ -186,9 +192,11 @@ func (s *InboundService) GetActiveUsers(ctx context.Context, nodeID, tag string)
 	active := make([]*satrapv1.InboundUser, 0, len(users)) // preallocated, no zeroing
 	now := time.Now()
 
-	for i := 0; i < len(users); i++ {
-		if now.Sub(users[i].Metadata.CreationTimestamp) < users[i].Metadata.TTL {
-			active = append(active, users[i])
+	n := len(users)
+	for i := 0; i < n; i++ {
+		user := users[i]
+		if now.Sub(user.Metadata.CreationTimestamp) < user.Metadata.TTL {
+			active = append(active, user)
 		}
 	}
 

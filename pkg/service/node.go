@@ -39,9 +39,11 @@ func (s *NodeService) GetActiveNodes(ctx context.Context) ([]*corev1.Node, error
 
 	activeNodes := make([]*corev1.Node, 0, len(nodes)) // preallocated, no zeroing
 
-	for i := 0; i < len(nodes); i++ {
-		if nodes[i].Status.Ready {
-			activeNodes = append(activeNodes, nodes[i])
+	n := len(nodes)
+	for i := 0; i < n; i++ {
+		node := nodes[i]
+		if node.Status.Ready {
+			activeNodes = append(activeNodes, node)
 		}
 	}
 
