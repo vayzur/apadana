@@ -51,7 +51,7 @@ func (s *InboundService) DeleteInbound(ctx context.Context, nodeID, tag string) 
 		return fmt.Errorf("inbound delete store %s/%s: %w", nodeID, tag, err)
 	}
 	if err := s.satrapClient.RemoveInbound(node, tag); err != nil && !errors.Is(err, errs.ErrNotFound) {
-		return fmt.Errorf("inbound delete %s/%s: %w", nodeID, tag, err)
+		return fmt.Errorf("inbound delete runtime %s/%s: %w", nodeID, tag, err)
 	}
 	return nil
 }
