@@ -35,8 +35,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	xrayAddr := fmt.Sprintf("%s:%d", cfg.Xray.Address, cfg.Xray.Port)
-	xrayClient, err := xray.New(xrayAddr)
+	xrayClient, err := xray.New(&cfg.Xray)
 	if err != nil {
 		zlog.Fatal().Err(err).Msg("failed to connect xray")
 	}

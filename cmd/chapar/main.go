@@ -19,7 +19,6 @@ import (
 	zlog "github.com/rs/zerolog/log"
 	"github.com/vayzur/apadana/pkg/storage/etcd"
 	"github.com/vayzur/apadana/pkg/storage/resources"
-	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func main() {
@@ -36,11 +35,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	etcdClient, err := clientv3.New(clientv3.Config{
-		Endpoints:   cfg.EtcdEndpoints,
-		DialTimeout: 5 * time.Second,
-		Context:     ctx,
-	})
+	etcdClient, err := etcd.NewClient(&cfg.Etcd, ctx)
 	if err != nil {
 		zlog.Fatal().Err(err).Msg("failed to connect etcd")
 	}

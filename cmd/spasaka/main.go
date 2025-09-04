@@ -13,10 +13,10 @@ import (
 	"github.com/vayzur/apadana/pkg/leader"
 	spasakaconfigv1 "github.com/vayzur/apadana/pkg/spasaka/config/v1"
 	"github.com/vayzur/apadana/pkg/spasaka/controller"
+	"github.com/vayzur/apadana/pkg/storage/etcd"
 
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
-	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
 )
 
@@ -35,14 +35,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	etcdCtx, etcdCancel := context.WithCancel(ctx)
-	defer etcdCancel()
-
-	etcdClient, err := clientv3.New(clientv3.Config{
-		Endpoints:   cfg.EtcdEndpoints,
-		DialTimeout: 5 * time.Second,
-		Context:     etcdCtx,
-	})
+	etcdClient, err := etcd.NewClient(&cfg.Etcd, ctx)
 	if err != nil {
 		zlog.Fatal().Err(err).Msg("failed to connect etcd")
 	}
