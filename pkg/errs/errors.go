@@ -1,9 +1,9 @@
 package errs
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
-	"json"
 	"maps"
 )
 
