@@ -81,6 +81,13 @@ func (e *EtcdStorage) ReadinessCheck() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := e.client.Status(ctx, e.client.Endpoints()[0])
-	return err
+	var lastErr error
+	for _, ep := range e.client.Endpoints() {
+		_, err := e.client.Status(ctx, ep)
+		if err == nil {
+			return nil
+		}
+		lastErr = err
+	}
+	return lastErr
 }
