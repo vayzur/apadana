@@ -12,11 +12,15 @@ import (
 	apadana "github.com/vayzur/apadana/pkg/client"
 
 	xray "github.com/vayzur/apadana/pkg/satrap/xray/client"
+	xrayconfigv1 "github.com/vayzur/apadana/pkg/satrap/xray/config/v1"
 )
 
 func main() {
-	xrayAddr := "127.0.0.1:8080"
-	xrayCli, _ := xray.New(xrayAddr)
+	xrayConf := xrayconfigv1.XrayConfig{
+		Address: "127.0.0.1",
+		Port:    8080,
+	}
+	xrayCli, _ := xray.New(&xrayConf)
 
 	listenAddr := "0.0.0.0"
 	port := 10800
