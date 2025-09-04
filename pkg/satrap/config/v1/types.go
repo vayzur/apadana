@@ -1,38 +1,33 @@
 package v1
 
-import "time"
+import (
+	"time"
+
+	chaparconfigv1 "github.com/vayzur/apadana/pkg/chapar/config/v1"
+	xrayconfigv1 "github.com/vayzur/apadana/pkg/satrap/xray/config/v1"
+)
 
 type TLSConfig struct {
 	Enabled  bool   `mapstructure:"enabled" yaml:"enabled"`
 	CertFile string `mapstructure:"certFile" yaml:"certFile"`
 	KeyFile  string `mapstructure:"keyFile" yaml:"keyFile"`
 }
-type ClusterConfig struct {
-	Enabled bool   `mapstructure:"enabled" yaml:"enabled"`
-	Server  string `mapstructure:"server" yaml:"server"`
-	Token   string `mapstructure:"token" yaml:"token"`
-}
-
-type XrayConfig struct {
-	Address string `mapstructure:"address" yaml:"address"`
-	Port    uint16 `mapstructure:"port" yaml:"port"`
-}
 
 type SatrapConfig struct {
-	NodeID                       string        `mapstructure:"nodeID" yaml:"nodeID"`
-	Address                      string        `mapstructure:"address" yaml:"address"`
-	Port                         uint16        `mapstructure:"port" yaml:"port"`
-	Prefork                      bool          `mapstructure:"prefork" yaml:"prefork"`
-	Token                        string        `mapstructure:"token" yaml:"token"`
-	TLS                          TLSConfig     `mapstructure:"tls" yaml:"tls"`
-	Xray                         XrayConfig    `mapstructure:"xray" yaml:"xray"`
-	Cluster                      ClusterConfig `mapstructure:"cluster" yaml:"cluster"`
-	NodeStatusUpdateFrequency    time.Duration `mapstructure:"nodeStatusUpdateFrequency" yaml:"nodeStatusUpdateFrequency"`
-	SyncFrequency                time.Duration `mapstructure:"syncFrequency" yaml:"syncFrequency"`
-	ConcurrentInboundSyncs       int32         `mapstructure:"concurrentInboundSyncs" yaml:"concurrentInboundSyncs"`
-	ConcurrentInboundExpireSyncs int32         `mapstructure:"concurrentInboundExpireSyncs" yaml:"concurrentInboundExpireSyncs"`
-	ConcurrentInboundGCSyncs     int32         `mapstructure:"concurrentInboundGCSyncs" yaml:"concurrentInboundGCSyncs"`
-	ConcurrentUserSyncs          int32         `mapstructure:"concurrentUserSyncs" yaml:"concurrentUserSyncs"`
-	ConcurrentUserExpireSyncs    int32         `mapstructure:"concurrentUserExpireSyncs" yaml:"concurrentUserExpireSyncs"`
-	MaxInbounds                  int32         `mapstructure:"maxInbounds" yaml:"maxInbounds"`
+	NodeID                       string                       `mapstructure:"nodeID" yaml:"nodeID"`
+	Address                      string                       `mapstructure:"address" yaml:"address"`
+	Port                         uint16                       `mapstructure:"port" yaml:"port"`
+	Prefork                      bool                         `mapstructure:"prefork" yaml:"prefork"`
+	Token                        string                       `mapstructure:"token" yaml:"token"`
+	TLS                          TLSConfig                    `mapstructure:"tls" yaml:"tls"`
+	Xray                         xrayconfigv1.XrayConfig      `mapstructure:"xray" yaml:"xray"`
+	Cluster                      chaparconfigv1.ClusterConfig `mapstructure:"cluster" yaml:"cluster"`
+	NodeStatusUpdateFrequency    time.Duration                `mapstructure:"nodeStatusUpdateFrequency" yaml:"nodeStatusUpdateFrequency"`
+	SyncFrequency                time.Duration                `mapstructure:"syncFrequency" yaml:"syncFrequency"`
+	ConcurrentInboundSyncs       int32                        `mapstructure:"concurrentInboundSyncs" yaml:"concurrentInboundSyncs"`
+	ConcurrentInboundExpireSyncs int32                        `mapstructure:"concurrentInboundExpireSyncs" yaml:"concurrentInboundExpireSyncs"`
+	ConcurrentInboundGCSyncs     int32                        `mapstructure:"concurrentInboundGCSyncs" yaml:"concurrentInboundGCSyncs"`
+	ConcurrentUserSyncs          int32                        `mapstructure:"concurrentUserSyncs" yaml:"concurrentUserSyncs"`
+	ConcurrentUserExpireSyncs    int32                        `mapstructure:"concurrentUserExpireSyncs" yaml:"concurrentUserExpireSyncs"`
+	MaxInbounds                  int32                        `mapstructure:"maxInbounds" yaml:"maxInbounds"`
 }
