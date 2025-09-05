@@ -35,7 +35,7 @@ func (c *Client) ListInbounds(ctx context.Context) (map[string]struct{}, error) 
 }
 
 func (c *Client) AddInbound(ctx context.Context, inbound []byte) error {
-	conf := new(conf.InboundDetourConfig)
+	conf := &conf.InboundDetourConfig{}
 	if err := json.Unmarshal(inbound, conf); err != nil {
 		return fmt.Errorf("inbound unmarshal failed: %w", err)
 	}
