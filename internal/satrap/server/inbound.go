@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
@@ -25,11 +26,25 @@ func (s *Server) InboundsCount(c fiber.Ctx) error {
 }
 
 func (s *Server) AddInbound(c fiber.Ctx) error {
-	b := c.Body()
+	zlog.Info().Str("component", "satrap").Str("resource", "inbound").Str("action", "create").Str("body", string(c.Body())).Msg("received")
 
-	zlog.Info().Str("component", "satrap").Str("resource", "inbound").Str("action", "create").Str("body", string(c.Body())).Msg("received body")
+	conf := &satrapv1.InboundConfig{}
+	if err := c.Bind().JSON(conf); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
 
-	if err := s.xrayClient.AddInbound(context.Background(), b); err != nil {
+	clean, err := json.Marshal(conf)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	zlog.Info().Str("component", "satrap").Str("resource", "inbound").Str("action", "create").RawJSON("raw", clean).Msg("cleaned")
+
+	if err := s.xrayClient.AddInbound(context.Background(), clean); err != nil {
 		if errors.Is(err, errs.ErrConflict) {
 			return c.SendStatus(fiber.StatusConflict)
 		}
