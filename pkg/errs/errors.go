@@ -2,7 +2,6 @@ package errs
 
 import (
 	"errors"
-	"fmt"
 	"maps"
 )
 
@@ -14,13 +13,13 @@ var (
 )
 
 type Error struct {
-	Kind   string
-	Msg    string
-	Fields map[string]string
+	Kind   string            `json:"kind,omitempty"`
+	Msg    string            `json:"message"`
+	Fields map[string]string `json:"fields,omitempty"`
 }
 
 func (e *Error) Error() string {
-	return fmt.Sprintf("kind=%s msg=%s fields=%v", e.Kind, e.Msg, e.Fields)
+	return e.Msg
 }
 
 func New(kind, msg string) *Error {
