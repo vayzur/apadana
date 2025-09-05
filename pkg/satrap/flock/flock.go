@@ -3,6 +3,7 @@ package flock
 import (
 	"fmt"
 	"os"
+	"syscall"
 )
 
 type Flock struct {
@@ -30,6 +31,10 @@ func (f *Flock) TryLock() error {
 	}
 
 	fmt.Fprintf(file, "%d", os.Getpid())
+
+	// file stays accessible via fd but auto-cleans on process death
+	syscall.Unlink(f.path)
+
 	f.file = file
 	return nil
 }
@@ -43,13 +48,9 @@ func (f *Flock) Unlock() error {
 		return fmt.Errorf("lock not held")
 	}
 
-	name := f.file.Name()
+	// Just close the fd - file is already unlinked
 	if err := f.file.Close(); err != nil {
 		return fmt.Errorf("failed to close lock file: %w", err)
-	}
-
-	if err := os.Remove(name); err != nil {
-		return fmt.Errorf("failed to remove lock file: %w", err)
 	}
 
 	f.file = nil
