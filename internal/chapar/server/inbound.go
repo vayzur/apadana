@@ -41,6 +41,8 @@ func (s *Server) CreateInbound(c fiber.Ctx) error {
 		)
 	}
 
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "create").Str("nodeID", nodeID).Str("body", string(c.Body())).Msg("received body")
+
 	inbound := &satrapv1.Inbound{}
 	if err := c.Bind().JSON(inbound); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(
@@ -49,6 +51,22 @@ func (s *Server) CreateInbound(c fiber.Ctx) error {
 			},
 		)
 	}
+
+	zlog.Info().
+		Str("component", "chapar").
+		Str("resource", "inbound").
+		Str("action", "create").
+		Str("nodeID", nodeID).
+		Str("tag", inbound.Config.Tag).
+		Str("protocol", inbound.Config.Protocol).
+		Uint16("port", inbound.Config.Port).
+		Str("listen", string(inbound.Config.Listen)).
+		Str("settings", string(inbound.Config.Settings)).
+		Str("streamSettings", string(inbound.Config.StreamSettings)).
+		Str("streamSettings", string(inbound.Config.StreamSettings)).
+		Str("allocate", string(inbound.Config.Allocate)).
+		Str("sniffing", string(inbound.Config.Sniffing)).
+		Msg("received object")
 
 	if err := s.inboundService.CreateInbound(c.RequestCtx(), nodeID, inbound); err != nil {
 		if errors.Is(err, errs.ErrConflict) {

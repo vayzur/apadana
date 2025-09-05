@@ -7,6 +7,7 @@ import (
 	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
 
 	"github.com/gofiber/fiber/v3"
+	zlog "github.com/rs/zerolog/log"
 	"github.com/vayzur/apadana/pkg/errs"
 )
 
@@ -25,6 +26,8 @@ func (s *Server) InboundsCount(c fiber.Ctx) error {
 
 func (s *Server) AddInbound(c fiber.Ctx) error {
 	b := c.Body()
+
+	zlog.Info().Str("component", "satrap").Str("resource", "inbound").Str("action", "create").Str("body", string(c.Body())).Msg("received body")
 
 	if err := s.xrayClient.AddInbound(context.Background(), b); err != nil {
 		if errors.Is(err, errs.ErrConflict) {
