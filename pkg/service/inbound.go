@@ -69,7 +69,7 @@ func (s *InboundService) CreateInbound(ctx context.Context, nodeID string, inbou
 		return errs.ErrNodeCapacity
 	}
 	if err := s.satrapClient.AddInbound(node, &inbound.Config); err != nil {
-		return fmt.Errorf("inbound add %s/%s: %w", nodeID, inbound.Config.Tag, err)
+		return fmt.Errorf("inbound add runtime %s/%s: %w", nodeID, inbound.Config.Tag, err)
 	}
 	if err := s.store.CreateInbound(ctx, nodeID, inbound); err != nil {
 		if rerr := s.satrapClient.RemoveInbound(node, inbound.Config.Tag); rerr != nil {
@@ -134,7 +134,7 @@ func (s *InboundService) DeleteUser(ctx context.Context, nodeID, tag, email stri
 		return err
 	}
 	if err := s.satrapClient.RemoveUser(node, tag, email); err != nil && !errors.Is(err, errs.ErrNotFound) {
-		return fmt.Errorf("inbound user delete %s/%s: %w", nodeID, tag, err)
+		return fmt.Errorf("inbound user delete runtime %s/%s: %w", nodeID, tag, err)
 	}
 	if err := s.store.DeleteUser(ctx, nodeID, tag, email); err != nil {
 		return fmt.Errorf("inbound user delete store %s/%s/%s: %w", nodeID, tag, email, err)
@@ -148,7 +148,7 @@ func (s *InboundService) CreateUser(ctx context.Context, nodeID, tag string, use
 		return err
 	}
 	if err := s.satrapClient.AddUser(node, tag, user); err != nil {
-		return fmt.Errorf("create inbound user %s/%s/%s: %w", nodeID, tag, user.Email, err)
+		return fmt.Errorf("create inbound user runtime %s/%s/%s: %w", nodeID, tag, user.Email, err)
 	}
 	if err := s.store.CreateUser(ctx, nodeID, tag, user); err != nil {
 		if rerr := s.satrapClient.RemoveUser(node, tag, user.Email); rerr != nil && !errors.Is(rerr, errs.ErrNotFound) {
