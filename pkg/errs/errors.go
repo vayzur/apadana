@@ -1,7 +1,6 @@
 package errs
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
@@ -21,8 +20,7 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	fields, _ := json.Marshal(e.Fields)
-	return fmt.Sprintf("kind=%s msg=%s fields=%s", e.Kind, e.Msg, string(fields))
+	return fmt.Sprintf("kind=%s msg=%s fields=%v", e.Kind, e.Msg, e.Fields)
 }
 
 func New(kind, msg string) *Error {
