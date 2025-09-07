@@ -7,8 +7,6 @@ builds:
     binary: chapar
     goos:
       - linux
-      - windows
-      - darwin
     goarch:
       - amd64
       - arm64
@@ -23,8 +21,6 @@ builds:
     binary: spasaka
     goos:
       - linux
-      - windows
-      - darwin
     goarch:
       - amd64
       - arm64
@@ -39,8 +35,6 @@ builds:
     binary: satrap
     goos:
       - linux
-      - windows
-      - darwin
     goarch:
       - amd64
       - arm64
@@ -53,10 +47,10 @@ builds:
 archives:
   -
     formats: ["zip"]
-    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+    name_template: "{{ .ProjectName }}-{{ .Arch }}"
 
 checksum:
-  name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}-checksum.txt"
+  name_template: "{{ .ProjectName }}-{{ .Arch }}-checksum.txt"
   split: true
 
 changelog:
