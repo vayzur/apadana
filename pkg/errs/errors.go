@@ -2,6 +2,7 @@ package errs
 
 import (
 	"errors"
+	"fmt"
 	"maps"
 )
 
@@ -19,7 +20,7 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	return e.Msg
+	return fmt.Sprintf("kind: %s msg: %s fields: %v", e.Kind, e.Msg, e.Fields)
 }
 
 func New(kind, msg string) *Error {
