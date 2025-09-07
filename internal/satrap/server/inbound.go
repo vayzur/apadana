@@ -32,7 +32,7 @@ func (s *Server) AddInbound(c fiber.Ctx) error {
 		if errors.Is(err, errs.ErrConflict) {
 			return c.SendStatus(fiber.StatusConflict)
 		}
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.SendStatus(fiber.StatusCreated)
 }
@@ -48,7 +48,7 @@ func (s *Server) RemoveInbound(c fiber.Ctx) error {
 		if errors.Is(err, errs.ErrNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
 		}
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.SendStatus(fiber.StatusNoContent)
 }
@@ -93,7 +93,7 @@ func (s *Server) RemoveUser(c fiber.Ctx) error {
 		if errors.Is(err, errs.ErrNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
 		}
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.SendStatus(fiber.StatusNoContent)
 }
