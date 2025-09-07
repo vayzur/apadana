@@ -11,30 +11,22 @@ import (
 )
 
 func main() {
-	apadanaClient := apadana.New("http://127.0.0.1:10200", "cluster-shared-token", time.Second*5)
+	clusterAddress := "https://sub.domain.tld:10200"
+	clusterToken := "cluster-shared-token"
+	apadanaClient := apadana.New(clusterAddress, clusterToken, time.Second*5)
 
 	n := &corev1.Node{
 		Metadata: corev1.NodeMetadata{
 			Name: "test",
 			Labels: map[string]string{
-				"region":  "EU",
-				"country": "germany",
+				"region":   "eu",
+				"country":  "france",
+				"provider": "ovh",
+				"purpose":  "gaming",
 			},
 			Annotations: map[string]string{
 				"fakeHost": "www.speedtest.net",
 				"sni":      "gate.domain.tld",
-			},
-		},
-		Status: corev1.NodeStatus{
-			Addresses: []corev1.NodeAddress{
-				{
-					Type: corev1.InternalAddress,
-					Host: "127.0.0.1",
-				},
-				{
-					Type: corev1.ExternalAddress,
-					Host: "sub.domain.tld",
-				},
 			},
 		},
 		Spec: corev1.NodeSpec{
