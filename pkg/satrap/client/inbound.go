@@ -12,8 +12,8 @@ import (
 )
 
 func (c *Client) InboundsCount(node *corev1.Node) (*satrapv1.Count, error) {
-	url := fmt.Sprintf("%s/api/v1/inbounds/count", node.Address)
-	status, resp, err := c.httpClient.Do(http.MethodGet, url, node.Token, nil)
+	url := node.URL("/api/v1/inbounds/count")
+	status, resp, err := c.httpClient.Do(http.MethodGet, url, node.Spec.Token, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -31,8 +31,8 @@ func (c *Client) AddInbound(node *corev1.Node, inboundConfig *satrapv1.InboundCo
 	if err := inboundConfig.Validate(); err != nil {
 		return fmt.Errorf("validate inbound failed %s/%s: %w", node.Metadata.ID, inboundConfig.Tag, err)
 	}
-	url := fmt.Sprintf("%s/api/v1/inbounds", node.Address)
-	status, resp, err := c.httpClient.Do(http.MethodPost, url, node.Token, inboundConfig)
+	url := node.URL("/api/v1/inbounds")
+	status, resp, err := c.httpClient.Do(http.MethodPost, url, node.Spec.Token, inboundConfig)
 	if err != nil {
 		return err
 	}
@@ -46,8 +46,9 @@ func (c *Client) AddInbound(node *corev1.Node, inboundConfig *satrapv1.InboundCo
 }
 
 func (c *Client) RemoveInbound(node *corev1.Node, tag string) error {
-	url := fmt.Sprintf("%s/api/v1/inbounds/%s", node.Address, tag)
-	status, resp, err := c.httpClient.Do(http.MethodDelete, url, node.Token, nil)
+	path := fmt.Sprintf("/api/v1/inbounds/%s", tag)
+	url := node.URL(path)
+	status, resp, err := c.httpClient.Do(http.MethodDelete, url, node.Spec.Token, nil)
 	if err != nil {
 		return err
 	}
@@ -61,8 +62,9 @@ func (c *Client) RemoveInbound(node *corev1.Node, tag string) error {
 }
 
 func (c *Client) AddUser(node *corev1.Node, tag string, user *satrapv1.InboundUser) error {
-	url := fmt.Sprintf("%s/api/v1/inbounds/%s/users", node.Address, tag)
-	status, resp, err := c.httpClient.Do(http.MethodPost, url, node.Token, user)
+	path := fmt.Sprintf("/api/v1/inbounds/%s/users", tag)
+	url := node.URL(path)
+	status, resp, err := c.httpClient.Do(http.MethodPost, url, node.Spec.Token, user)
 	if err != nil {
 		return err
 	}
@@ -76,8 +78,9 @@ func (c *Client) AddUser(node *corev1.Node, tag string, user *satrapv1.InboundUs
 }
 
 func (c *Client) RemoveUser(node *corev1.Node, tag, email string) error {
-	url := fmt.Sprintf("%s/api/v1/inbounds/%s/users/%s", node.Address, tag, email)
-	status, resp, err := c.httpClient.Do(http.MethodDelete, url, node.Token, nil)
+	path := fmt.Sprintf("/api/v1/inbounds/%s/users/%s", tag, email)
+	url := node.URL(path)
+	status, resp, err := c.httpClient.Do(http.MethodDelete, url, node.Spec.Token, nil)
 	if err != nil {
 		return err
 	}
