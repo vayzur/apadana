@@ -66,7 +66,7 @@ func (s *InboundService) CreateInbound(ctx context.Context, nodeID string, inbou
 		return err
 	}
 	if inboundsCount.Value >= node.Status.Capacity.MaxInbounds {
-		return errs.ErrNodeCapacity
+		return errs.ErrCapacityExceeded
 	}
 	if err := s.satrapClient.AddInbound(node, &inbound.Config); err != nil {
 		return fmt.Errorf("inbound add runtime %s/%s: %w", nodeID, inbound.Config.Tag, err)

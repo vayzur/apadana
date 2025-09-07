@@ -56,7 +56,7 @@ func (s *Server) CreateInbound(c fiber.Ctx) error {
 		if errors.Is(err, errs.ErrConflict) {
 			return c.SendStatus(fiber.StatusConflict)
 		}
-		if errors.Is(err, errs.ErrNodeCapacity) {
+		if errors.Is(err, errs.ErrCapacityExceeded) {
 			return c.SendStatus(fiber.StatusTooManyRequests)
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(

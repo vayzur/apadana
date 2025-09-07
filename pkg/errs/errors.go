@@ -7,10 +7,10 @@ import (
 )
 
 var (
-	ErrConflict     = errors.New("conflict")
-	ErrNotFound     = errors.New("not found")
-	ErrNodeCapacity = errors.New("node capacity exceeded")
-	ErrUnexpected   = errors.New("unexpected")
+	ErrConflict         = errors.New("conflict")
+	ErrNotFound         = errors.New("not found")
+	ErrCapacityExceeded = errors.New("capacity exceeded")
+	ErrUnexpected       = errors.New("unexpected")
 )
 
 type Error struct {
