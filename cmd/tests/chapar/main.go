@@ -16,14 +16,30 @@ func main() {
 	n := &corev1.Node{
 		Metadata: corev1.NodeMetadata{
 			Name: "test",
-		},
-		Status: corev1.NodeStatus{
-			Capacity: corev1.NodeCapacity{
-				MaxInbounds: 110,
+			Labels: map[string]string{
+				"region":  "EU",
+				"country": "germany",
+			},
+			Annotations: map[string]string{
+				"fakeHost": "www.speedtest.net",
+				"sni":      "gate.domain.tld",
 			},
 		},
-		Address: "http://127.0.0.1:10100",
-		Token:   "satrap-shared-token",
+		Status: corev1.NodeStatus{
+			Addresses: []corev1.NodeAddress{
+				{
+					Type: corev1.InternalAddress,
+					Host: "127.0.0.1",
+				},
+				{
+					Type: corev1.ExternalAddress,
+					Host: "sub.domain.tld",
+				},
+			},
+		},
+		Spec: corev1.NodeSpec{
+			Token: "satrap-shared-token",
+		},
 	}
 	node, err := apadanaClient.CreateNode(n)
 	if err != nil {
