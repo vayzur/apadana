@@ -27,12 +27,16 @@ func NewInboundService(store *resources.InboundStore, nodeService *NodeService, 
 	}
 }
 
-func (s *InboundService) GetInboundsCount(ctx context.Context, nodeID string) (*satrapv1.Count, error) {
+func (s *InboundService) CountRuntimeInbounds(ctx context.Context, nodeID string) (*satrapv1.Count, error) {
 	node, err := s.nodeService.GetNode(ctx, nodeID)
 	if err != nil {
 		return nil, err
 	}
-	return s.satrapClient.InboundsCount(node)
+	return s.satrapClient.CountInbounds(node)
+}
+
+func (s *InboundService) CountInbounds(ctx context.Context, nodeID string) (uint32, error) {
+	return s.store.CountInbounds(ctx, nodeID)
 }
 
 func (s *InboundService) GetInbound(ctx context.Context, nodeID, tag string) (*satrapv1.Inbound, error) {
@@ -61,21 +65,21 @@ func (s *InboundService) CreateInbound(ctx context.Context, nodeID string, inbou
 	if err != nil {
 		return err
 	}
-	inboundsCount, err := s.GetInboundsCount(ctx, nodeID)
+	inboundsCount, err := s.CountInbounds(ctx, nodeID)
 	if err != nil {
 		return err
 	}
-	if inboundsCount.Value >= node.Status.Capacity.MaxInbounds {
+	if inboundsCount >= node.Status.Capacity.MaxInbounds {
 		return errs.ErrCapacityExceeded
 	}
 	if err := s.satrapClient.AddInbound(node, &inbound.Config); err != nil {
-		return fmt.Errorf("inbound add runtime %s/%s: %w", nodeID, inbound.Config.Tag, err)
+		return fmt.Errorf("create inbound runtime %s/%s: %w", nodeID, inbound.Config.Tag, err)
 	}
 	if err := s.store.CreateInbound(ctx, nodeID, inbound); err != nil {
 		if rerr := s.satrapClient.RemoveInbound(node, inbound.Config.Tag); rerr != nil {
-			return fmt.Errorf("inbound add rollback %s/%s failed: %w: %w", nodeID, inbound.Config.Tag, rerr, err)
+			return fmt.Errorf("create inbound rollback %s/%s failed: %w: %w", nodeID, inbound.Config.Tag, rerr, err)
 		}
-		return fmt.Errorf("inbound add store %s/%s: %w", nodeID, inbound.Config.Tag, err)
+		return fmt.Errorf("create inbound store %s/%s: %w", nodeID, inbound.Config.Tag, err)
 	}
 	return nil
 }
@@ -203,7 +207,7 @@ func (s *InboundService) GetActiveUsers(ctx context.Context, nodeID, tag string)
 	return active, nil
 }
 
-func (s *InboundService) InboundRenew(ctx context.Context, nodeID, tag string, renew *satrapv1.Renew) error {
+func (s *InboundService) RenewInbound(ctx context.Context, nodeID, tag string, renew *satrapv1.Renew) error {
 	inbound, err := s.GetInbound(ctx, nodeID, tag)
 	if err != nil {
 		return err
@@ -215,7 +219,7 @@ func (s *InboundService) InboundRenew(ctx context.Context, nodeID, tag string, r
 	return nil
 }
 
-func (s *InboundService) InboundUserRenew(ctx context.Context, nodeID, tag, email string, renew *satrapv1.Renew) error {
+func (s *InboundService) RenewInboundUser(ctx context.Context, nodeID, tag, email string, renew *satrapv1.Renew) error {
 	user, err := s.GetUser(ctx, nodeID, tag, email)
 	if err != nil {
 		return err

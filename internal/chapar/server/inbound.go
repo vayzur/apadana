@@ -218,7 +218,7 @@ func (s *Server) GetInboundUsers(c fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(users)
 }
 
-func (s *Server) InboundRenew(c fiber.Ctx) error {
+func (s *Server) RenewInbound(c fiber.Ctx) error {
 	params, err := s.requiredParams(c, "nodeID", "tag")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
@@ -233,7 +233,7 @@ func (s *Server) InboundRenew(c fiber.Ctx) error {
 		)
 	}
 
-	if err := s.inboundService.InboundRenew(c.RequestCtx(), params["nodeID"], params["tag"], renew); err != nil {
+	if err := s.inboundService.RenewInbound(c.RequestCtx(), params["nodeID"], params["tag"], renew); err != nil {
 		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "update").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("failed")
 		if errors.Is(err, errs.ErrNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
@@ -249,7 +249,7 @@ func (s *Server) InboundRenew(c fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusOK)
 }
 
-func (s *Server) InboundUserRenew(c fiber.Ctx) error {
+func (s *Server) RenewInboundUser(c fiber.Ctx) error {
 	params, err := s.requiredParams(c, "nodeID", "tag", "email")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
@@ -264,7 +264,7 @@ func (s *Server) InboundUserRenew(c fiber.Ctx) error {
 		)
 	}
 
-	if err := s.inboundService.InboundUserRenew(c.RequestCtx(), params["nodeID"], params["tag"], params["email"], renew); err != nil {
+	if err := s.inboundService.RenewInboundUser(c.RequestCtx(), params["nodeID"], params["tag"], params["email"], renew); err != nil {
 		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "update").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("failed")
 		if errors.Is(err, errs.ErrNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
@@ -280,7 +280,7 @@ func (s *Server) InboundUserRenew(c fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusOK)
 }
 
-func (s *Server) GetRuntimeInboundsCount(c fiber.Ctx) error {
+func (s *Server) CountRuntimeInbounds(c fiber.Ctx) error {
 	nodeID := c.Params("nodeID")
 	if nodeID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(
@@ -290,9 +290,9 @@ func (s *Server) GetRuntimeInboundsCount(c fiber.Ctx) error {
 		)
 	}
 
-	count, err := s.inboundService.GetInboundsCount(c.RequestCtx(), nodeID)
+	count, err := s.inboundService.CountRuntimeInbounds(c.RequestCtx(), nodeID)
 	if err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "list").Str("nodeID", nodeID).Int32("count", count.Value).Msg("failed")
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "count").Str("nodeID", nodeID).Uint32("count", count.Value).Msg("failed")
 		if errors.Is(err, errs.ErrNotFound) {
 			return c.SendStatus(fiber.StatusNotFound)
 		}
@@ -303,6 +303,6 @@ func (s *Server) GetRuntimeInboundsCount(c fiber.Ctx) error {
 		)
 	}
 
-	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "list").Str("nodeID", nodeID).Int32("count", count.Value).Msg("retrieved")
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "count").Str("nodeID", nodeID).Uint32("count", count.Value).Msg("retrieved")
 	return c.Status(fiber.StatusOK).JSON(count)
 }

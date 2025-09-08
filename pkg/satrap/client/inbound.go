@@ -11,7 +11,7 @@ import (
 	"github.com/vayzur/apadana/pkg/errs"
 )
 
-func (c *Client) InboundsCount(node *corev1.Node) (*satrapv1.Count, error) {
+func (c *Client) CountInbounds(node *corev1.Node) (*satrapv1.Count, error) {
 	url := node.URL("/api/v1/inbounds/count")
 	status, resp, err := c.httpClient.Do(http.MethodGet, url, node.Spec.Token, nil)
 	if err != nil {

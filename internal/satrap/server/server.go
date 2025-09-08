@@ -44,7 +44,7 @@ func (s *Server) setupRoutes() {
 	v1 := api.Group("/v1")
 
 	inbounds := v1.Group("/inbounds")
-	inbounds.Get("/count", s.InboundsCount)
+	inbounds.Get("/count", s.CountInbounds)
 	inbounds.Post("", s.requireJSON, s.AddInbound)
 	inbounds.Delete("/:tag", s.RemoveInbound)
 
