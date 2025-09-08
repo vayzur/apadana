@@ -30,7 +30,7 @@ type NodeAddress struct {
 }
 
 type NodeCapacity struct {
-	MaxInbounds int32 `json:"maxInbounds"`
+	MaxInbounds uint32 `json:"maxInbounds"`
 }
 
 type NodeConnectionConfig struct {

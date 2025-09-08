@@ -26,10 +26,10 @@ type SatrapConfig struct {
 	Cluster                      chaparconfigv1.ClusterConfig `mapstructure:"cluster" yaml:"cluster"`
 	NodeStatusUpdateFrequency    time.Duration                `mapstructure:"nodeStatusUpdateFrequency" yaml:"nodeStatusUpdateFrequency"`
 	SyncFrequency                time.Duration                `mapstructure:"syncFrequency" yaml:"syncFrequency"`
-	ConcurrentInboundSyncs       int32                        `mapstructure:"concurrentInboundSyncs" yaml:"concurrentInboundSyncs"`
-	ConcurrentInboundExpireSyncs int32                        `mapstructure:"concurrentInboundExpireSyncs" yaml:"concurrentInboundExpireSyncs"`
-	ConcurrentInboundGCSyncs     int32                        `mapstructure:"concurrentInboundGCSyncs" yaml:"concurrentInboundGCSyncs"`
-	ConcurrentUserSyncs          int32                        `mapstructure:"concurrentUserSyncs" yaml:"concurrentUserSyncs"`
-	ConcurrentUserExpireSyncs    int32                        `mapstructure:"concurrentUserExpireSyncs" yaml:"concurrentUserExpireSyncs"`
-	MaxInbounds                  int32                        `mapstructure:"maxInbounds" yaml:"maxInbounds"`
+	ConcurrentInboundSyncs       uint32                       `mapstructure:"concurrentInboundSyncs" yaml:"concurrentInboundSyncs"`
+	ConcurrentInboundExpireSyncs uint32                       `mapstructure:"concurrentInboundExpireSyncs" yaml:"concurrentInboundExpireSyncs"`
+	ConcurrentInboundGCSyncs     uint32                       `mapstructure:"concurrentInboundGCSyncs" yaml:"concurrentInboundGCSyncs"`
+	ConcurrentUserSyncs          uint32                       `mapstructure:"concurrentUserSyncs" yaml:"concurrentUserSyncs"`
+	ConcurrentUserExpireSyncs    uint32                       `mapstructure:"concurrentUserExpireSyncs" yaml:"concurrentUserExpireSyncs"`
+	MaxInbounds                  uint32                       `mapstructure:"maxInbounds" yaml:"maxInbounds"`
 }

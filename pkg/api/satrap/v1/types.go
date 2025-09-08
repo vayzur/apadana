@@ -11,8 +11,10 @@ const (
 )
 
 type Metadata struct {
-	CreationTimestamp time.Time     `json:"creationTimestamp"`
-	TTL               time.Duration `json:"ttl"`
+	CreationTimestamp time.Time         `json:"creationTimestamp"`
+	TTL               time.Duration     `json:"ttl"`
+	Labels            map[string]string `json:"labels,omitempty"`
+	Annotations       map[string]string `json:"annotations,omitempty"`
 }
 
 type Renew struct {
@@ -20,7 +22,7 @@ type Renew struct {
 }
 
 type Count struct {
-	Value int32 `json:"count"`
+	Value uint32 `json:"count"`
 }
 
 var Empty struct{}
