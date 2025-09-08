@@ -77,6 +77,14 @@ func (e *EtcdStorage) GetList(ctx context.Context, key string) (map[string][]byt
 	return result, nil
 }
 
+func (e *EtcdStorage) Count(ctx context.Context, key string) (uint32, error) {
+	resp, err := e.client.Get(ctx, key, clientv3.WithPrefix(), clientv3.WithCountOnly())
+	if err != nil {
+		return 0, fmt.Errorf("%q: %w", key, err)
+	}
+	return uint32(resp.Count), nil
+}
+
 func (e *EtcdStorage) ReadinessCheck() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

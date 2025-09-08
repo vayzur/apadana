@@ -88,6 +88,16 @@ func (s *InboundStore) GetInbounds(ctx context.Context, nodeID string) ([]*satra
 	return inbounds, nil
 }
 
+func (s *InboundStore) CountInbounds(ctx context.Context, nodeID string) (uint32, error) {
+	key := fmt.Sprintf("/inbounds/%s/", nodeID)
+	count, err := s.store.Count(ctx, key)
+	if err != nil {
+		return 0, fmt.Errorf("count inbounds %s: %w", nodeID, err)
+	}
+
+	return count, nil
+}
+
 func (s *InboundStore) GetUser(ctx context.Context, nodeID, tag, email string) (*satrapv1.InboundUser, error) {
 	key := fmt.Sprintf("/inboundUsers/%s/%s/%s", nodeID, tag, email)
 	resp, err := s.store.Get(ctx, key)
@@ -154,4 +164,14 @@ func (s *InboundStore) GetUsers(ctx context.Context, nodeID, tag string) ([]*sat
 	}
 
 	return users, nil
+}
+
+func (s *InboundStore) CountUsers(ctx context.Context, nodeID, tag string) (uint32, error) {
+	key := fmt.Sprintf("/inboundUsers/%s/%s/", nodeID, tag)
+	count, err := s.store.Count(ctx, key)
+	if err != nil {
+		return 0, fmt.Errorf("count inbound users %s: %w", nodeID, err)
+	}
+
+	return count, nil
 }
