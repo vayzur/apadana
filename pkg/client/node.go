@@ -29,6 +29,40 @@ func (c *Client) UpdateNodeStatus(nodeID string, nodeStatus *corev1.NodeStatus) 
 	return nil
 }
 
+func (c *Client) UpdateNodeMetadata(nodeID string, nodeMetadata *corev1.NodeMetadata) error {
+	if nodeID == "" {
+		return fmt.Errorf("nodeID cannot be empty")
+	}
+	url := fmt.Sprintf("%s/api/v1/nodes/%s/metadata", c.address, nodeID)
+	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, nodeMetadata)
+	if err != nil {
+		zlog.Error().Err(err).Str("component", "client").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Msg("failed")
+		return err
+	}
+	if status != http.StatusOK {
+		zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
+	}
+	return nil
+}
+
+func (c *Client) UpdateNodeSpec(nodeID string, nodeSpec *corev1.NodeSpec) error {
+	if nodeID == "" {
+		return fmt.Errorf("nodeID cannot be empty")
+	}
+	url := fmt.Sprintf("%s/api/v1/nodes/%s/spec", c.address, nodeID)
+	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, nodeSpec)
+	if err != nil {
+		zlog.Error().Err(err).Str("component", "client").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Msg("failed")
+		return err
+	}
+	if status != http.StatusOK {
+		zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		return errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
+	}
+	return nil
+}
+
 func (c *Client) GetNode(nodeID string) (*corev1.Node, error) {
 	if nodeID == "" {
 		return nil, fmt.Errorf("nodeID cannot be empty")

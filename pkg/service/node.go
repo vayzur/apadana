@@ -59,3 +59,26 @@ func (s *NodeService) UpdateNodeStatus(ctx context.Context, nodeID string, statu
 	node.Status = *status
 	return s.CreateNode(ctx, node)
 }
+
+func (s *NodeService) UpdateNodeMetadata(ctx context.Context, nodeID string, metadata *corev1.NodeMetadata) error {
+	node, err := s.GetNode(ctx, nodeID)
+	if err != nil {
+		return err
+	}
+
+	metadata.ID = node.Metadata.ID
+	metadata.CreationTimestamp = node.Metadata.CreationTimestamp
+
+	node.Metadata = *metadata
+	return s.CreateNode(ctx, node)
+}
+
+func (s *NodeService) UpdateNodeSpec(ctx context.Context, nodeID string, spec *corev1.NodeSpec) error {
+	node, err := s.GetNode(ctx, nodeID)
+	if err != nil {
+		return err
+	}
+
+	node.Spec = *spec
+	return s.CreateNode(ctx, node)
+}

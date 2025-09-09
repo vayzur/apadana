@@ -72,7 +72,7 @@ func (s *Server) GetNode(c fiber.Ctx) error {
 }
 
 func (s *Server) CreateNode(c fiber.Ctx) error {
-	node := new(corev1.Node)
+	node := &corev1.Node{}
 	if err := c.Bind().JSON(node); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
@@ -135,7 +135,7 @@ func (s *Server) UpdateNodeStatus(c fiber.Ctx) error {
 		)
 	}
 
-	nodeStatus := new(corev1.NodeStatus)
+	nodeStatus := &corev1.NodeStatus{}
 	if err := c.Bind().JSON(nodeStatus); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
@@ -145,6 +145,68 @@ func (s *Server) UpdateNodeStatus(c fiber.Ctx) error {
 	}
 
 	if err := s.nodeService.UpdateNodeStatus(c.RequestCtx(), nodeID, nodeStatus); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	zlog.Info().Str("component", "chapar").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Msg("updated")
+	return c.SendStatus(fiber.StatusOK)
+}
+
+func (s *Server) UpdateNodeMetadata(c fiber.Ctx) error {
+	nodeID := c.Params("nodeID")
+	if nodeID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(
+			fiber.Map{
+				"error": "nodeID parameter is required",
+			},
+		)
+	}
+
+	metadata := &corev1.NodeMetadata{}
+	if err := c.Bind().JSON(metadata); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	if err := s.nodeService.UpdateNodeMetadata(c.RequestCtx(), nodeID, metadata); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	zlog.Info().Str("component", "chapar").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Msg("updated")
+	return c.SendStatus(fiber.StatusOK)
+}
+
+func (s *Server) UpdateNodeSpec(c fiber.Ctx) error {
+	nodeID := c.Params("nodeID")
+	if nodeID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(
+			fiber.Map{
+				"error": "nodeID parameter is required",
+			},
+		)
+	}
+
+	spec := &corev1.NodeSpec{}
+	if err := c.Bind().JSON(spec); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	if err := s.nodeService.UpdateNodeSpec(c.RequestCtx(), nodeID, spec); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(
 			fiber.Map{
 				"error": err.Error(),

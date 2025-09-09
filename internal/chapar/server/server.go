@@ -52,6 +52,8 @@ func (s *Server) setupRoutes() {
 	nodes.Post("", s.CreateNode)
 	nodes.Delete("/:nodeID", s.DeleteNode)
 	nodes.Patch("/:nodeID/status", s.UpdateNodeStatus)
+	nodes.Patch("/:nodeID/metadata", s.UpdateNodeMetadata)
+	nodes.Patch("/:nodeID/spec", s.UpdateNodeSpec)
 
 	inbounds := nodes.Group("/:nodeID/inbounds")
 	inbounds.Get("", s.GetInbounds)
