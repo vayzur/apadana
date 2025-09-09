@@ -58,6 +58,7 @@ func (s *Server) setupRoutes() {
 	inbounds := nodes.Group("/:nodeID/inbounds")
 	inbounds.Get("", s.GetInbounds)
 	inbounds.Post("", s.CreateInbound)
+	inbounds.Get("/count", s.CountInbounds)
 	inbounds.Get("/runtime/count", s.CountRuntimeInbounds)
 	inbounds.Get("/:tag", s.GetInbound)
 	inbounds.Delete("/:tag", s.DeleteInbound)
@@ -65,6 +66,7 @@ func (s *Server) setupRoutes() {
 
 	inboundUsers := inbounds.Group("/:tag/users")
 	inboundUsers.Get("", s.GetInboundUsers)
+	inboundUsers.Get("/count", s.CountInboundUsers)
 	inboundUsers.Post("", s.CreateUser)
 	inboundUsers.Delete("/:email", s.DeleteUser)
 	inboundUsers.Patch("/:email/renew", s.RenewInboundUser)

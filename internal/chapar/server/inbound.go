@@ -306,3 +306,123 @@ func (s *Server) CountRuntimeInbounds(c fiber.Ctx) error {
 	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "count").Str("nodeID", nodeID).Uint32("count", count.Value).Msg("retrieved")
 	return c.Status(fiber.StatusOK).JSON(count)
 }
+
+func (s *Server) UpdateInboundMetadata(c fiber.Ctx) error {
+	params, err := s.requiredParams(c, "nodeID", "tag")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	metadata := &satrapv1.Metadata{}
+	if err := c.Bind().JSON(metadata); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	if err := s.inboundService.UpdateInboundMetadata(c.RequestCtx(), params["nodeID"], params["tag"], metadata); err != nil {
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "update").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("failed")
+		if errors.Is(err, errs.ErrNotFound) {
+			return c.SendStatus(fiber.StatusNotFound)
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "update").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("updated")
+	return c.SendStatus(fiber.StatusOK)
+}
+
+func (s *Server) UpdateInboundUserMetadata(c fiber.Ctx) error {
+	params, err := s.requiredParams(c, "nodeID", "tag", "email")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	metadata := &satrapv1.Metadata{}
+	if err := c.Bind().JSON(metadata); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	if err := s.inboundService.UpdateUserMetadata(c.RequestCtx(), params["nodeID"], params["tag"], params["email"], metadata); err != nil {
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "update").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("failed")
+		if errors.Is(err, errs.ErrNotFound) {
+			return c.SendStatus(fiber.StatusNotFound)
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "update").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("updated")
+	return c.SendStatus(fiber.StatusOK)
+}
+
+func (s *Server) CountInbounds(c fiber.Ctx) error {
+	nodeID := c.Params("nodeID")
+	if nodeID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(
+			fiber.Map{
+				"error": "nodeID parameter is required",
+			},
+		)
+	}
+
+	count, err := s.inboundService.CountInbounds(c.RequestCtx(), nodeID)
+	if err != nil {
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "count").Str("nodeID", nodeID).Uint32("count", count).Msg("failed")
+		if errors.Is(err, errs.ErrNotFound) {
+			return c.SendStatus(fiber.StatusNotFound)
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	countResp := &satrapv1.Count{
+		Value: count,
+	}
+
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "count").Str("nodeID", nodeID).Uint32("count", count).Msg("retrieved")
+	return c.Status(fiber.StatusOK).JSON(countResp)
+}
+
+func (s *Server) CountInboundUsers(c fiber.Ctx) error {
+	params, err := s.requiredParams(c, "nodeID", "tag")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	count, err := s.inboundService.CountUsers(c.RequestCtx(), params["nodeID"], params["tag"])
+	if err != nil {
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "count").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Uint32("count", count).Msg("failed")
+		if errors.Is(err, errs.ErrNotFound) {
+			return c.SendStatus(fiber.StatusNotFound)
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	countResp := &satrapv1.Count{
+		Value: count,
+	}
+
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "count").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Uint32("count", count).Msg("retrieved")
+	return c.Status(fiber.StatusOK).JSON(countResp)
+}

@@ -132,6 +132,10 @@ func (s *InboundService) GetUser(ctx context.Context, nodeID, tag, email string)
 	return s.store.GetUser(ctx, nodeID, tag, email)
 }
 
+func (s *InboundService) CountUsers(ctx context.Context, nodeID, tag string) (uint32, error) {
+	return s.store.CountUsers(ctx, nodeID, tag)
+}
+
 func (s *InboundService) DeleteUser(ctx context.Context, nodeID, tag, email string) error {
 	node, err := s.nodeService.GetNode(ctx, nodeID)
 	if err != nil {
@@ -229,4 +233,24 @@ func (s *InboundService) RenewInboundUser(ctx context.Context, nodeID, tag, emai
 		return fmt.Errorf("inbound user renew store %s/%s: %w", nodeID, tag, err)
 	}
 	return nil
+}
+
+func (s *InboundService) UpdateInboundMetadata(ctx context.Context, nodeID, tag string, metadata *satrapv1.Metadata) error {
+	inbound, err := s.GetInbound(ctx, nodeID, tag)
+	if err != nil {
+		return err
+	}
+
+	inbound.Metadata = *metadata
+	return s.store.CreateInbound(ctx, nodeID, inbound)
+}
+
+func (s *InboundService) UpdateUserMetadata(ctx context.Context, nodeID, tag, email string, metadata *satrapv1.Metadata) error {
+	user, err := s.GetUser(ctx, nodeID, tag, email)
+	if err != nil {
+		return err
+	}
+
+	user.Metadata = *metadata
+	return s.store.CreateUser(ctx, nodeID, tag, user)
 }
