@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
 	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
 	"github.com/vayzur/apadana/pkg/errs"
+	"golang.org/x/sync/errgroup"
 
 	satrap "github.com/vayzur/apadana/pkg/satrap/client"
 	"github.com/vayzur/apadana/pkg/storage/resources"
@@ -72,14 +74,14 @@ func (s *InboundService) CreateInbound(ctx context.Context, nodeID string, inbou
 	if inboundsCount >= node.Status.Capacity.MaxInbounds {
 		return errs.ErrCapacityExceeded
 	}
-	if err := s.satrapClient.AddInbound(node, &inbound.Config); err != nil {
-		return fmt.Errorf("create inbound runtime %s/%s: %w", nodeID, inbound.Config.Tag, err)
+	if err := s.satrapClient.AddInbound(node, &inbound.Spec.Config); err != nil {
+		return fmt.Errorf("create inbound runtime %s/%s: %w", nodeID, inbound.Spec.Config.Tag, err)
 	}
 	if err := s.store.CreateInbound(ctx, nodeID, inbound); err != nil {
-		if rerr := s.satrapClient.RemoveInbound(node, inbound.Config.Tag); rerr != nil {
-			return fmt.Errorf("create inbound rollback %s/%s failed: %w: %w", nodeID, inbound.Config.Tag, rerr, err)
+		if rerr := s.satrapClient.RemoveInbound(node, inbound.Spec.Config.Tag); rerr != nil {
+			return fmt.Errorf("create inbound rollback %s/%s failed: %w: %w", nodeID, inbound.Spec.Config.Tag, rerr, err)
 		}
-		return fmt.Errorf("create inbound store %s/%s: %w", nodeID, inbound.Config.Tag, err)
+		return fmt.Errorf("create inbound store %s/%s: %w", nodeID, inbound.Spec.Config.Tag, err)
 	}
 	return nil
 }
@@ -151,19 +153,46 @@ func (s *InboundService) DeleteUser(ctx context.Context, nodeID, tag, email stri
 }
 
 func (s *InboundService) CreateUser(ctx context.Context, nodeID, tag string, user *satrapv1.InboundUser) error {
-	node, err := s.nodeService.GetNode(ctx, nodeID)
-	if err != nil {
+	var (
+		node       *corev1.Node
+		inb        *satrapv1.Inbound
+		usersCount uint32
+		nodeErr    error
+		inbErr     error
+		countErr   error
+	)
+
+	g, ctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		node, nodeErr = s.nodeService.GetNode(ctx, nodeID)
+		return nodeErr
+	})
+	g.Go(func() error {
+		inb, inbErr = s.GetInbound(ctx, nodeID, tag)
+		return inbErr
+	})
+	g.Go(func() error {
+		usersCount, countErr = s.CountUsers(ctx, nodeID, tag)
+		return countErr
+	})
+
+	if err := g.Wait(); err != nil {
 		return err
 	}
+
+	if usersCount >= inb.Spec.Capacity.MaxUsers {
+		return errs.ErrCapacityExceeded
+	}
+
+	if err := s.store.CreateUser(ctx, nodeID, tag, user); err != nil {
+		return fmt.Errorf("create inbound user store %s/%s/%s: %w", nodeID, tag, user.Email, err)
+	}
+
 	if err := s.satrapClient.AddUser(node, tag, user); err != nil {
 		return fmt.Errorf("create inbound user runtime %s/%s/%s: %w", nodeID, tag, user.Email, err)
 	}
-	if err := s.store.CreateUser(ctx, nodeID, tag, user); err != nil {
-		if rerr := s.satrapClient.RemoveUser(node, tag, user.Email); rerr != nil && !errors.Is(rerr, errs.ErrNotFound) {
-			return fmt.Errorf("create inbound user rollback %s/%s/%s failed: %w: %w", nodeID, tag, user.Email, rerr, err)
-		}
-		return fmt.Errorf("create inbound user store %s/%s/%s: %w", nodeID, tag, user.Email, err)
-	}
+
 	return nil
 }
 

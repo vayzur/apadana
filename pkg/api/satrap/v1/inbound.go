@@ -24,9 +24,18 @@ type InboundConfig struct {
 	Sniffing       json.RawMessage `json:"sniffing"`
 }
 
+type InboundCapacity struct {
+	MaxUsers uint32 `json:"maxUsers"`
+}
+
+type InboundSpec struct {
+	Capacity InboundCapacity `json:"capacity"`
+	Config   InboundConfig   `json:"config"`
+}
+
 type Inbound struct {
-	Metadata Metadata      `json:"metadata"`
-	Config   InboundConfig `json:"config"`
+	Metadata Metadata    `json:"metadata"`
+	Spec     InboundSpec `json:"spec"`
 }
 
 func (c *InboundConfig) Validate() error {

@@ -45,12 +45,12 @@ func (s *InboundStore) GetInbound(ctx context.Context, nodeID, tag string) (*sat
 func (s *InboundStore) CreateInbound(ctx context.Context, nodeID string, inbound *satrapv1.Inbound) error {
 	val, err := json.Marshal(inbound)
 	if err != nil {
-		return fmt.Errorf("marshal inbound %s/%s: %w", nodeID, inbound.Config.Tag, err)
+		return fmt.Errorf("marshal inbound %s/%s: %w", nodeID, inbound.Spec.Config.Tag, err)
 	}
 
-	key := fmt.Sprintf("/inbounds/%s/%s", nodeID, inbound.Config.Tag)
+	key := fmt.Sprintf("/inbounds/%s/%s", nodeID, inbound.Spec.Config.Tag)
 	if err := s.store.Create(ctx, key, string(val)); err != nil {
-		return fmt.Errorf("create inbound %s/%s: %w", nodeID, inbound.Config.Tag, err)
+		return fmt.Errorf("create inbound %s/%s: %w", nodeID, inbound.Spec.Config.Tag, err)
 	}
 
 	return nil

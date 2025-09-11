@@ -52,7 +52,7 @@ func (s *Server) CreateInbound(c fiber.Ctx) error {
 	}
 
 	if err := s.inboundService.CreateInbound(c.RequestCtx(), nodeID, inbound); err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "create").Str("nodeID", nodeID).Str("tag", inbound.Config.Tag).Msg("failed")
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "create").Str("nodeID", nodeID).Str("tag", inbound.Spec.Config.Tag).Msg("failed")
 		if errors.Is(err, errs.ErrConflict) {
 			return c.SendStatus(fiber.StatusConflict)
 		}
@@ -66,7 +66,7 @@ func (s *Server) CreateInbound(c fiber.Ctx) error {
 		)
 	}
 
-	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "create").Str("nodeID", nodeID).Str("tag", inbound.Config.Tag).Msg("created")
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "create").Str("nodeID", nodeID).Str("tag", inbound.Spec.Config.Tag).Msg("created")
 	return c.Status(fiber.StatusCreated).JSON(inbound)
 }
 

@@ -25,7 +25,7 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 				}
 
 				go func(inb *satrapv1.Inbound) {
-					desiredUsers, err := m.apadanaClient.GetInboundUsers(nodeID, inb.Config.Tag, satrapv1.Active)
+					desiredUsers, err := m.apadanaClient.GetInboundUsers(nodeID, inb.Spec.Config.Tag, satrapv1.Active)
 					if err != nil {
 						return
 					}
@@ -41,11 +41,11 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 	for range m.concurrentInboundExpireSyncs {
 		go func() {
 			for inb := range expireInboundCh {
-				if err := m.apadanaClient.DeleteInbound(nodeID, inb.Config.Tag); err != nil {
+				if err := m.apadanaClient.DeleteInbound(nodeID, inb.Spec.Config.Tag); err != nil {
 					continue
 				}
 				zlog.Info().Str("component", "syncManager").Str("resource", "inbound").
-					Str("nodeID", nodeID).Str("tag", inb.Config.Tag).Msg("expired")
+					Str("nodeID", nodeID).Str("tag", inb.Spec.Config.Tag).Msg("expired")
 			}
 		}()
 	}
@@ -121,7 +121,7 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 			clear(desiredInboundMap)
 			for _, inbound := range desiredInbounds {
 				if inbound != nil {
-					desiredInboundMap[inbound.Config.Tag] = inbound
+					desiredInboundMap[inbound.Spec.Config.Tag] = inbound
 				}
 			}
 
@@ -149,7 +149,7 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 						createInboundCh <- inbound
 					}
 
-					expiredUsers, err := m.apadanaClient.GetInboundUsers(nodeID, inbound.Config.Tag, satrapv1.Expired)
+					expiredUsers, err := m.apadanaClient.GetInboundUsers(nodeID, inbound.Spec.Config.Tag, satrapv1.Expired)
 					if err != nil {
 						continue
 					}
