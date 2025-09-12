@@ -24,16 +24,14 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 					continue
 				}
 
-				go func(inb *satrapv1.Inbound) {
-					desiredUsers, err := m.apadanaClient.GetInboundUsers(nodeID, inb.Spec.Config.Tag, satrapv1.Active)
-					if err != nil {
-						return
-					}
+				desiredUsers, err := m.apadanaClient.GetInboundUsers(nodeID, inb.Spec.Config.Tag, satrapv1.Active)
+				if err != nil {
+					continue
+				}
 
-					for _, user := range desiredUsers {
-						createUserCh <- user
-					}
-				}(inb)
+				for _, user := range desiredUsers {
+					createUserCh <- user
+				}
 			}
 		}()
 	}
