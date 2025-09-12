@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 
 	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
+	"github.com/xtls/xray-core/infra/conf"
 
 	xray "github.com/vayzur/apadana/pkg/satrap/xray/client"
 	xrayconfigv1 "github.com/vayzur/apadana/pkg/satrap/xray/config/v1"
@@ -74,7 +76,12 @@ func main() {
 	    }
 	`, listenAddr, port, clientID, tag)
 
-	if err := xrayCli.AddInbound(context.Background(), []byte(inbound)); err != nil {
+	conf := &conf.InboundDetourConfig{}
+	if err := json.Unmarshal([]byte(inbound), conf); err != nil {
+		log.Printf("unmarshal failed: %v", err)
+	}
+
+	if err := xrayCli.AddInbound(context.Background(), conf); err != nil {
 		log.Printf("failed: %v", err)
 	}
 
