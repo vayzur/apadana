@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -18,35 +17,30 @@ import (
 
 func (c *Client) ListInbounds(ctx context.Context) (map[string]struct{}, error) {
 	req := &command.ListInboundsRequest{IsOnlyTags: true}
-	inbounds, err := c.hsClient.ListInbounds(ctx, req)
+	resp, err := c.hsClient.ListInbounds(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("list inbounds failed: %w", err)
 	}
 
-	inbs := make(map[string]struct{}, len(inbounds.Inbounds))
-	for _, inb := range inbounds.Inbounds {
-		inbs[inb.Tag] = satrapv1.Empty
+	inbounds := make(map[string]struct{}, len(resp.Inbounds))
+	for _, inbound := range resp.Inbounds {
+		inbounds[inbound.Tag] = satrapv1.Empty
 	}
 
 	// remove the "api" tag in one operation
-	delete(inbs, "api")
+	delete(inbounds, "api")
 
-	return inbs, nil
+	return inbounds, nil
 }
 
-func (c *Client) AddInbound(ctx context.Context, inbound []byte) error {
-	conf := &conf.InboundDetourConfig{}
-	if err := json.Unmarshal(inbound, conf); err != nil {
-		return fmt.Errorf("inbound unmarshal failed: %w", err)
-	}
-
+func (c *Client) AddInbound(ctx context.Context, conf *conf.InboundDetourConfig) error {
 	config, err := conf.Build()
 	if err != nil {
 		return fmt.Errorf("inbound build failed: %w", err)
 	}
 
-	inboundConfig := command.AddInboundRequest{Inbound: config}
-	_, err = c.hsClient.AddInbound(ctx, &inboundConfig)
+	req := command.AddInboundRequest{Inbound: config}
+	_, err = c.hsClient.AddInbound(ctx, &req)
 	return handleXrayError(err)
 }
 
@@ -78,6 +72,21 @@ func (c *Client) RemoveUser(ctx context.Context, tag, email string) error {
 		}),
 	})
 	return handleXrayError(err)
+}
+
+func (c *Client) ListUsers(ctx context.Context, tag string) (map[string]struct{}, error) {
+	req := &command.GetInboundUserRequest{Tag: tag}
+	resp, err := c.hsClient.GetInboundUsers(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("list users failed: %w", err)
+	}
+
+	users := make(map[string]struct{}, len(resp.Users))
+	for _, user := range resp.Users {
+		users[user.Email] = satrapv1.Empty
+	}
+
+	return users, nil
 }
 
 func handleXrayError(err error) error {
