@@ -9,6 +9,7 @@ import (
 	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
 	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
 	"github.com/vayzur/apadana/pkg/errs"
+	"github.com/xtls/xray-core/infra/conf"
 )
 
 func (c *Client) CountInbounds(node *corev1.Node) (*satrapv1.Count, error) {
@@ -27,10 +28,7 @@ func (c *Client) CountInbounds(node *corev1.Node) (*satrapv1.Count, error) {
 	return count, nil
 }
 
-func (c *Client) AddInbound(node *corev1.Node, inboundConfig *satrapv1.InboundConfig) error {
-	if err := inboundConfig.Validate(); err != nil {
-		return fmt.Errorf("validate inbound failed %s/%s: %w", node.Metadata.ID, inboundConfig.Tag, err)
-	}
+func (c *Client) AddInbound(node *corev1.Node, inboundConfig *conf.InboundDetourConfig) error {
 	url := node.URL("/api/v1/inbounds")
 	status, resp, err := c.httpClient.Do(http.MethodPost, url, node.Spec.Token, inboundConfig)
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 
 	zlog "github.com/rs/zerolog/log"
 	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
+	"github.com/xtls/xray-core/infra/conf"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/vayzur/apadana/pkg/errs"
@@ -24,8 +25,15 @@ func (s *Server) CountInbounds(c fiber.Ctx) error {
 }
 
 func (s *Server) AddInbound(c fiber.Ctx) error {
-	b := c.Body()
-	if err := s.xrayClient.AddInbound(context.Background(), b); err != nil {
+	inboundConfig := &conf.InboundDetourConfig{}
+	if err := c.Bind().JSON(inboundConfig); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			},
+		)
+	}
+	if err := s.xrayClient.AddInbound(context.Background(), inboundConfig); err != nil {
 		zlog.Error().Err(err).Str("component", "satrap").Str("resource", "inbound").Str("action", "create").Msg("failed")
 		if errors.Is(err, errs.ErrConflict) {
 			return c.SendStatus(fiber.StatusConflict)
