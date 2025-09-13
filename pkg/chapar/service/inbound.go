@@ -11,8 +11,8 @@ import (
 	"github.com/vayzur/apadana/pkg/errs"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/vayzur/apadana/pkg/chapar/storage/resources"
 	satrap "github.com/vayzur/apadana/pkg/satrap/client"
-	"github.com/vayzur/apadana/pkg/storage/resources"
 )
 
 type InboundService struct {

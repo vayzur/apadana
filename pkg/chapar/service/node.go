@@ -4,7 +4,7 @@ import (
 	"context"
 
 	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
-	"github.com/vayzur/apadana/pkg/storage/resources"
+	"github.com/vayzur/apadana/pkg/chapar/storage/resources"
 )
 
 type NodeService struct {
