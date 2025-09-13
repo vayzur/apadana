@@ -50,14 +50,14 @@ func (s *InboundService) DeleteInbound(ctx context.Context, nodeID, tag string) 
 	if err != nil {
 		return err
 	}
+	if err := s.satrapClient.RemoveInbound(node, tag); err != nil && !errors.Is(err, errs.ErrNotFound) {
+		return fmt.Errorf("inbound delete runtime %s/%s: %w", nodeID, tag, err)
+	}
 	if err := s.store.DeleteUsers(ctx, nodeID, tag); err != nil && !errors.Is(err, errs.ErrNotFound) {
 		return fmt.Errorf("inbound delete store %s/%s: %w", nodeID, tag, err)
 	}
 	if err := s.store.DeleteInbound(ctx, nodeID, tag); err != nil && !errors.Is(err, errs.ErrNotFound) {
 		return fmt.Errorf("inbound delete store %s/%s: %w", nodeID, tag, err)
-	}
-	if err := s.satrapClient.RemoveInbound(node, tag); err != nil && !errors.Is(err, errs.ErrNotFound) {
-		return fmt.Errorf("inbound delete runtime %s/%s: %w", nodeID, tag, err)
 	}
 	return nil
 }
