@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
 	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
@@ -90,46 +89,6 @@ func (s *InboundService) GetInbounds(ctx context.Context, nodeID string) ([]*sat
 	return s.store.GetInbounds(ctx, nodeID)
 }
 
-func (s *InboundService) GetExpiredInbounds(ctx context.Context, nodeID string) ([]*satrapv1.Inbound, error) {
-	inbounds, err := s.GetInbounds(ctx, nodeID)
-	if err != nil {
-		return nil, err
-	}
-
-	expired := make([]*satrapv1.Inbound, 0, len(inbounds)) // preallocated, no zeroing
-	now := time.Now()                                      // only once
-
-	n := len(inbounds)
-	for i := 0; i < n; i++ {
-		inbound := inbounds[i]
-		if now.Sub(inbound.Metadata.CreationTimestamp) >= inbound.Metadata.TTL {
-			expired = append(expired, inbound)
-		}
-	}
-
-	return expired, nil
-}
-
-func (s *InboundService) GetActiveInbounds(ctx context.Context, nodeID string) ([]*satrapv1.Inbound, error) {
-	inbounds, err := s.GetInbounds(ctx, nodeID)
-	if err != nil {
-		return nil, err
-	}
-
-	active := make([]*satrapv1.Inbound, 0, len(inbounds)) // preallocated, no zeroing
-	now := time.Now()                                     // only once
-
-	n := len(inbounds)
-	for i := 0; i < n; i++ {
-		inbound := inbounds[i]
-		if now.Sub(inbound.Metadata.CreationTimestamp) < inbound.Metadata.TTL {
-			active = append(active, inbound)
-		}
-	}
-
-	return active, nil
-}
-
 func (s *InboundService) GetUser(ctx context.Context, nodeID, tag, email string) (*satrapv1.InboundUser, error) {
 	return s.store.GetUser(ctx, nodeID, tag, email)
 }
@@ -198,46 +157,6 @@ func (s *InboundService) CreateUser(ctx context.Context, nodeID, tag string, use
 
 func (s *InboundService) GetUsers(ctx context.Context, nodeID, tag string) ([]*satrapv1.InboundUser, error) {
 	return s.store.GetUsers(ctx, nodeID, tag)
-}
-
-func (s *InboundService) GetExpiredUsers(ctx context.Context, nodeID, tag string) ([]*satrapv1.InboundUser, error) {
-	users, err := s.GetUsers(ctx, nodeID, tag)
-	if err != nil {
-		return nil, err
-	}
-
-	expired := make([]*satrapv1.InboundUser, 0, len(users)) // preallocated, no zeroing
-	now := time.Now()
-
-	n := len(users)
-	for i := 0; i < n; i++ {
-		user := users[i]
-		if now.Sub(user.Metadata.CreationTimestamp) >= user.Metadata.TTL {
-			expired = append(expired, user)
-		}
-	}
-
-	return expired, nil
-}
-
-func (s *InboundService) GetActiveUsers(ctx context.Context, nodeID, tag string) ([]*satrapv1.InboundUser, error) {
-	users, err := s.GetUsers(ctx, nodeID, tag)
-	if err != nil {
-		return nil, err
-	}
-
-	active := make([]*satrapv1.InboundUser, 0, len(users)) // preallocated, no zeroing
-	now := time.Now()
-
-	n := len(users)
-	for i := 0; i < n; i++ {
-		user := users[i]
-		if now.Sub(user.Metadata.CreationTimestamp) < user.Metadata.TTL {
-			active = append(active, user)
-		}
-	}
-
-	return active, nil
 }
 
 func (s *InboundService) RenewInbound(ctx context.Context, nodeID, tag string, renew *satrapv1.Renew) error {

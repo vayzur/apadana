@@ -80,22 +80,7 @@ func (s *Server) GetInbounds(c fiber.Ctx) error {
 		)
 	}
 
-	state := c.Query("state", "all") // default = "all"
-
-	var inbounds []*satrapv1.Inbound
-	var err error
-
-	switch state {
-	case "active":
-		inbounds, err = s.inboundService.GetActiveInbounds(c.RequestCtx(), nodeID)
-	case "expired":
-		inbounds, err = s.inboundService.GetExpiredInbounds(c.RequestCtx(), nodeID)
-	case "all":
-		fallthrough
-	default:
-		inbounds, err = s.inboundService.GetInbounds(c.RequestCtx(), nodeID)
-	}
-
+	inbounds, err := s.inboundService.GetInbounds(c.RequestCtx(), nodeID)
 	if err != nil {
 		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbounds").Str("action", "list").Str("nodeID", nodeID).Int("count", len(inbounds)).Msg("failed")
 		return c.Status(fiber.StatusInternalServerError).JSON(
@@ -190,21 +175,7 @@ func (s *Server) GetInboundUsers(c fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	state := c.Query("state", "all") // default = "all"
-
-	var users []*satrapv1.InboundUser
-
-	switch state {
-	case "active":
-		users, err = s.inboundService.GetActiveUsers(c.RequestCtx(), params["nodeID"], params["tag"])
-	case "expired":
-		users, err = s.inboundService.GetExpiredUsers(c.RequestCtx(), params["nodeID"], params["tag"])
-	case "all":
-		fallthrough
-	default:
-		users, err = s.inboundService.GetUsers(c.RequestCtx(), params["nodeID"], params["tag"])
-	}
-
+	users, err := s.inboundService.GetUsers(c.RequestCtx(), params["nodeID"], params["tag"])
 	if err != nil {
 		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "list").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Int("count", len(users)).Msg("failed")
 		return c.Status(fiber.StatusInternalServerError).JSON(

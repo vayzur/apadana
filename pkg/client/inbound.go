@@ -147,14 +147,11 @@ func (c *Client) CountRuntimeInbounds(nodeID string) (*satrapv1.Count, error) {
 	return count, nil
 }
 
-func (c *Client) GetInbounds(nodeID string, state satrapv1.State) ([]*satrapv1.Inbound, error) {
+func (c *Client) GetInbounds(nodeID string) ([]*satrapv1.Inbound, error) {
 	if nodeID == "" {
 		return nil, fmt.Errorf("nodeID cannot be empty")
 	}
-	if state == "" {
-		state = satrapv1.All
-	}
-	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds?state=%s", c.address, nodeID, state)
+	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds", c.address, nodeID)
 	status, resp, err := c.httpClient.Do(http.MethodGet, url, c.token, nil)
 	if err != nil {
 		zlog.Error().Err(err).Str("component", "client").Str("resource", "inbounds").Str("action", "list").Str("nodeID", nodeID).Msg("failed")
@@ -220,17 +217,14 @@ func (c *Client) UpdateInboundMetadata(nodeID, tag string, metadata *satrapv1.Me
 	return nil
 }
 
-func (c *Client) GetInboundUsers(nodeID, tag string, state satrapv1.State) ([]*satrapv1.InboundUser, error) {
+func (c *Client) GetInboundUsers(nodeID, tag string) ([]*satrapv1.InboundUser, error) {
 	if nodeID == "" {
 		return nil, fmt.Errorf("nodeID cannot be empty")
 	}
 	if tag == "" {
 		return nil, fmt.Errorf("tag cannot be empty")
 	}
-	if state == "" {
-		state = satrapv1.All
-	}
-	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds/%s/users?state=%s", c.address, nodeID, tag, state)
+	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds/%s/users", c.address, nodeID, tag)
 	status, resp, err := c.httpClient.Do(http.MethodGet, url, c.token, nil)
 	if err != nil {
 		zlog.Error().Err(err).Str("component", "client").Str("resource", "inboundUsers").Str("action", "list").Str("nodeID", nodeID).Str("tag", tag).Msg("failed")
