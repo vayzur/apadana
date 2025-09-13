@@ -12,13 +12,13 @@ import (
 	"github.com/vayzur/apadana/internal/chapar/server"
 	"github.com/vayzur/apadana/internal/config"
 	chaparconfigv1 "github.com/vayzur/apadana/pkg/chapar/config/v1"
+	"github.com/vayzur/apadana/pkg/chapar/service"
 	satrap "github.com/vayzur/apadana/pkg/satrap/client"
-	"github.com/vayzur/apadana/pkg/service"
 
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
-	"github.com/vayzur/apadana/pkg/storage/etcd"
-	"github.com/vayzur/apadana/pkg/storage/resources"
+	"github.com/vayzur/apadana/pkg/chapar/storage/etcd"
+	"github.com/vayzur/apadana/pkg/chapar/storage/resources"
 )
 
 func main() {

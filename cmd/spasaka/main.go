@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/vayzur/apadana/internal/config"
+	"github.com/vayzur/apadana/pkg/chapar/storage/etcd"
 	apadana "github.com/vayzur/apadana/pkg/client"
 	"github.com/vayzur/apadana/pkg/leader"
 	spasakaconfigv1 "github.com/vayzur/apadana/pkg/spasaka/config/v1"
 	"github.com/vayzur/apadana/pkg/spasaka/controller"
-	"github.com/vayzur/apadana/pkg/storage/etcd"
 
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"

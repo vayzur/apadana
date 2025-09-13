@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/healthcheck"
 	"github.com/vayzur/apadana/internal/auth"
-	"github.com/vayzur/apadana/pkg/service"
+	"github.com/vayzur/apadana/pkg/chapar/service"
 )
 
 type Server struct {

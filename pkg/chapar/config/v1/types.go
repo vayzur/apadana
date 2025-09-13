@@ -1,6 +1,6 @@
 package v1
 
-import etcdconfigv1 "github.com/vayzur/apadana/pkg/storage/etcd/config/v1"
+import etcdconfigv1 "github.com/vayzur/apadana/pkg/chapar/storage/etcd/config/v1"
 
 type TLSConfig struct {
 	Enabled  bool   `mapstructure:"enabled" yaml:"enabled"`

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	chaparconfigv1 "github.com/vayzur/apadana/pkg/chapar/config/v1"
-	etcdconfigv1 "github.com/vayzur/apadana/pkg/storage/etcd/config/v1"
+	etcdconfigv1 "github.com/vayzur/apadana/pkg/chapar/storage/etcd/config/v1"
 )
 
 type SpasakaConfig struct {
