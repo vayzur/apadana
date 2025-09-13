@@ -8,14 +8,13 @@ import (
 )
 
 type SyncManager struct {
-	xrayClient                   *xray.Client
-	apadanaClient                *apadana.Client
-	syncFrequency                time.Duration
-	concurrentInboundSyncs       uint32
-	concurrentInboundExpireSyncs uint32
-	concurrentInboundGCSyncs     uint32
-	concurrentUserSyncs          uint32
-	concurrentUserExpireSyncs    uint32
+	xrayClient               *xray.Client
+	apadanaClient            *apadana.Client
+	syncFrequency            time.Duration
+	concurrentInboundSyncs   uint32
+	concurrentInboundGCSyncs uint32
+	concurrentUserSyncs      uint32
+	concurrentUserGCSyncs    uint32
 }
 
 func NewSyncManager(
@@ -23,19 +22,17 @@ func NewSyncManager(
 	apadanaClient *apadana.Client,
 	syncFrequency time.Duration,
 	concurrentInboundSyncs,
-	concurrentInboundExpireSyncs,
 	concurrentInboundGCSyncs,
 	concurrentUserSyncs,
-	concurrentUserExpireSyncs uint32,
+	concurrentUserGCSyncs uint32,
 ) *SyncManager {
 	return &SyncManager{
-		xrayClient:                   xrayClient,
-		apadanaClient:                apadanaClient,
-		syncFrequency:                syncFrequency,
-		concurrentInboundSyncs:       concurrentInboundSyncs,
-		concurrentInboundExpireSyncs: concurrentInboundExpireSyncs,
-		concurrentInboundGCSyncs:     concurrentInboundGCSyncs,
-		concurrentUserSyncs:          concurrentUserSyncs,
-		concurrentUserExpireSyncs:    concurrentUserExpireSyncs,
+		xrayClient:               xrayClient,
+		apadanaClient:            apadanaClient,
+		syncFrequency:            syncFrequency,
+		concurrentInboundSyncs:   concurrentInboundSyncs,
+		concurrentInboundGCSyncs: concurrentInboundGCSyncs,
+		concurrentUserSyncs:      concurrentUserSyncs,
+		concurrentUserGCSyncs:    concurrentUserGCSyncs,
 	}
 }

@@ -15,21 +15,20 @@ type TLSConfig struct {
 }
 
 type SatrapConfig struct {
-	NodeID                       string                       `mapstructure:"nodeID" yaml:"nodeID"`
-	BindAddress                  string                       `mapstructure:"bindAddress" yaml:"bindAddress"`
-	Port                         uint16                       `mapstructure:"port" yaml:"port"`
-	Prefork                      bool                         `mapstructure:"prefork" yaml:"prefork"`
-	Token                        string                       `mapstructure:"token" yaml:"token"`
-	Addresses                    []corev1.NodeAddress         `mapstructure:"addresses" yaml:"addresses"`
-	TLS                          TLSConfig                    `mapstructure:"tls" yaml:"tls"`
-	Xray                         xrayconfigv1.XrayConfig      `mapstructure:"xray" yaml:"xray"`
-	Cluster                      chaparconfigv1.ClusterConfig `mapstructure:"cluster" yaml:"cluster"`
-	NodeStatusUpdateFrequency    time.Duration                `mapstructure:"nodeStatusUpdateFrequency" yaml:"nodeStatusUpdateFrequency"`
-	SyncFrequency                time.Duration                `mapstructure:"syncFrequency" yaml:"syncFrequency"`
-	ConcurrentInboundSyncs       uint32                       `mapstructure:"concurrentInboundSyncs" yaml:"concurrentInboundSyncs"`
-	ConcurrentInboundExpireSyncs uint32                       `mapstructure:"concurrentInboundExpireSyncs" yaml:"concurrentInboundExpireSyncs"`
-	ConcurrentInboundGCSyncs     uint32                       `mapstructure:"concurrentInboundGCSyncs" yaml:"concurrentInboundGCSyncs"`
-	ConcurrentUserSyncs          uint32                       `mapstructure:"concurrentUserSyncs" yaml:"concurrentUserSyncs"`
-	ConcurrentUserExpireSyncs    uint32                       `mapstructure:"concurrentUserExpireSyncs" yaml:"concurrentUserExpireSyncs"`
-	MaxInbounds                  uint32                       `mapstructure:"maxInbounds" yaml:"maxInbounds"`
+	NodeID                    string                       `mapstructure:"nodeID" yaml:"nodeID"`
+	BindAddress               string                       `mapstructure:"bindAddress" yaml:"bindAddress"`
+	Port                      uint16                       `mapstructure:"port" yaml:"port"`
+	Prefork                   bool                         `mapstructure:"prefork" yaml:"prefork"`
+	Token                     string                       `mapstructure:"token" yaml:"token"`
+	Addresses                 []corev1.NodeAddress         `mapstructure:"addresses" yaml:"addresses"`
+	TLS                       TLSConfig                    `mapstructure:"tls" yaml:"tls"`
+	Xray                      xrayconfigv1.XrayConfig      `mapstructure:"xray" yaml:"xray"`
+	Cluster                   chaparconfigv1.ClusterConfig `mapstructure:"cluster" yaml:"cluster"`
+	NodeStatusUpdateFrequency time.Duration                `mapstructure:"nodeStatusUpdateFrequency" yaml:"nodeStatusUpdateFrequency"`
+	SyncFrequency             time.Duration                `mapstructure:"syncFrequency" yaml:"syncFrequency"`
+	ConcurrentInboundSyncs    uint32                       `mapstructure:"concurrentInboundSyncs" yaml:"concurrentInboundSyncs"`
+	ConcurrentInboundGCSyncs  uint32                       `mapstructure:"concurrentInboundGCSyncs" yaml:"concurrentInboundGCSyncs"`
+	ConcurrentUserSyncs       uint32                       `mapstructure:"concurrentUserSyncs" yaml:"concurrentUserSyncs"`
+	ConcurrentUserGCSyncs     uint32                       `mapstructure:"concurrentUserGCSyncs" yaml:"concurrentUserGCSyncs"`
+	MaxInbounds               uint32                       `mapstructure:"maxInbounds" yaml:"maxInbounds"`
 }

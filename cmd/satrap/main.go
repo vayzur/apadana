@@ -96,10 +96,9 @@ func main() {
 		apadanaClient,
 		cfg.SyncFrequency,
 		cfg.ConcurrentInboundSyncs,
-		cfg.ConcurrentInboundExpireSyncs,
 		cfg.ConcurrentInboundGCSyncs,
 		cfg.ConcurrentUserSyncs,
-		cfg.ConcurrentUserExpireSyncs,
+		cfg.ConcurrentUserGCSyncs,
 	)
 
 	if cfg.Cluster.Enabled {
