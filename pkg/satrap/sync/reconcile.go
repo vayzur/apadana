@@ -11,20 +11,19 @@ import (
 
 func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 	createInboundCh := make(chan *satrapv1.Inbound, 256)
-	expireInboundCh := make(chan *satrapv1.Inbound, 256)
 	gcInboundCh := make(chan string, 256)
 
 	createUserCh := make(chan *satrapv1.InboundUser, 256)
-	expireUserCh := make(chan *satrapv1.InboundUser, 256)
+	gcUserCh := make(chan *satrapv1.InboundUser, 256)
 
 	for range m.concurrentInboundSyncs {
 		go func() {
 			for inb := range createInboundCh {
-				if err := m.apadanaClient.CreateInbound(nodeID, inb); err != nil {
+				if err := m.xrayClient.AddInbound(ctx, &inb.Spec.Config); err != nil {
 					continue
 				}
 
-				desiredUsers, err := m.apadanaClient.GetInboundUsers(nodeID, inb.Spec.Config.Tag, satrapv1.Active)
+				desiredUsers, err := m.apadanaClient.GetInboundUsers(nodeID, inb.Spec.Config.Tag)
 				if err != nil {
 					continue
 				}
@@ -32,18 +31,6 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 				for _, user := range desiredUsers {
 					createUserCh <- user
 				}
-			}
-		}()
-	}
-
-	for range m.concurrentInboundExpireSyncs {
-		go func() {
-			for inb := range expireInboundCh {
-				if err := m.apadanaClient.DeleteInbound(nodeID, inb.Spec.Config.Tag); err != nil {
-					continue
-				}
-				zlog.Info().Str("component", "syncManager").Str("resource", "inbound").
-					Str("nodeID", nodeID).Str("tag", inb.Spec.Config.Tag).Msg("expired")
 			}
 		}()
 	}
@@ -64,21 +51,23 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 	for range m.concurrentUserSyncs {
 		go func() {
 			for user := range createUserCh {
-				if err := m.apadanaClient.CreateInboundUser(nodeID, user.InboundTag, user); err != nil {
+				account, err := user.ToAccount()
+				if err != nil {
+					continue
+				}
+				if err := m.xrayClient.AddUser(ctx, user.InboundTag, user.Email, account); err != nil {
 					continue
 				}
 			}
 		}()
 	}
 
-	for range m.concurrentUserExpireSyncs {
+	for range m.concurrentUserGCSyncs {
 		go func() {
-			for user := range expireUserCh {
-				if err := m.apadanaClient.DeleteInboundUser(nodeID, user.InboundTag, user.Email); err != nil {
+			for user := range gcUserCh {
+				if err := m.xrayClient.RemoveUser(ctx, user.InboundTag, user.Email); err != nil {
 					continue
 				}
-				zlog.Info().Str("component", "syncManager").Str("resource", "user").
-					Str("nodeID", nodeID).Str("tag", user.InboundTag).Str("email", user.Email).Msg("expired")
 			}
 		}()
 	}
@@ -87,7 +76,7 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 	defer ticker.Stop()
 
 	wg := &sync.WaitGroup{}
-	desiredInboundMap := make(map[string]*satrapv1.Inbound)
+	desiredInboundsMap := make(map[string]*satrapv1.Inbound)
 
 	zlog.Info().Str("component", "syncManager").Msg("started")
 
@@ -95,14 +84,13 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 		select {
 		case <-ctx.Done():
 			close(createInboundCh)
-			close(expireInboundCh)
 			close(gcInboundCh)
 			close(createUserCh)
-			close(expireUserCh)
+			close(gcUserCh)
 			return
 
 		case <-ticker.C:
-			desiredInbounds, err := m.apadanaClient.GetInbounds(nodeID, satrapv1.Active)
+			desiredInbounds, err := m.apadanaClient.GetInbounds(nodeID)
 			if err != nil {
 				zlog.Error().Err(err).Str("component", "syncManager").Str("nodeID", nodeID).
 					Msg("failed to get desired inbounds")
@@ -116,43 +104,44 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 				continue
 			}
 
-			clear(desiredInboundMap)
+			clear(desiredInboundsMap)
 			for _, inbound := range desiredInbounds {
 				if inbound != nil {
-					desiredInboundMap[inbound.Spec.Config.Tag] = inbound
+					desiredInboundsMap[inbound.Spec.Config.Tag] = inbound
 				}
 			}
 
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
+				desiredUsersMap := make(map[string]*satrapv1.InboundUser)
 
-				expiredInbounds, err := m.apadanaClient.GetInbounds(nodeID, satrapv1.Expired)
-				if err != nil {
-					zlog.Error().Err(err).Str("component", "syncManager").Str("nodeID", nodeID).
-						Msg("failed to get expired inbounds")
-					return
-				}
-
-				for _, inbound := range expiredInbounds {
-					expireInboundCh <- inbound
-				}
-			}()
-
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				for tag, inbound := range desiredInboundMap {
-					if _, ok := currentInbounds[tag]; !ok {
+				for _, inbound := range desiredInbounds {
+					if _, ok := currentInbounds[inbound.Spec.Config.Tag]; !ok {
 						createInboundCh <- inbound
 					}
 
-					expiredUsers, err := m.apadanaClient.GetInboundUsers(nodeID, inbound.Spec.Config.Tag, satrapv1.Expired)
+					desiredUsers, err := m.apadanaClient.GetInboundUsers(nodeID, inbound.Spec.Config.Tag)
 					if err != nil {
 						continue
 					}
-					for _, user := range expiredUsers {
-						expireUserCh <- user
+
+					currentUsers, err := m.xrayClient.ListUsers(ctx, inbound.Spec.Config.Tag)
+					if err != nil {
+						continue
+					}
+
+					clear(desiredUsersMap)
+					for _, user := range desiredUsers {
+						if user != nil {
+							desiredUsersMap[user.Email] = user
+						}
+					}
+
+					for email := range currentUsers {
+						if _, ok := desiredUsersMap[email]; !ok {
+							gcUserCh <- &satrapv1.InboundUser{InboundTag: inbound.Spec.Config.Tag, Email: email}
+						}
 					}
 				}
 			}()
@@ -161,7 +150,7 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 			go func() {
 				defer wg.Done()
 				for tag := range currentInbounds {
-					if _, ok := desiredInboundMap[tag]; !ok {
+					if _, ok := desiredInboundsMap[tag]; !ok {
 						gcInboundCh <- tag
 					}
 				}
