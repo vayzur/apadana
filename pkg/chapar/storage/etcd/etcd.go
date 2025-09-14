@@ -11,6 +11,13 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
+const (
+	keepaliveTime    = 30 * time.Second
+	keepaliveTimeout = 10 * time.Second
+
+	dialTimeout = 20 * time.Second
+)
+
 func NewClient(cfg *etcdconfigv1.EtcdConfig, ctx context.Context) (*clientv3.Client, error) {
 	var tlsConfig *tls.Config
 
@@ -37,10 +44,12 @@ func NewClient(cfg *etcdconfigv1.EtcdConfig, ctx context.Context) (*clientv3.Cli
 	}
 
 	etcdClient, err := clientv3.New(clientv3.Config{
-		Endpoints:   cfg.Servers,
-		DialTimeout: 5 * time.Second,
-		Context:     ctx,
-		TLS:         tlsConfig,
+		DialTimeout:          dialTimeout,
+		DialKeepAliveTime:    keepaliveTime,
+		DialKeepAliveTimeout: keepaliveTimeout,
+		Endpoints:            cfg.Servers,
+		TLS:                  tlsConfig,
+		Context:              ctx,
 	})
 	if err != nil {
 		return nil, err
