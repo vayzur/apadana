@@ -76,6 +76,8 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 	defer ticker.Stop()
 
 	wg := &sync.WaitGroup{}
+	uwg := &sync.WaitGroup{}
+
 	desiredInboundsMap := make(map[string]*satrapv1.Inbound)
 
 	zlog.Info().Str("component", "syncManager").Msg("started")
@@ -114,11 +116,13 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
+
 				desiredUsersMap := make(map[string]*satrapv1.InboundUser)
 
 				for _, inbound := range desiredInbounds {
 					if _, ok := currentInbounds[inbound.Spec.Config.Tag]; !ok {
 						createInboundCh <- inbound
+						continue
 					}
 
 					desiredUsers, err := m.apadanaClient.GetInboundUsers(nodeID, inbound.Spec.Config.Tag)
@@ -138,11 +142,23 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 						}
 					}
 
-					for email := range currentUsers {
-						if _, ok := desiredUsersMap[email]; !ok {
-							gcUserCh <- &satrapv1.InboundUser{InboundTag: inbound.Spec.Config.Tag, Email: email}
+					uwg.Go(func() {
+						for email := range currentUsers {
+							if _, ok := desiredUsersMap[email]; !ok {
+								gcUserCh <- &satrapv1.InboundUser{InboundTag: inbound.Spec.Config.Tag, Email: email}
+							}
 						}
-					}
+					})
+
+					uwg.Go(func() {
+						for _, user := range desiredUsers {
+							if _, ok := currentUsers[user.Email]; !ok {
+								createUserCh <- user
+							}
+						}
+					})
+
+					uwg.Wait()
 				}
 			}()
 
