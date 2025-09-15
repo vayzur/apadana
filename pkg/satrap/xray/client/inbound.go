@@ -16,15 +16,18 @@ import (
 )
 
 func (c *Client) ListInbounds(ctx context.Context) (map[string]struct{}, error) {
-	req := &command.ListInboundsRequest{IsOnlyTags: true}
-	resp, err := c.hsClient.ListInbounds(ctx, req)
+	resp, err := c.hsClient.ListInbounds(ctx, &command.ListInboundsRequest{
+		IsOnlyTags: true,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("list inbounds failed: %w", err)
 	}
 
-	inbounds := make(map[string]struct{}, len(resp.Inbounds))
-	for _, inbound := range resp.Inbounds {
-		inbounds[inbound.Tag] = satrapv1.Empty
+	inbs := resp.GetInbounds()
+
+	inbounds := make(map[string]struct{}, len(inbs))
+	for _, inbound := range inbs {
+		inbounds[inbound.Tag] = struct{}{}
 	}
 
 	// remove the "api" tag in one operation
@@ -39,8 +42,9 @@ func (c *Client) AddInbound(ctx context.Context, conf *conf.InboundDetourConfig)
 		return fmt.Errorf("inbound build failed: %w", err)
 	}
 
-	req := command.AddInboundRequest{Inbound: config}
-	_, err = c.hsClient.AddInbound(ctx, &req)
+	_, err = c.hsClient.AddInbound(ctx, &command.AddInboundRequest{
+		Inbound: config,
+	})
 	return handleXrayError(err)
 }
 
@@ -75,15 +79,18 @@ func (c *Client) RemoveUser(ctx context.Context, tag, email string) error {
 }
 
 func (c *Client) ListUsers(ctx context.Context, tag string) (map[string]struct{}, error) {
-	req := &command.GetInboundUserRequest{Tag: tag}
-	resp, err := c.hsClient.GetInboundUsers(ctx, req)
+	resp, err := c.hsClient.GetInboundUsers(ctx, &command.GetInboundUserRequest{
+		Tag: tag,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("list users failed: %w", err)
 	}
 
-	users := make(map[string]struct{}, len(resp.Users))
-	for _, user := range resp.Users {
-		users[user.Email] = satrapv1.Empty
+	u := resp.GetUsers()
+
+	users := make(map[string]struct{}, len(u))
+	for _, user := range u {
+		users[user.Email] = struct{}{}
 	}
 
 	return users, nil
