@@ -78,8 +78,6 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 	wg := &sync.WaitGroup{}
 	uwg := &sync.WaitGroup{}
 
-	desiredInboundsMap := make(map[string]*satrapv1.Inbound)
-
 	zlog.Info().Str("component", "syncManager").Msg("started")
 
 	for {
@@ -106,7 +104,8 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 				continue
 			}
 
-			clear(desiredInboundsMap)
+			desiredInboundsMap := make(map[string]*satrapv1.Inbound, len(desiredInbounds))
+
 			for _, inbound := range desiredInbounds {
 				if inbound != nil {
 					desiredInboundsMap[inbound.Spec.Config.Tag] = inbound
@@ -116,8 +115,6 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-
-				desiredUsersMap := make(map[string]*satrapv1.InboundUser)
 
 				for _, inbound := range desiredInbounds {
 					if _, ok := currentInbounds[inbound.Spec.Config.Tag]; !ok {
@@ -135,7 +132,8 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 						continue
 					}
 
-					clear(desiredUsersMap)
+					desiredUsersMap := make(map[string]*satrapv1.InboundUser, len(desiredUsers))
+
 					for _, user := range desiredUsers {
 						if user != nil {
 							desiredUsersMap[user.Email] = user
