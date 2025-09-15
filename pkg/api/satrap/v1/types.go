@@ -16,5 +16,3 @@ type Renew struct {
 type Count struct {
 	Value uint32 `json:"count"`
 }
-
-var Empty struct{}
