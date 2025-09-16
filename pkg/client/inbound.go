@@ -22,15 +22,15 @@ func (c *Client) CreateInbound(nodeID string, inbound *satrapv1.Inbound) error {
 		return err
 	}
 	if status == http.StatusConflict {
-		zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "create").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		zlog.Error().Str("component", "apadana").Str("resource", "inbound").Str("action", "create").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
 		return errs.ErrConflict
 	}
 	if status == http.StatusTooManyRequests {
-		zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "create").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		zlog.Error().Str("component", "apadana").Str("resource", "inbound").Str("action", "create").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
 		return errs.ErrCapacityExceeded
 	}
 	if status != http.StatusCreated {
-		zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "create").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		zlog.Error().Str("component", "apadana").Str("resource", "inbound").Str("action", "create").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
 		return errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
 	}
 	return nil
@@ -54,7 +54,7 @@ func (c *Client) DeleteInbound(nodeID, tag string) error {
 		return errs.ErrNotFound
 	}
 	if status != http.StatusNoContent {
-		zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "delete").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
+		zlog.Error().Str("component", "apadana").Str("resource", "inbound").Str("action", "delete").Str("nodeID", nodeID).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
 		return errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("tag", tag).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
 	}
 	return nil
