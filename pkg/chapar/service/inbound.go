@@ -121,18 +121,18 @@ func (s *InboundService) CreateUser(ctx context.Context, nodeID, tag string, use
 		countErr   error
 	)
 
-	g, ctx := errgroup.WithContext(ctx)
+	g, groupCtx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		node, nodeErr = s.nodeService.GetNode(ctx, nodeID)
+		node, nodeErr = s.nodeService.GetNode(groupCtx, nodeID)
 		return nodeErr
 	})
 	g.Go(func() error {
-		inb, inbErr = s.GetInbound(ctx, nodeID, tag)
+		inb, inbErr = s.GetInbound(groupCtx, nodeID, tag)
 		return inbErr
 	})
 	g.Go(func() error {
-		usersCount, countErr = s.CountUsers(ctx, nodeID, tag)
+		usersCount, countErr = s.CountUsers(groupCtx, nodeID, tag)
 		return countErr
 	})
 
