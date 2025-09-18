@@ -251,33 +251,6 @@ func (s *Server) RenewInboundUser(c fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusOK)
 }
 
-func (s *Server) CountRuntimeInbounds(c fiber.Ctx) error {
-	nodeID := c.Params("nodeID")
-	if nodeID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			fiber.Map{
-				"error": "nodeID parameter is required",
-			},
-		)
-	}
-
-	count, err := s.inboundService.CountRuntimeInbounds(c.RequestCtx(), nodeID)
-	if err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "count").Str("nodeID", nodeID).Uint32("count", count.Value).Msg("failed")
-		if errors.Is(err, errs.ErrNotFound) {
-			return c.SendStatus(fiber.StatusNotFound)
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
-	}
-
-	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "count").Str("nodeID", nodeID).Uint32("count", count.Value).Msg("retrieved")
-	return c.Status(fiber.StatusOK).JSON(count)
-}
-
 func (s *Server) UpdateInboundMetadata(c fiber.Ctx) error {
 	params, err := s.requiredParams(c, "nodeID", "tag")
 	if err != nil {

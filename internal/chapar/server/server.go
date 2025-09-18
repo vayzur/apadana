@@ -59,7 +59,6 @@ func (s *Server) setupRoutes() {
 	inbounds.Get("", s.GetInbounds)
 	inbounds.Post("", s.CreateInbound)
 	inbounds.Get("/count", s.CountInbounds)
-	inbounds.Get("/runtime/count", s.CountRuntimeInbounds)
 	inbounds.Get("/:tag", s.GetInbound)
 	inbounds.Delete("/:tag", s.DeleteInbound)
 	inbounds.Patch("/:tag/renew", s.RenewInbound)

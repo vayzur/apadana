@@ -119,34 +119,6 @@ func (c *Client) CountInbounds(nodeID string) (*satrapv1.Count, error) {
 	return count, nil
 }
 
-func (c *Client) CountRuntimeInbounds(nodeID string) (*satrapv1.Count, error) {
-	if nodeID == "" {
-		return nil, fmt.Errorf("nodeID cannot be empty")
-	}
-	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds/runtime/count", c.address, nodeID)
-	status, resp, err := c.httpClient.Do(http.MethodGet, url, c.token, nil)
-	if err != nil {
-		zlog.Error().Err(err).Str("component", "client").Str("resource", "inbound").Str("action", "count").Str("nodeID", nodeID).Msg("failed")
-		return nil, err
-	}
-	if status == http.StatusNotFound {
-		zlog.Error().Str("component", "apadana").Str("resource", "inbound").Str("action", "count").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return nil, errs.ErrNotFound
-	}
-	if status != http.StatusOK {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inbound").Str("action", "count").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return nil, errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
-	}
-
-	count := &satrapv1.Count{}
-	if err := json.Unmarshal(resp, count); err != nil {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "inbound").Str("action", "count").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("unmarshal failed")
-		return nil, errs.New("unmarshal", "unmarshal failed").WithField("nodeID", nodeID).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
-	}
-
-	return count, nil
-}
-
 func (c *Client) GetInbounds(nodeID string) ([]*satrapv1.Inbound, error) {
 	if nodeID == "" {
 		return nil, fmt.Errorf("nodeID cannot be empty")

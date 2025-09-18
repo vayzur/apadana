@@ -12,18 +12,6 @@ import (
 	"github.com/vayzur/apadana/pkg/errs"
 )
 
-func (s *Server) CountInbounds(c fiber.Ctx) error {
-	inbounds, err := s.xrayClient.ListInbounds(context.Background())
-	if err != nil {
-		zlog.Error().Err(err).Str("component", "satrap").Str("resource", "inbound").Str("action", "count").Msg("failed")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
-	count := satrapv1.Count{
-		Value: uint32(len(inbounds)),
-	}
-	return c.Status(fiber.StatusOK).JSON(count)
-}
-
 func (s *Server) AddInbound(c fiber.Ctx) error {
 	inboundConfig := &conf.InboundDetourConfig{}
 	if err := c.Bind().JSON(inboundConfig); err != nil {

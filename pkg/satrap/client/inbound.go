@@ -1,7 +1,6 @@
 package satrap
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -11,22 +10,6 @@ import (
 	"github.com/vayzur/apadana/pkg/errs"
 	"github.com/xtls/xray-core/infra/conf"
 )
-
-func (c *Client) CountInbounds(node *corev1.Node) (*satrapv1.Count, error) {
-	url := node.URL("/api/v1/inbounds/count")
-	status, resp, err := c.httpClient.Do(http.MethodGet, url, node.Spec.Token, nil)
-	if err != nil {
-		return nil, err
-	}
-	if status != http.StatusOK {
-		return nil, errs.New("unexpected", "unexpected response").WithField("nodeID", node.Metadata.ID).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
-	}
-	count := &satrapv1.Count{}
-	if err := json.Unmarshal(resp, count); err != nil {
-		return nil, errs.New("unmarshal", "unmarshal failed").WithField("nodeID", node.Metadata.ID).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
-	}
-	return count, nil
-}
 
 func (c *Client) AddInbound(node *corev1.Node, inboundConfig *conf.InboundDetourConfig) error {
 	url := node.URL("/api/v1/inbounds")

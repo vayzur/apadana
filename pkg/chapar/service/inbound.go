@@ -28,14 +28,6 @@ func NewInboundService(store *resources.InboundStore, nodeService *NodeService, 
 	}
 }
 
-func (s *InboundService) CountRuntimeInbounds(ctx context.Context, nodeID string) (*satrapv1.Count, error) {
-	node, err := s.nodeService.GetNode(ctx, nodeID)
-	if err != nil {
-		return nil, err
-	}
-	return s.satrapClient.CountInbounds(node)
-}
-
 func (s *InboundService) CountInbounds(ctx context.Context, nodeID string) (uint32, error) {
 	return s.store.CountInbounds(ctx, nodeID)
 }
