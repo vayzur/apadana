@@ -2,8 +2,6 @@ package client
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
 	"github.com/vayzur/apadana/pkg/errs"
@@ -11,8 +9,6 @@ import (
 	"github.com/xtls/xray-core/common/protocol"
 	"github.com/xtls/xray-core/common/serial"
 	"github.com/xtls/xray-core/infra/conf"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func (c *Client) ListInbounds(ctx context.Context) (map[string]struct{}, error) {
@@ -20,7 +16,7 @@ func (c *Client) ListInbounds(ctx context.Context) (map[string]struct{}, error) 
 		IsOnlyTags: true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("list inbounds failed: %w", err)
+		return nil, errs.New(errs.KindInternal, errs.ReasonUnknown, "list inbounds failed", nil, err)
 	}
 
 	inbs := resp.GetInbounds()
@@ -39,20 +35,20 @@ func (c *Client) ListInbounds(ctx context.Context) (map[string]struct{}, error) 
 func (c *Client) AddInbound(ctx context.Context, conf *conf.InboundDetourConfig) error {
 	config, err := conf.Build()
 	if err != nil {
-		return fmt.Errorf("inbound build failed: %w", err)
+		return errs.New(errs.KindInvalid, errs.ReasonUnknown, "inbound config build failed", nil, err)
 	}
 
 	_, err = c.hsClient.AddInbound(ctx, &command.AddInboundRequest{
 		Inbound: config,
 	})
-	return handleXrayError(err)
+	return errs.HandleXrayError(err, satrapv1.ResourceInbound)
 }
 
 func (c *Client) RemoveInbound(ctx context.Context, tag string) error {
 	_, err := c.hsClient.RemoveInbound(ctx, &command.RemoveInboundRequest{
 		Tag: tag,
 	})
-	return handleXrayError(err)
+	return errs.HandleXrayError(err, satrapv1.ResourceInbound)
 }
 
 func (c *Client) AddUser(ctx context.Context, tag, email string, account satrapv1.Account) error {
@@ -65,7 +61,7 @@ func (c *Client) AddUser(ctx context.Context, tag, email string, account satrapv
 			},
 		}),
 	})
-	return handleXrayError(err)
+	return errs.HandleXrayError(err, satrapv1.ResourceUser)
 }
 
 func (c *Client) RemoveUser(ctx context.Context, tag, email string) error {
@@ -75,7 +71,7 @@ func (c *Client) RemoveUser(ctx context.Context, tag, email string) error {
 			Email: email,
 		}),
 	})
-	return handleXrayError(err)
+	return errs.HandleXrayError(err, satrapv1.ResourceUser)
 }
 
 func (c *Client) ListUsers(ctx context.Context, tag string) (map[string]struct{}, error) {
@@ -83,7 +79,7 @@ func (c *Client) ListUsers(ctx context.Context, tag string) (map[string]struct{}
 		Tag: tag,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("list users failed: %w", err)
+		return nil, errs.New(errs.KindInternal, errs.ReasonUnknown, "list users failed", nil, err)
 	}
 
 	u := resp.GetUsers()
@@ -94,32 +90,4 @@ func (c *Client) ListUsers(ctx context.Context, tag string) (map[string]struct{}
 	}
 
 	return users, nil
-}
-
-func handleXrayError(err error) error {
-	s, ok := status.FromError(err)
-	if !ok {
-		return err
-	}
-
-	if s.Code() == codes.Unknown {
-		message := s.Message()
-		if strings.Contains(message, "existing tag found") {
-			return errs.ErrConflict
-		}
-		if strings.Contains(message, "already exists") {
-			return errs.ErrConflict
-		}
-		if strings.Contains(message, "not enough information for making a decision") {
-			return errs.ErrNotFound
-		}
-		if strings.Contains(message, "handler not found") {
-			return errs.ErrNotFound
-		}
-		if strings.Contains(message, "not found") {
-			return errs.ErrNotFound
-		}
-	}
-
-	return err
 }

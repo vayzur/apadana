@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"time"
 
+	"github.com/google/uuid"
 	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
 	"github.com/vayzur/apadana/pkg/chapar/storage/resources"
 )
@@ -24,6 +26,8 @@ func (s *NodeService) DeleteNode(ctx context.Context, nodeID string) error {
 }
 
 func (s *NodeService) CreateNode(ctx context.Context, node *corev1.Node) error {
+	node.Metadata.ID = uuid.NewString()
+	node.Metadata.CreationTimestamp = time.Now()
 	return s.store.CreateNode(ctx, node)
 }
 

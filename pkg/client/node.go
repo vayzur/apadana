@@ -14,7 +14,7 @@ import (
 
 func (c *Client) UpdateNodeStatus(nodeID string, nodeStatus *corev1.NodeStatus) error {
 	if nodeID == "" {
-		return fmt.Errorf("nodeID cannot be empty")
+		return errs.ErrInvalidNodeID
 	}
 	url := fmt.Sprintf("%s/api/v1/nodes/%s/status", c.address, nodeID)
 	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, nodeStatus)
@@ -22,16 +22,35 @@ func (c *Client) UpdateNodeStatus(nodeID string, nodeStatus *corev1.NodeStatus) 
 		zlog.Error().Err(err).Str("component", "client").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Msg("failed")
 		return err
 	}
-	if status != http.StatusOK {
-		zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
+
+	if status == http.StatusOK {
+		return nil
 	}
-	return nil
+
+	zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
+
+	switch status {
+	case http.StatusNotFound:
+		return errs.ErrNodeNotFound
+	default:
+		return errs.New(
+			errs.KindInternal,
+			errs.ReasonUnknown,
+			"update node status failed",
+			map[string]string{
+				"nodeID": nodeID,
+				"status": strconv.Itoa(status),
+				"resp":   string(resp),
+			},
+			nil,
+		)
+	}
+
 }
 
 func (c *Client) UpdateNodeMetadata(nodeID string, nodeMetadata *corev1.NodeMetadata) error {
 	if nodeID == "" {
-		return fmt.Errorf("nodeID cannot be empty")
+		return errs.ErrInvalidNodeID
 	}
 	url := fmt.Sprintf("%s/api/v1/nodes/%s/metadata", c.address, nodeID)
 	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, nodeMetadata)
@@ -39,16 +58,34 @@ func (c *Client) UpdateNodeMetadata(nodeID string, nodeMetadata *corev1.NodeMeta
 		zlog.Error().Err(err).Str("component", "client").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Msg("failed")
 		return err
 	}
-	if status != http.StatusOK {
-		zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
+
+	if status == http.StatusOK {
+		return nil
 	}
-	return nil
+
+	zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
+
+	switch status {
+	case http.StatusNotFound:
+		return errs.ErrNodeNotFound
+	default:
+		return errs.New(
+			errs.KindInternal,
+			errs.ReasonUnknown,
+			"update node metadata failed",
+			map[string]string{
+				"nodeID": nodeID,
+				"status": strconv.Itoa(status),
+				"resp":   string(resp),
+			},
+			nil,
+		)
+	}
 }
 
 func (c *Client) UpdateNodeSpec(nodeID string, nodeSpec *corev1.NodeSpec) error {
 	if nodeID == "" {
-		return fmt.Errorf("nodeID cannot be empty")
+		return errs.ErrInvalidNodeID
 	}
 	url := fmt.Sprintf("%s/api/v1/nodes/%s/spec", c.address, nodeID)
 	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, nodeSpec)
@@ -56,16 +93,34 @@ func (c *Client) UpdateNodeSpec(nodeID string, nodeSpec *corev1.NodeSpec) error 
 		zlog.Error().Err(err).Str("component", "client").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Msg("failed")
 		return err
 	}
-	if status != http.StatusOK {
-		zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
+
+	if status == http.StatusOK {
+		return nil
 	}
-	return nil
+
+	zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
+
+	switch status {
+	case http.StatusNotFound:
+		return errs.ErrNodeNotFound
+	default:
+		return errs.New(
+			errs.KindInternal,
+			errs.ReasonUnknown,
+			"update node spec failed",
+			map[string]string{
+				"nodeID": nodeID,
+				"status": strconv.Itoa(status),
+				"resp":   string(resp),
+			},
+			nil,
+		)
+	}
 }
 
 func (c *Client) GetNode(nodeID string) (*corev1.Node, error) {
 	if nodeID == "" {
-		return nil, fmt.Errorf("nodeID cannot be empty")
+		return nil, errs.ErrInvalidNodeID
 	}
 	url := fmt.Sprintf("%s/api/v1/nodes/%s", c.address, nodeID)
 	status, resp, err := c.httpClient.Do(http.MethodGet, url, c.token, nil)
@@ -73,16 +128,44 @@ func (c *Client) GetNode(nodeID string) (*corev1.Node, error) {
 		zlog.Error().Err(err).Str("component", "client").Str("resource", "node").Str("action", "get").Str("nodeID", nodeID).Msg("failed")
 		return nil, err
 	}
-	if status != http.StatusOK {
-		zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "get").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return nil, errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
+
+	if status == http.StatusOK {
+		node := &corev1.Node{}
+		if err := json.Unmarshal(resp, node); err != nil {
+			zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "get").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("unmarshal failed")
+			return nil, errs.New(
+				errs.KindInternal,
+				errs.ReasonUnmarshalFailed,
+				"node unmarshal failed",
+				map[string]string{
+					"nodeID": nodeID,
+					"status": strconv.Itoa(status),
+					"resp":   string(resp),
+				},
+				nil,
+			)
+		}
+		return node, nil
 	}
-	node := &corev1.Node{}
-	if err := json.Unmarshal(resp, node); err != nil {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "get").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("unmarshal failed")
-		return nil, errs.New("unmarshal", "unmarshal failed").WithField("nodeID", nodeID).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
+
+	zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "get").Str("nodeID", nodeID).Int("status", status).Str("resp", string(resp)).Msg("failed")
+
+	switch status {
+	case http.StatusNotFound:
+		return nil, errs.ErrNodeNotFound
+	default:
+		return nil, errs.New(
+			errs.KindInternal,
+			errs.ReasonUnknown,
+			"get node failed",
+			map[string]string{
+				"nodeID": nodeID,
+				"status": strconv.Itoa(status),
+				"resp":   string(resp),
+			},
+			nil,
+		)
 	}
-	return node, nil
 }
 
 func (c *Client) GetNodes() ([]*corev1.Node, error) {
@@ -92,16 +175,36 @@ func (c *Client) GetNodes() ([]*corev1.Node, error) {
 		zlog.Error().Err(err).Str("component", "client").Str("resource", "nodes").Str("action", "list").Msg("failed")
 		return nil, err
 	}
-	if status != http.StatusOK {
-		zlog.Error().Str("component", "apadana").Str("resource", "nodes").Str("action", "list").Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return nil, errs.New("unexpected", "unexpected response").WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
+	if status == http.StatusOK {
+		nodes := []*corev1.Node{}
+		if err := json.Unmarshal(resp, &nodes); err != nil {
+			zlog.Error().Err(err).Str("component", "apadana").Str("resource", "nodes").Str("action", "list").Int("status", status).Str("resp", string(resp)).Msg("unmarshal failed")
+			return nil, errs.New(
+				errs.KindInternal,
+				errs.ReasonUnmarshalFailed,
+				"nodes unmarshal failed",
+				map[string]string{
+					"status": strconv.Itoa(status),
+					"resp":   string(resp),
+				},
+				nil,
+			)
+		}
+		return nodes, nil
 	}
-	nodes := []*corev1.Node{}
-	if err := json.Unmarshal(resp, &nodes); err != nil {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "nodes").Str("action", "list").Int("status", status).Str("resp", string(resp)).Msg("unmarshal failed")
-		return nil, errs.New("unmarshal", "unmarshal failed").WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
-	}
-	return nodes, nil
+
+	zlog.Error().Str("component", "apadana").Str("resource", "nodes").Str("action", "list").Int("status", status).Str("resp", string(resp)).Msg("failed")
+
+	return nil, errs.New(
+		errs.KindInternal,
+		errs.ReasonUnknown,
+		"get nodes failed",
+		map[string]string{
+			"status": strconv.Itoa(status),
+			"resp":   string(resp),
+		},
+		nil,
+	)
 }
 
 func (c *Client) GetActiveNodes() ([]*corev1.Node, error) {
@@ -111,16 +214,36 @@ func (c *Client) GetActiveNodes() ([]*corev1.Node, error) {
 		zlog.Error().Err(err).Str("component", "client").Str("resource", "nodes").Str("action", "list").Msg("failed")
 		return nil, err
 	}
-	if status != http.StatusOK {
-		zlog.Error().Str("component", "apadana").Str("resource", "nodes").Str("action", "list").Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return nil, errs.New("unexpected", "unexpected response").WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
+	if status == http.StatusOK {
+		nodes := []*corev1.Node{}
+		if err := json.Unmarshal(resp, &nodes); err != nil {
+			zlog.Error().Err(err).Str("component", "apadana").Str("resource", "nodes").Str("action", "list").Int("status", status).Str("resp", string(resp)).Msg("unmarshal failed")
+			return nil, errs.New(
+				errs.KindInternal,
+				errs.ReasonUnmarshalFailed,
+				"active nodes unmarshal failed",
+				map[string]string{
+					"status": strconv.Itoa(status),
+					"resp":   string(resp),
+				},
+				nil,
+			)
+		}
+		return nodes, nil
 	}
-	nodes := []*corev1.Node{}
-	if err := json.Unmarshal(resp, &nodes); err != nil {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "nodes").Str("action", "list").Int("status", status).Str("resp", string(resp)).Msg("unmarshal failed")
-		return nil, errs.New("unmarshal", "unmarshal failed").WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
-	}
-	return nodes, nil
+
+	zlog.Error().Str("component", "apadana").Str("resource", "nodes").Str("action", "list").Int("status", status).Str("resp", string(resp)).Msg("failed")
+
+	return nil, errs.New(
+		errs.KindInternal,
+		errs.ReasonUnknown,
+		"get active nodes failed",
+		map[string]string{
+			"status": strconv.Itoa(status),
+			"resp":   string(resp),
+		},
+		nil,
+	)
 }
 
 func (c *Client) CreateNode(node *corev1.Node) (*corev1.Node, error) {
@@ -130,21 +253,42 @@ func (c *Client) CreateNode(node *corev1.Node) (*corev1.Node, error) {
 		zlog.Error().Err(err).Str("component", "client").Str("resource", "node").Str("action", "create").Msg("failed")
 		return nil, err
 	}
-	if status != http.StatusCreated {
-		zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "create").Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return nil, errs.New("unexpected", "unexpected response").WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
+
+	if status == http.StatusCreated {
+		n := &corev1.Node{}
+		if err := json.Unmarshal(resp, n); err != nil {
+			zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "create").Int("status", status).Str("resp", string(resp)).Msg("unmarshal failed")
+			return nil, errs.New(
+				errs.KindInternal,
+				errs.ReasonUnmarshalFailed,
+				"node unmarshal failed",
+				map[string]string{
+					"status": strconv.Itoa(status),
+					"resp":   string(resp),
+				},
+				nil,
+			)
+		}
+		return n, nil
 	}
-	n := &corev1.Node{}
-	if err := json.Unmarshal(resp, n); err != nil {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "create").Int("status", status).Str("resp", string(resp)).Msg("unmarshal failed")
-		return nil, errs.New("unmarshal", "unmarshal failed").WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
-	}
-	return n, nil
+
+	zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "create").Int("status", status).Str("resp", string(resp)).Msg("failed")
+
+	return nil, errs.New(
+		errs.KindInternal,
+		errs.ReasonUnknown,
+		"create node failed",
+		map[string]string{
+			"status": strconv.Itoa(status),
+			"resp":   string(resp),
+		},
+		nil,
+	)
 }
 
 func (c *Client) DeleteNode(nodeID string) error {
 	if nodeID == "" {
-		return fmt.Errorf("nodeID cannot be empty")
+		return errs.ErrInvalidNodeID
 	}
 	url := fmt.Sprintf("%s/api/v1/nodes/%s", c.address, nodeID)
 	status, resp, err := c.httpClient.Do(http.MethodDelete, url, c.token, nil)
@@ -152,13 +296,28 @@ func (c *Client) DeleteNode(nodeID string) error {
 		zlog.Error().Err(err).Str("component", "client").Str("resource", "node").Str("action", "delete").Str("nodeID", nodeID).Msg("failed")
 		return err
 	}
-	if status == http.StatusNotFound {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "delete").Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return errs.ErrNotFound
+
+	if status == http.StatusNoContent {
+		return nil
 	}
-	if status != http.StatusNoContent {
-		zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "delete").Int("status", status).Str("resp", string(resp)).Msg("failed")
-		return errs.New("unexpected", "unexpected response").WithField("nodeID", nodeID).WithField("status", strconv.Itoa(status)).WithField("resp", string(resp))
+
+	zlog.Error().Err(err).Str("component", "apadana").Str("resource", "node").Str("action", "delete").Int("status", status).Str("resp", string(resp)).Msg("failed")
+
+	switch status {
+	case http.StatusNotFound:
+		return errs.ErrNodeNotFound
+	default:
+		return errs.New(
+			errs.KindInternal,
+			errs.ReasonUnknown,
+			"get node failed",
+			map[string]string{
+				"nodeID": nodeID,
+				"status": strconv.Itoa(status),
+				"resp":   string(resp),
+			},
+			nil,
+		)
 	}
-	return nil
+
 }

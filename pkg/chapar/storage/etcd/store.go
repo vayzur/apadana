@@ -27,7 +27,7 @@ func (e *EtcdStorage) Get(ctx context.Context, key string, out *[]byte) error {
 	}
 
 	if len(resp.Kvs) == 0 {
-		return errs.ErrNotFound
+		return errs.ErrResourceNotFound
 	}
 
 	*out = resp.Kvs[0].Value
@@ -66,7 +66,7 @@ func (e *EtcdStorage) Delete(ctx context.Context, key string) error {
 	}
 
 	if resp.Deleted == 0 {
-		return errs.ErrNotFound
+		return errs.ErrResourceNotFound
 	}
 
 	return nil

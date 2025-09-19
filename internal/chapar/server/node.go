@@ -2,12 +2,9 @@ package server
 
 import (
 	"context"
-	"errors"
 	"net/http"
-	"time"
 
 	"github.com/gofiber/fiber/v3"
-	"github.com/google/uuid"
 	zlog "github.com/rs/zerolog/log"
 	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
 	"github.com/vayzur/apadana/pkg/errs"
@@ -16,11 +13,7 @@ import (
 func (s *Server) GetNodes(c fiber.Ctx) error {
 	nodes, err := s.nodeService.GetNodes(c.RequestCtx())
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
+		return errs.HandleAPIError(c, err)
 	}
 
 	zlog.Info().Str("component", "chapar").Str("resource", "nodes").Str("action", "list").Int("count", len(nodes)).Msg("retrieved")
@@ -30,11 +23,7 @@ func (s *Server) GetNodes(c fiber.Ctx) error {
 func (s *Server) GetActiveNodes(c fiber.Ctx) error {
 	nodes, err := s.nodeService.GetActiveNodes(c.RequestCtx())
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
+		return errs.HandleAPIError(c, err)
 	}
 
 	zlog.Info().Str("component", "chapar").Str("resource", "nodes").Str("action", "list").Int("count", len(nodes)).Msg("retrieved")
@@ -46,25 +35,14 @@ func (s *Server) GetNode(c fiber.Ctx) error {
 	if nodeID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
-				"error": "nodeID parameter is required",
+				"error": errs.ErrInvalidNodeID,
 			},
 		)
 	}
 
 	node, err := s.nodeService.GetNode(c.RequestCtx(), nodeID)
 	if err != nil {
-		if errors.Is(err, errs.ErrNotFound) {
-			return c.Status(fiber.StatusNotFound).JSON(
-				fiber.Map{
-					"error": err.Error(),
-				},
-			)
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
+		return errs.HandleAPIError(c, err)
 	}
 
 	zlog.Info().Str("component", "chapar").Str("resource", "node").Str("action", "get").Str("nodeID", nodeID).Msg("retrieved")
@@ -81,15 +59,8 @@ func (s *Server) CreateNode(c fiber.Ctx) error {
 		)
 	}
 
-	node.Metadata.ID = uuid.NewString()
-	node.Metadata.CreationTimestamp = time.Now()
-
 	if err := s.nodeService.CreateNode(c.RequestCtx(), node); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
+		return errs.HandleAPIError(c, err)
 	}
 
 	zlog.Info().Str("component", "chapar").Str("resource", "node").Str("action", "create").Str("nodeID", node.Metadata.ID).Msg("created")
@@ -101,24 +72,13 @@ func (s *Server) DeleteNode(c fiber.Ctx) error {
 	if nodeID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
-				"error": "nodeID parameter is required",
+				"error": errs.ErrInvalidNodeID,
 			},
 		)
 	}
 
 	if err := s.nodeService.DeleteNode(context.Background(), nodeID); err != nil {
-		if errors.Is(err, errs.ErrNotFound) {
-			return c.Status(fiber.StatusNotFound).JSON(
-				fiber.Map{
-					"error": err.Error(),
-				},
-			)
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
+		return errs.HandleAPIError(c, err)
 	}
 
 	zlog.Info().Str("component", "chapar").Str("resource", "node").Str("action", "delete").Str("nodeID", nodeID).Msg("deleted")
@@ -130,7 +90,7 @@ func (s *Server) UpdateNodeStatus(c fiber.Ctx) error {
 	if nodeID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
-				"error": "nodeID parameter is required",
+				"error": errs.ErrInvalidNodeID,
 			},
 		)
 	}
@@ -145,11 +105,7 @@ func (s *Server) UpdateNodeStatus(c fiber.Ctx) error {
 	}
 
 	if err := s.nodeService.UpdateNodeStatus(c.RequestCtx(), nodeID, nodeStatus); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
+		return errs.HandleAPIError(c, err)
 	}
 
 	zlog.Info().Str("component", "chapar").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Msg("updated")
@@ -161,7 +117,7 @@ func (s *Server) UpdateNodeMetadata(c fiber.Ctx) error {
 	if nodeID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
-				"error": "nodeID parameter is required",
+				"error": errs.ErrInvalidNodeID,
 			},
 		)
 	}
@@ -176,11 +132,7 @@ func (s *Server) UpdateNodeMetadata(c fiber.Ctx) error {
 	}
 
 	if err := s.nodeService.UpdateNodeMetadata(c.RequestCtx(), nodeID, metadata); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
+		return errs.HandleAPIError(c, err)
 	}
 
 	zlog.Info().Str("component", "chapar").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Msg("updated")
@@ -192,7 +144,7 @@ func (s *Server) UpdateNodeSpec(c fiber.Ctx) error {
 	if nodeID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
-				"error": "nodeID parameter is required",
+				"error": errs.ErrInvalidNodeID,
 			},
 		)
 	}
@@ -207,11 +159,7 @@ func (s *Server) UpdateNodeSpec(c fiber.Ctx) error {
 	}
 
 	if err := s.nodeService.UpdateNodeSpec(c.RequestCtx(), nodeID, spec); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
+		return errs.HandleAPIError(c, err)
 	}
 
 	zlog.Info().Str("component", "chapar").Str("resource", "node").Str("action", "update").Str("nodeID", nodeID).Msg("updated")

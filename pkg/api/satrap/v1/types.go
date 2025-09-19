@@ -2,6 +2,14 @@ package v1
 
 import "time"
 
+type Resource string
+
+const (
+	ResourceInbound  Resource = "inbound"
+	ResourceUser     Resource = "user"
+	ResourceOutbound Resource = "outbound"
+)
+
 type Metadata struct {
 	CreationTimestamp time.Time         `json:"creationTimestamp"`
 	TTL               time.Duration     `json:"ttl"`

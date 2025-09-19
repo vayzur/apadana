@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
 	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
@@ -41,14 +40,14 @@ func (s *InboundService) DeleteInbound(ctx context.Context, nodeID, tag string) 
 	if err != nil {
 		return err
 	}
-	if err := s.satrapClient.RemoveInbound(node, tag); err != nil && !errors.Is(err, errs.ErrNotFound) {
-		return fmt.Errorf("inbound delete runtime %s/%s: %w", nodeID, tag, err)
+	if err := s.satrapClient.RemoveInbound(node, tag); err != nil && !errors.Is(err, errs.ErrInboundNotFound) {
+		return err
 	}
-	if err := s.store.DeleteUsers(ctx, nodeID, tag); err != nil && !errors.Is(err, errs.ErrNotFound) {
-		return fmt.Errorf("inbound delete store %s/%s: %w", nodeID, tag, err)
+	if err := s.store.DeleteUsers(ctx, nodeID, tag); err != nil && !errors.Is(err, errs.ErrUserNotFound) {
+		return err
 	}
-	if err := s.store.DeleteInbound(ctx, nodeID, tag); err != nil && !errors.Is(err, errs.ErrNotFound) {
-		return fmt.Errorf("inbound delete store %s/%s: %w", nodeID, tag, err)
+	if err := s.store.DeleteInbound(ctx, nodeID, tag); err != nil && !errors.Is(err, errs.ErrInboundNotFound) {
+		return err
 	}
 	return nil
 }
@@ -63,16 +62,16 @@ func (s *InboundService) CreateInbound(ctx context.Context, nodeID string, inbou
 		return err
 	}
 	if inboundsCount >= node.Status.Capacity.MaxInbounds {
-		return errs.ErrCapacityExceeded
+		return errs.ErrNodeCapacityExceeded
 	}
 	if err := s.satrapClient.AddInbound(node, &inbound.Spec.Config); err != nil {
-		return fmt.Errorf("create inbound runtime %s/%s: %w", nodeID, inbound.Spec.Config.Tag, err)
+		return err
 	}
 	if err := s.store.CreateInbound(ctx, nodeID, inbound); err != nil {
 		if rerr := s.satrapClient.RemoveInbound(node, inbound.Spec.Config.Tag); rerr != nil {
-			return fmt.Errorf("create inbound rollback %s/%s failed: %w: %w", nodeID, inbound.Spec.Config.Tag, rerr, err)
+			return rerr
 		}
-		return fmt.Errorf("create inbound store %s/%s: %w", nodeID, inbound.Spec.Config.Tag, err)
+		return err
 	}
 	return nil
 }
@@ -94,11 +93,11 @@ func (s *InboundService) DeleteUser(ctx context.Context, nodeID, tag, email stri
 	if err != nil {
 		return err
 	}
-	if err := s.satrapClient.RemoveUser(node, tag, email); err != nil && !errors.Is(err, errs.ErrNotFound) {
-		return fmt.Errorf("inbound user delete runtime %s/%s: %w", nodeID, tag, err)
+	if err := s.satrapClient.RemoveUser(node, tag, email); err != nil && !errors.Is(err, errs.ErrUserNotFound) {
+		return err
 	}
 	if err := s.store.DeleteUser(ctx, nodeID, tag, email); err != nil {
-		return fmt.Errorf("inbound user delete store %s/%s/%s: %w", nodeID, tag, email, err)
+		return err
 	}
 	return nil
 }
@@ -133,15 +132,15 @@ func (s *InboundService) CreateUser(ctx context.Context, nodeID, tag string, use
 	}
 
 	if usersCount >= inb.Spec.Capacity.MaxUsers {
-		return errs.ErrCapacityExceeded
+		return errs.ErrInboundCapacityExceeded
 	}
 
 	if err := s.store.CreateUser(ctx, nodeID, tag, user); err != nil {
-		return fmt.Errorf("create inbound user store %s/%s/%s: %w", nodeID, tag, user.Email, err)
+		return err
 	}
 
 	if err := s.satrapClient.AddUser(node, tag, user); err != nil {
-		return fmt.Errorf("create inbound user runtime %s/%s/%s: %w", nodeID, tag, user.Email, err)
+		return err
 	}
 
 	return nil
@@ -158,7 +157,7 @@ func (s *InboundService) RenewInbound(ctx context.Context, nodeID, tag string, r
 	}
 	inbound.Metadata.TTL = renew.TTL
 	if err := s.store.CreateInbound(ctx, nodeID, inbound); err != nil {
-		return fmt.Errorf("inbound renew store %s/%s: %w", nodeID, tag, err)
+		return err
 	}
 	return nil
 }
@@ -170,7 +169,7 @@ func (s *InboundService) RenewInboundUser(ctx context.Context, nodeID, tag, emai
 	}
 	user.Metadata.TTL = renew.TTL
 	if err := s.store.CreateUser(ctx, nodeID, tag, user); err != nil {
-		return fmt.Errorf("inbound user renew store %s/%s: %w", nodeID, tag, err)
+		return err
 	}
 	return nil
 }
