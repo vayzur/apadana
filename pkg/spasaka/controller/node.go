@@ -16,11 +16,11 @@ func (c *Spasaka) RunNodeMonitor(ctx context.Context, concurrentNodeSyncs int, n
 			for node := range nodesChan {
 				if time.Since(node.Status.LastHeartbeatTime) >= nodeMonitorGracePeriod {
 					node.Status.Ready = false
-					if err := c.apadanaClient.UpdateNodeStatus(node.Metadata.ID, &node.Status); err != nil {
+					if err := c.apadanaClient.UpdateNodeStatus(node.Metadata.Name, &node.Status); err != nil {
 						if ctx.Err() != nil {
 							return
 						}
-						zlog.Error().Err(err).Str("component", "spasaka").Str("resource", "node").Str("action", "update").Str("nodeID", node.Metadata.ID).Msg("failed")
+						zlog.Error().Err(err).Str("component", "spasaka").Str("resource", "node").Str("action", "update").Str("nodeName", node.Metadata.Name).Msg("failed")
 						continue
 					}
 				}

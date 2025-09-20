@@ -14,7 +14,7 @@ const (
 
 type NodeMetadata struct {
 	Name              string            `json:"name"`
-	ID                string            `json:"id"`
+	UID               string            `json:"uid"`
 	CreationTimestamp time.Time         `json:"creationTimestamp"`
 	Labels            map[string]string `json:"labels,omitempty"`
 	Annotations       map[string]string `json:"annotations,omitempty"`

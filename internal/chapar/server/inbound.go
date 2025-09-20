@@ -8,7 +8,7 @@ import (
 )
 
 func (s *Server) GetInbound(c fiber.Ctx) error {
-	params, err := s.requiredParams(c, "nodeID", "tag")
+	params, err := s.requiredParams(c, "nodeName", "tag")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(&errs.Error{
 			Kind:    errs.KindInvalid,
@@ -17,22 +17,25 @@ func (s *Server) GetInbound(c fiber.Ctx) error {
 		})
 	}
 
-	inbound, err := s.inboundService.GetInbound(c.RequestCtx(), params["nodeID"], params["tag"])
+	nodeName := params["nodeName"]
+	tag := params["tag"]
+
+	inbound, err := s.inboundService.GetInbound(c.RequestCtx(), nodeName, tag)
 	if err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "get").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("failed")
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "get").Str("nodeName", nodeName).Str("tag", tag).Msg("failed")
 		return errs.HandleAPIError(c, err)
 	}
 
-	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "get").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("retrieved")
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "get").Str("nodeName", nodeName).Str("tag", tag).Msg("retrieved")
 	return c.Status(fiber.StatusOK).JSON(inbound)
 }
 
 func (s *Server) CreateInbound(c fiber.Ctx) error {
-	nodeID := c.Params("nodeID")
-	if nodeID == "" {
+	nodeName := c.Params("nodeName")
+	if nodeName == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
-				"error": errs.ErrInvalidNodeID,
+				"error": errs.ErrInvalidNode,
 			},
 		)
 	}
@@ -41,42 +44,48 @@ func (s *Server) CreateInbound(c fiber.Ctx) error {
 	if err := c.Bind().JSON(inbound); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
-				"error": err.Error(),
+				"error": &errs.Error{
+					Kind:    errs.KindInvalid,
+					Reason:  errs.ReasonUnmarshalFailed,
+					Message: err.Error(),
+				},
 			},
 		)
 	}
 
-	if err := s.inboundService.CreateInbound(c.RequestCtx(), nodeID, inbound); err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "create").Str("nodeID", nodeID).Str("tag", inbound.Spec.Config.Tag).Msg("failed")
+	tag := inbound.Spec.Config.Tag
+
+	if err := s.inboundService.CreateInbound(c.RequestCtx(), nodeName, inbound); err != nil {
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "create").Str("nodeName", nodeName).Str("tag", tag).Msg("failed")
 		return errs.HandleAPIError(c, err)
 	}
 
-	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "create").Str("nodeID", nodeID).Str("tag", inbound.Spec.Config.Tag).Msg("created")
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "create").Str("nodeName", nodeName).Str("tag", tag).Msg("created")
 	return c.Status(fiber.StatusCreated).JSON(inbound)
 }
 
 func (s *Server) GetInbounds(c fiber.Ctx) error {
-	nodeID := c.Params("nodeID")
-	if nodeID == "" {
+	nodeName := c.Params("nodeName")
+	if nodeName == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
-				"error": errs.ErrInvalidNodeID,
+				"error": errs.ErrInvalidNode,
 			},
 		)
 	}
 
-	inbounds, err := s.inboundService.GetInbounds(c.RequestCtx(), nodeID)
+	inbounds, err := s.inboundService.GetInbounds(c.RequestCtx(), nodeName)
 	if err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbounds").Str("action", "list").Str("nodeID", nodeID).Int("count", len(inbounds)).Msg("failed")
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbounds").Str("action", "list").Str("nodeName", nodeName).Int("count", len(inbounds)).Msg("failed")
 		return errs.HandleAPIError(c, err)
 	}
 
-	zlog.Info().Str("component", "chapar").Str("resource", "inbounds").Str("action", "list").Str("nodeID", nodeID).Int("count", len(inbounds)).Msg("retrieved")
+	zlog.Info().Str("component", "chapar").Str("resource", "inbounds").Str("action", "list").Str("nodeName", nodeName).Int("count", len(inbounds)).Msg("retrieved")
 	return c.Status(fiber.StatusOK).JSON(inbounds)
 }
 
 func (s *Server) DeleteInbound(c fiber.Ctx) error {
-	params, err := s.requiredParams(c, "nodeID", "tag")
+	params, err := s.requiredParams(c, "nodeName", "tag")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(&errs.Error{
 			Kind:    errs.KindInvalid,
@@ -85,17 +94,20 @@ func (s *Server) DeleteInbound(c fiber.Ctx) error {
 		})
 	}
 
-	if err := s.inboundService.DeleteInbound(c.RequestCtx(), params["nodeID"], params["tag"]); err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "delete").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("failed")
+	nodeName := params["nodeName"]
+	tag := params["tag"]
+
+	if err := s.inboundService.DeleteInbound(c.RequestCtx(), nodeName, tag); err != nil {
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "delete").Str("nodeName", nodeName).Str("tag", tag).Msg("failed")
 		return errs.HandleAPIError(c, err)
 	}
 
-	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "delete").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("deleted")
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "delete").Str("nodeName", nodeName).Str("tag", tag).Msg("deleted")
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
 func (s *Server) CreateUser(c fiber.Ctx) error {
-	params, err := s.requiredParams(c, "nodeID", "tag")
+	params, err := s.requiredParams(c, "nodeName", "tag")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(&errs.Error{
 			Kind:    errs.KindInvalid,
@@ -103,6 +115,9 @@ func (s *Server) CreateUser(c fiber.Ctx) error {
 			Message: err.Error(),
 		})
 	}
+
+	nodeName := params["nodeName"]
+	tag := params["tag"]
 
 	user := &satrapv1.InboundUser{}
 	if err := c.Bind().JSON(user); err != nil {
@@ -113,17 +128,20 @@ func (s *Server) CreateUser(c fiber.Ctx) error {
 		)
 	}
 
-	if err := s.inboundService.CreateUser(c.RequestCtx(), params["nodeID"], params["tag"], user); err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "create").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Str("protocol", user.Type).Str("email", user.Email).Str("account", string(user.Account)).Msg("failed")
+	email := user.Email
+	proto := user.Type
+
+	if err := s.inboundService.CreateUser(c.RequestCtx(), nodeName, tag, user); err != nil {
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "create").Str("nodeName", nodeName).Str("tag", tag).Str("protocol", proto).Str("email", email).Msg("failed")
 		return errs.HandleAPIError(c, err)
 	}
 
-	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "create").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Str("protocol", user.Type).Str("email", user.Email).Str("account", string(user.Account)).Msg("created")
+	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "create").Str("nodeName", nodeName).Str("tag", tag).Str("protocol", proto).Str("email", email).Msg("created")
 	return c.Status(fiber.StatusCreated).JSON(user)
 }
 
 func (s *Server) DeleteUser(c fiber.Ctx) error {
-	params, err := s.requiredParams(c, "nodeID", "tag", "email")
+	params, err := s.requiredParams(c, "nodeName", "tag", "email")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(&errs.Error{
 			Kind:    errs.KindInvalid,
@@ -132,17 +150,21 @@ func (s *Server) DeleteUser(c fiber.Ctx) error {
 		})
 	}
 
-	if err := s.inboundService.DeleteUser(c.RequestCtx(), params["nodeID"], params["tag"], params["email"]); err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "delete").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Str("email", params["email"]).Msg("failed")
+	nodeName := params["nodeName"]
+	tag := params["tag"]
+	email := params["email"]
+
+	if err := s.inboundService.DeleteUser(c.RequestCtx(), nodeName, tag, params["email"]); err != nil {
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "delete").Str("nodeName", nodeName).Str("tag", tag).Str("email", email).Msg("failed")
 		return errs.HandleAPIError(c, err)
 	}
 
-	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "delete").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Str("email", params["email"]).Msg("deleted")
+	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "delete").Str("nodeName", nodeName).Str("tag", tag).Str("email", email).Msg("deleted")
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
 func (s *Server) GetInboundUsers(c fiber.Ctx) error {
-	params, err := s.requiredParams(c, "nodeID", "tag")
+	params, err := s.requiredParams(c, "nodeName", "tag")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(&errs.Error{
 			Kind:    errs.KindInvalid,
@@ -151,18 +173,21 @@ func (s *Server) GetInboundUsers(c fiber.Ctx) error {
 		})
 	}
 
-	users, err := s.inboundService.GetUsers(c.RequestCtx(), params["nodeID"], params["tag"])
+	nodeName := params["nodeName"]
+	tag := params["tag"]
+
+	users, err := s.inboundService.GetUsers(c.RequestCtx(), nodeName, tag)
 	if err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "list").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Int("count", len(users)).Msg("failed")
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "list").Str("nodeName", nodeName).Str("tag", tag).Int("count", len(users)).Msg("failed")
 		return errs.HandleAPIError(c, err)
 	}
 
-	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "list").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Int("count", len(users)).Msg("retrieved")
+	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "list").Str("nodeName", nodeName).Str("tag", tag).Int("count", len(users)).Msg("retrieved")
 	return c.Status(fiber.StatusOK).JSON(users)
 }
 
 func (s *Server) RenewInbound(c fiber.Ctx) error {
-	params, err := s.requiredParams(c, "nodeID", "tag")
+	params, err := s.requiredParams(c, "nodeName", "tag")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(&errs.Error{
 			Kind:    errs.KindInvalid,
@@ -170,6 +195,9 @@ func (s *Server) RenewInbound(c fiber.Ctx) error {
 			Message: err.Error(),
 		})
 	}
+
+	nodeName := params["nodeName"]
+	tag := params["tag"]
 
 	renew := &satrapv1.Renew{}
 	if err := c.Bind().JSON(renew); err != nil {
@@ -180,17 +208,17 @@ func (s *Server) RenewInbound(c fiber.Ctx) error {
 		)
 	}
 
-	if err := s.inboundService.RenewInbound(c.RequestCtx(), params["nodeID"], params["tag"], renew); err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "update").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("failed")
+	if err := s.inboundService.RenewInbound(c.RequestCtx(), nodeName, tag, renew); err != nil {
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Msg("failed")
 		return errs.HandleAPIError(c, err)
 	}
 
-	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "update").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("updated")
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Msg("updated")
 	return c.SendStatus(fiber.StatusOK)
 }
 
 func (s *Server) RenewInboundUser(c fiber.Ctx) error {
-	params, err := s.requiredParams(c, "nodeID", "tag", "email")
+	params, err := s.requiredParams(c, "nodeName", "tag", "email")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(&errs.Error{
 			Kind:    errs.KindInvalid,
@@ -198,6 +226,9 @@ func (s *Server) RenewInboundUser(c fiber.Ctx) error {
 			Message: err.Error(),
 		})
 	}
+
+	nodeName := params["nodeName"]
+	tag := params["tag"]
 
 	renew := &satrapv1.Renew{}
 	if err := c.Bind().JSON(renew); err != nil {
@@ -208,17 +239,17 @@ func (s *Server) RenewInboundUser(c fiber.Ctx) error {
 		)
 	}
 
-	if err := s.inboundService.RenewInboundUser(c.RequestCtx(), params["nodeID"], params["tag"], params["email"], renew); err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "update").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("failed")
+	if err := s.inboundService.RenewInboundUser(c.RequestCtx(), nodeName, tag, params["email"], renew); err != nil {
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Msg("failed")
 		return errs.HandleAPIError(c, err)
 	}
 
-	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "update").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("updated")
+	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Msg("updated")
 	return c.SendStatus(fiber.StatusOK)
 }
 
 func (s *Server) UpdateInboundMetadata(c fiber.Ctx) error {
-	params, err := s.requiredParams(c, "nodeID", "tag")
+	params, err := s.requiredParams(c, "nodeName", "tag")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(&errs.Error{
 			Kind:    errs.KindInvalid,
@@ -226,6 +257,9 @@ func (s *Server) UpdateInboundMetadata(c fiber.Ctx) error {
 			Message: err.Error(),
 		})
 	}
+
+	nodeName := params["nodeName"]
+	tag := params["tag"]
 
 	metadata := &satrapv1.Metadata{}
 	if err := c.Bind().JSON(metadata); err != nil {
@@ -236,17 +270,17 @@ func (s *Server) UpdateInboundMetadata(c fiber.Ctx) error {
 		)
 	}
 
-	if err := s.inboundService.UpdateInboundMetadata(c.RequestCtx(), params["nodeID"], params["tag"], metadata); err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "update").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("failed")
+	if err := s.inboundService.UpdateInboundMetadata(c.RequestCtx(), nodeName, tag, metadata); err != nil {
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Msg("failed")
 		return errs.HandleAPIError(c, err)
 	}
 
-	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "update").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("updated")
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Msg("updated")
 	return c.SendStatus(fiber.StatusOK)
 }
 
 func (s *Server) UpdateInboundUserMetadata(c fiber.Ctx) error {
-	params, err := s.requiredParams(c, "nodeID", "tag", "email")
+	params, err := s.requiredParams(c, "nodeName", "tag", "email")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(&errs.Error{
 			Kind:    errs.KindInvalid,
@@ -254,6 +288,10 @@ func (s *Server) UpdateInboundUserMetadata(c fiber.Ctx) error {
 			Message: err.Error(),
 		})
 	}
+
+	nodeName := params["nodeName"]
+	tag := params["tag"]
+	email := params["email"]
 
 	metadata := &satrapv1.Metadata{}
 	if err := c.Bind().JSON(metadata); err != nil {
@@ -264,28 +302,28 @@ func (s *Server) UpdateInboundUserMetadata(c fiber.Ctx) error {
 		)
 	}
 
-	if err := s.inboundService.UpdateUserMetadata(c.RequestCtx(), params["nodeID"], params["tag"], params["email"], metadata); err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "update").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("failed")
+	if err := s.inboundService.UpdateUserMetadata(c.RequestCtx(), nodeName, tag, email, metadata); err != nil {
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Str("email", email).Msg("failed")
 		return errs.HandleAPIError(c, err)
 	}
 
-	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "update").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Msg("updated")
+	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Str("email", email).Msg("updated")
 	return c.SendStatus(fiber.StatusOK)
 }
 
 func (s *Server) CountInbounds(c fiber.Ctx) error {
-	nodeID := c.Params("nodeID")
-	if nodeID == "" {
+	nodeName := c.Params("nodeName")
+	if nodeName == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
-				"error": "nodeID parameter is required",
+				"error": errs.ErrInvalidNode,
 			},
 		)
 	}
 
-	count, err := s.inboundService.CountInbounds(c.RequestCtx(), nodeID)
+	count, err := s.inboundService.CountInbounds(c.RequestCtx(), nodeName)
 	if err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "count").Str("nodeID", nodeID).Uint32("count", count).Msg("failed")
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "count").Str("nodeName", nodeName).Uint32("count", count).Msg("failed")
 		return errs.HandleAPIError(c, err)
 	}
 
@@ -293,12 +331,12 @@ func (s *Server) CountInbounds(c fiber.Ctx) error {
 		Value: count,
 	}
 
-	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "count").Str("nodeID", nodeID).Uint32("count", count).Msg("retrieved")
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "count").Str("nodeName", nodeName).Uint32("count", count).Msg("retrieved")
 	return c.Status(fiber.StatusOK).JSON(countResp)
 }
 
 func (s *Server) CountInboundUsers(c fiber.Ctx) error {
-	params, err := s.requiredParams(c, "nodeID", "tag")
+	params, err := s.requiredParams(c, "nodeName", "tag")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(&errs.Error{
 			Kind:    errs.KindInvalid,
@@ -307,9 +345,12 @@ func (s *Server) CountInboundUsers(c fiber.Ctx) error {
 		})
 	}
 
-	count, err := s.inboundService.CountUsers(c.RequestCtx(), params["nodeID"], params["tag"])
+	nodeName := params["nodeName"]
+	tag := params["tag"]
+
+	count, err := s.inboundService.CountUsers(c.RequestCtx(), nodeName, tag)
 	if err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "count").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Uint32("count", count).Msg("failed")
+		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "count").Str("nodeName", nodeName).Str("tag", tag).Uint32("count", count).Msg("failed")
 		return errs.HandleAPIError(c, err)
 	}
 
@@ -317,6 +358,6 @@ func (s *Server) CountInboundUsers(c fiber.Ctx) error {
 		Value: count,
 	}
 
-	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "count").Str("nodeID", params["nodeID"]).Str("tag", params["tag"]).Uint32("count", count).Msg("retrieved")
+	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "count").Str("nodeName", nodeName).Str("tag", tag).Uint32("count", count).Msg("retrieved")
 	return c.Status(fiber.StatusOK).JSON(countResp)
 }

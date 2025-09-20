@@ -9,7 +9,7 @@ import (
 	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
 )
 
-func (m *SyncManager) Run(ctx context.Context, nodeID string) {
+func (m *SyncManager) Run(ctx context.Context, nodeName string) {
 	createInboundCh := make(chan *satrapv1.Inbound, 256)
 	gcInboundCh := make(chan string, 256)
 
@@ -23,7 +23,7 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 					continue
 				}
 
-				desiredUsers, err := m.apadanaClient.GetInboundUsers(nodeID, inb.Spec.Config.Tag)
+				desiredUsers, err := m.apadanaClient.GetInboundUsers(nodeName, inb.Spec.Config.Tag)
 				if err != nil {
 					continue
 				}
@@ -41,7 +41,7 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 				if err := m.xrayClient.RemoveInbound(ctx, tag); err != nil {
 					zlog.Error().Err(err).Str("component", "syncManager").Str("controller", "gc").
 						Str("resource", "inbound").Str("action", "delete").
-						Str("nodeID", nodeID).Str("tag", tag).Msg("failed")
+						Str("nodeName", nodeName).Str("tag", tag).Msg("failed")
 					continue
 				}
 			}
@@ -90,16 +90,16 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 			return
 
 		case <-ticker.C:
-			desiredInbounds, err := m.apadanaClient.GetInbounds(nodeID)
+			desiredInbounds, err := m.apadanaClient.GetInbounds(nodeName)
 			if err != nil {
-				zlog.Error().Err(err).Str("component", "syncManager").Str("nodeID", nodeID).
+				zlog.Error().Err(err).Str("component", "syncManager").Str("nodeName", nodeName).
 					Msg("failed to get desired inbounds")
 				continue
 			}
 
 			currentInbounds, err := m.xrayClient.ListInbounds(ctx)
 			if err != nil {
-				zlog.Error().Err(err).Str("component", "syncManager").Str("nodeID", nodeID).
+				zlog.Error().Err(err).Str("component", "syncManager").Str("nodeName", nodeName).
 					Msg("failed to get current inbounds")
 				continue
 			}
@@ -122,7 +122,7 @@ func (m *SyncManager) Run(ctx context.Context, nodeID string) {
 						continue
 					}
 
-					desiredUsers, err := m.apadanaClient.GetInboundUsers(nodeID, inbound.Spec.Config.Tag)
+					desiredUsers, err := m.apadanaClient.GetInboundUsers(nodeName, inbound.Spec.Config.Tag)
 					if err != nil {
 						continue
 					}

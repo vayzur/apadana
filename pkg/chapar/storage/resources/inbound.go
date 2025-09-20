@@ -30,8 +30,8 @@ func NewInboundStore(store storage.Interface) *InboundStore {
 	return &InboundStore{store: store}
 }
 
-func (s *InboundStore) GetInbound(ctx context.Context, nodeID, tag string) (*satrapv1.Inbound, error) {
-	key := fmt.Sprintf("/inbounds/%s/%s", nodeID, tag)
+func (s *InboundStore) GetInbound(ctx context.Context, nodeName, tag string) (*satrapv1.Inbound, error) {
+	key := fmt.Sprintf("/inbounds/%s/%s", nodeName, tag)
 	out := &[]byte{}
 
 	if err := s.store.Get(ctx, key, out); err != nil {
@@ -43,8 +43,8 @@ func (s *InboundStore) GetInbound(ctx context.Context, nodeID, tag string) (*sat
 			errs.ReasonUnknown,
 			"get inbound failed",
 			map[string]string{
-				"nodeID": nodeID,
-				"tag":    tag,
+				"nodeName": nodeName,
+				"tag":      tag,
 			},
 			err,
 		)
@@ -57,8 +57,8 @@ func (s *InboundStore) GetInbound(ctx context.Context, nodeID, tag string) (*sat
 			errs.ReasonUnmarshalFailed,
 			"get inbound failed",
 			map[string]string{
-				"nodeID": nodeID,
-				"tag":    tag,
+				"nodeName": nodeName,
+				"tag":      tag,
 			},
 			err,
 		)
@@ -67,7 +67,7 @@ func (s *InboundStore) GetInbound(ctx context.Context, nodeID, tag string) (*sat
 	return inbound, nil
 }
 
-func (s *InboundStore) CreateInbound(ctx context.Context, nodeID string, inbound *satrapv1.Inbound) error {
+func (s *InboundStore) CreateInbound(ctx context.Context, nodeName string, inbound *satrapv1.Inbound) error {
 	val, err := json.Marshal(inbound)
 	if err != nil {
 		return errs.New(
@@ -75,22 +75,22 @@ func (s *InboundStore) CreateInbound(ctx context.Context, nodeID string, inbound
 			errs.ReasonMarshalFailed,
 			"create inbound failed",
 			map[string]string{
-				"nodeID": nodeID,
-				"tag":    inbound.Spec.Config.Tag,
+				"nodeName": nodeName,
+				"tag":      inbound.Spec.Config.Tag,
 			},
 			err,
 		)
 	}
 
-	key := fmt.Sprintf("/inbounds/%s/%s", nodeID, inbound.Spec.Config.Tag)
+	key := fmt.Sprintf("/inbounds/%s/%s", nodeName, inbound.Spec.Config.Tag)
 	if err := s.store.Create(ctx, key, val, uint64(inbound.Metadata.TTL.Seconds())); err != nil {
 		return errs.New(
 			errs.KindInternal,
 			errs.ReasonUnknown,
 			"create inbound failed",
 			map[string]string{
-				"nodeID": nodeID,
-				"tag":    inbound.Spec.Config.Tag,
+				"nodeName": nodeName,
+				"tag":      inbound.Spec.Config.Tag,
 			},
 			err,
 		)
@@ -99,8 +99,8 @@ func (s *InboundStore) CreateInbound(ctx context.Context, nodeID string, inbound
 	return nil
 }
 
-func (s *InboundStore) DeleteInbound(ctx context.Context, nodeID, tag string) error {
-	key := fmt.Sprintf("/inbounds/%s/%s", nodeID, tag)
+func (s *InboundStore) DeleteInbound(ctx context.Context, nodeName, tag string) error {
+	key := fmt.Sprintf("/inbounds/%s/%s", nodeName, tag)
 	if err := s.store.Delete(ctx, key); err != nil {
 		if errors.Is(err, errs.ErrResourceNotFound) {
 			return errs.ErrInboundNotFound
@@ -110,8 +110,8 @@ func (s *InboundStore) DeleteInbound(ctx context.Context, nodeID, tag string) er
 			errs.ReasonUnknown,
 			"delete inbound failed",
 			map[string]string{
-				"nodeID": nodeID,
-				"tag":    tag,
+				"nodeName": nodeName,
+				"tag":      tag,
 			},
 			err,
 		)
@@ -119,8 +119,8 @@ func (s *InboundStore) DeleteInbound(ctx context.Context, nodeID, tag string) er
 	return nil
 }
 
-func (s *InboundStore) GetInbounds(ctx context.Context, nodeID string) ([]*satrapv1.Inbound, error) {
-	key := fmt.Sprintf("/inbounds/%s/", nodeID)
+func (s *InboundStore) GetInbounds(ctx context.Context, nodeName string) ([]*satrapv1.Inbound, error) {
+	key := fmt.Sprintf("/inbounds/%s/", nodeName)
 	out := &[][]byte{}
 
 	if err := s.store.GetList(ctx, key, out); err != nil {
@@ -129,7 +129,7 @@ func (s *InboundStore) GetInbounds(ctx context.Context, nodeID string) ([]*satra
 			errs.ReasonUnknown,
 			"get inbounds failed",
 			map[string]string{
-				"nodeID": nodeID,
+				"nodeName": nodeName,
 			},
 			err,
 		)
@@ -142,7 +142,7 @@ func (s *InboundStore) GetInbounds(ctx context.Context, nodeID string) ([]*satra
 		*inbound = satrapv1.Inbound{}
 
 		if err := json.Unmarshal(v, inbound); err != nil {
-			zlog.Error().Err(err).Str("component", "inbound").Str("nodeID", nodeID).Msg("unmarshal failed")
+			zlog.Error().Err(err).Str("component", "inbound").Str("nodeName", nodeName).Msg("unmarshal failed")
 			inboundPool.Put(inbound)
 			continue
 		}
@@ -152,8 +152,8 @@ func (s *InboundStore) GetInbounds(ctx context.Context, nodeID string) ([]*satra
 	return inbounds, nil
 }
 
-func (s *InboundStore) CountInbounds(ctx context.Context, nodeID string) (uint32, error) {
-	key := fmt.Sprintf("/inbounds/%s/", nodeID)
+func (s *InboundStore) CountInbounds(ctx context.Context, nodeName string) (uint32, error) {
+	key := fmt.Sprintf("/inbounds/%s/", nodeName)
 	count, err := s.store.Count(ctx, key)
 	if err != nil {
 		return 0, errs.New(
@@ -161,7 +161,7 @@ func (s *InboundStore) CountInbounds(ctx context.Context, nodeID string) (uint32
 			errs.ReasonUnknown,
 			"count inbounds failed",
 			map[string]string{
-				"nodeID": nodeID,
+				"nodeName": nodeName,
 			},
 			err,
 		)
@@ -170,8 +170,8 @@ func (s *InboundStore) CountInbounds(ctx context.Context, nodeID string) (uint32
 	return count, nil
 }
 
-func (s *InboundStore) GetUser(ctx context.Context, nodeID, tag, email string) (*satrapv1.InboundUser, error) {
-	key := fmt.Sprintf("/inboundUsers/%s/%s/%s", nodeID, tag, email)
+func (s *InboundStore) GetUser(ctx context.Context, nodeName, tag, email string) (*satrapv1.InboundUser, error) {
+	key := fmt.Sprintf("/inboundUsers/%s/%s/%s", nodeName, tag, email)
 	out := &[]byte{}
 
 	if err := s.store.Get(ctx, key, out); err != nil {
@@ -183,9 +183,9 @@ func (s *InboundStore) GetUser(ctx context.Context, nodeID, tag, email string) (
 			errs.ReasonUnknown,
 			"get inbound user failed",
 			map[string]string{
-				"nodeID": nodeID,
-				"tag":    tag,
-				"email":  email,
+				"nodeName": nodeName,
+				"tag":      tag,
+				"email":    email,
 			},
 			err,
 		)
@@ -198,9 +198,9 @@ func (s *InboundStore) GetUser(ctx context.Context, nodeID, tag, email string) (
 			errs.ReasonUnmarshalFailed,
 			"get inbound user failed",
 			map[string]string{
-				"nodeID": nodeID,
-				"tag":    tag,
-				"email":  email,
+				"nodeName": nodeName,
+				"tag":      tag,
+				"email":    email,
 			},
 			err,
 		)
@@ -209,7 +209,7 @@ func (s *InboundStore) GetUser(ctx context.Context, nodeID, tag, email string) (
 	return user, nil
 }
 
-func (s *InboundStore) CreateUser(ctx context.Context, nodeID, tag string, inboundUser *satrapv1.InboundUser) error {
+func (s *InboundStore) CreateUser(ctx context.Context, nodeName, tag string, inboundUser *satrapv1.InboundUser) error {
 	val, err := json.Marshal(inboundUser)
 	if err != nil {
 		return errs.New(
@@ -217,24 +217,24 @@ func (s *InboundStore) CreateUser(ctx context.Context, nodeID, tag string, inbou
 			errs.ReasonMarshalFailed,
 			"create inbound user failed",
 			map[string]string{
-				"nodeID": nodeID,
-				"tag":    tag,
-				"email":  inboundUser.Email,
+				"nodeName": nodeName,
+				"tag":      tag,
+				"email":    inboundUser.Email,
 			},
 			err,
 		)
 	}
 
-	key := fmt.Sprintf("/inboundUsers/%s/%s/%s", nodeID, tag, inboundUser.Email)
+	key := fmt.Sprintf("/inboundUsers/%s/%s/%s", nodeName, tag, inboundUser.Email)
 	if err := s.store.Create(ctx, key, val, uint64(inboundUser.Metadata.TTL.Seconds())); err != nil {
 		return errs.New(
 			errs.KindInternal,
 			errs.ReasonUnknown,
 			"create inbound user failed",
 			map[string]string{
-				"nodeID": nodeID,
-				"tag":    tag,
-				"email":  inboundUser.Email,
+				"nodeName": nodeName,
+				"tag":      tag,
+				"email":    inboundUser.Email,
 			},
 			err,
 		)
@@ -243,8 +243,8 @@ func (s *InboundStore) CreateUser(ctx context.Context, nodeID, tag string, inbou
 	return nil
 }
 
-func (s *InboundStore) DeleteUser(ctx context.Context, nodeID, tag, email string) error {
-	key := fmt.Sprintf("/inboundUsers/%s/%s/%s", nodeID, tag, email)
+func (s *InboundStore) DeleteUser(ctx context.Context, nodeName, tag, email string) error {
+	key := fmt.Sprintf("/inboundUsers/%s/%s/%s", nodeName, tag, email)
 	if err := s.store.Delete(ctx, key); err != nil {
 		if errors.Is(err, errs.ErrResourceNotFound) {
 			return errs.ErrUserNotFound
@@ -254,9 +254,9 @@ func (s *InboundStore) DeleteUser(ctx context.Context, nodeID, tag, email string
 			errs.ReasonUnknown,
 			"delete inbound user failed",
 			map[string]string{
-				"nodeID": nodeID,
-				"tag":    tag,
-				"email":  email,
+				"nodeName": nodeName,
+				"tag":      tag,
+				"email":    email,
 			},
 			err,
 		)
@@ -264,8 +264,8 @@ func (s *InboundStore) DeleteUser(ctx context.Context, nodeID, tag, email string
 	return nil
 }
 
-func (s *InboundStore) DeleteUsers(ctx context.Context, nodeID, tag string) error {
-	key := fmt.Sprintf("/inboundUsers/%s/%s/", nodeID, tag)
+func (s *InboundStore) DeleteUsers(ctx context.Context, nodeName, tag string) error {
+	key := fmt.Sprintf("/inboundUsers/%s/%s/", nodeName, tag)
 	if err := s.store.Delete(ctx, key); err != nil {
 		if errors.Is(err, errs.ErrResourceNotFound) {
 			return errs.ErrUserNotFound
@@ -275,8 +275,8 @@ func (s *InboundStore) DeleteUsers(ctx context.Context, nodeID, tag string) erro
 			errs.ReasonUnknown,
 			"delete inbound users failed",
 			map[string]string{
-				"nodeID": nodeID,
-				"tag":    tag,
+				"nodeName": nodeName,
+				"tag":      tag,
 			},
 			err,
 		)
@@ -284,8 +284,8 @@ func (s *InboundStore) DeleteUsers(ctx context.Context, nodeID, tag string) erro
 	return nil
 }
 
-func (s *InboundStore) GetUsers(ctx context.Context, nodeID, tag string) ([]*satrapv1.InboundUser, error) {
-	key := fmt.Sprintf("/inboundUsers/%s/%s/", nodeID, tag)
+func (s *InboundStore) GetUsers(ctx context.Context, nodeName, tag string) ([]*satrapv1.InboundUser, error) {
+	key := fmt.Sprintf("/inboundUsers/%s/%s/", nodeName, tag)
 	out := &[][]byte{}
 
 	if err := s.store.GetList(ctx, key, out); err != nil {
@@ -294,8 +294,8 @@ func (s *InboundStore) GetUsers(ctx context.Context, nodeID, tag string) ([]*sat
 			errs.ReasonUnknown,
 			"get inbound users failed",
 			map[string]string{
-				"nodeID": nodeID,
-				"tag":    tag,
+				"nodeName": nodeName,
+				"tag":      tag,
 			},
 			err,
 		)
@@ -308,7 +308,7 @@ func (s *InboundStore) GetUsers(ctx context.Context, nodeID, tag string) ([]*sat
 		*user = satrapv1.InboundUser{}
 
 		if err := json.Unmarshal(v, user); err != nil {
-			zlog.Error().Err(err).Str("component", "inboundUser").Str("nodeID", nodeID).Str("tag", tag).Msg("unmarshal failed")
+			zlog.Error().Err(err).Str("component", "inboundUser").Str("nodeName", nodeName).Str("tag", tag).Msg("unmarshal failed")
 			userPool.Put(user)
 			continue
 		}
@@ -318,8 +318,8 @@ func (s *InboundStore) GetUsers(ctx context.Context, nodeID, tag string) ([]*sat
 	return users, nil
 }
 
-func (s *InboundStore) CountUsers(ctx context.Context, nodeID, tag string) (uint32, error) {
-	key := fmt.Sprintf("/inboundUsers/%s/%s/", nodeID, tag)
+func (s *InboundStore) CountUsers(ctx context.Context, nodeName, tag string) (uint32, error) {
+	key := fmt.Sprintf("/inboundUsers/%s/%s/", nodeName, tag)
 	count, err := s.store.Count(ctx, key)
 	if err != nil {
 		return 0, errs.New(
@@ -327,8 +327,8 @@ func (s *InboundStore) CountUsers(ctx context.Context, nodeID, tag string) (uint
 			errs.ReasonUnknown,
 			"count inbound users failed",
 			map[string]string{
-				"nodeID": nodeID,
-				"tag":    tag,
+				"nodeName": nodeName,
+				"tag":      tag,
 			},
 			err,
 		)

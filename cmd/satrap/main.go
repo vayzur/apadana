@@ -104,13 +104,13 @@ func main() {
 	if cfg.Cluster.Enabled {
 		hlock := flock.NewFlock("/tmp/satrap-heartbeat.lock")
 		if err := hlock.TryLock(); err == nil {
-			go hb.Run(ctx, cfg.NodeID)
+			go hb.Run(ctx, cfg.Name)
 			defer hlock.Unlock()
 		}
 
 		slock := flock.NewFlock("/tmp/satrap-sync-manager.lock")
 		if err := slock.TryLock(); err == nil {
-			go syncManager.Run(ctx, cfg.NodeID)
+			go syncManager.Run(ctx, cfg.Name)
 			defer slock.Unlock()
 		}
 	}

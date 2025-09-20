@@ -25,8 +25,8 @@ func NewNodeStore(store storage.Interface) *NodeStore {
 	return &NodeStore{store: store}
 }
 
-func (s *NodeStore) GetNode(ctx context.Context, nodeID string) (*corev1.Node, error) {
-	key := fmt.Sprintf("/nodes/%s", nodeID)
+func (s *NodeStore) GetNode(ctx context.Context, nodeName string) (*corev1.Node, error) {
+	key := fmt.Sprintf("/nodes/%s", nodeName)
 	out := &[]byte{}
 
 	if err := s.store.Get(ctx, key, out); err != nil {
@@ -38,7 +38,7 @@ func (s *NodeStore) GetNode(ctx context.Context, nodeID string) (*corev1.Node, e
 			errs.ReasonUnknown,
 			"get node failed",
 			map[string]string{
-				"nodeID": nodeID,
+				"nodeName": nodeName,
 			},
 			err,
 		)
@@ -51,7 +51,7 @@ func (s *NodeStore) GetNode(ctx context.Context, nodeID string) (*corev1.Node, e
 			errs.ReasonUnmarshalFailed,
 			"get node failed",
 			map[string]string{
-				"nodeID": nodeID,
+				"nodeName": nodeName,
 			},
 			err,
 		)
@@ -60,8 +60,8 @@ func (s *NodeStore) GetNode(ctx context.Context, nodeID string) (*corev1.Node, e
 	return node, nil
 }
 
-func (s *NodeStore) DeleteNode(ctx context.Context, nodeID string) error {
-	key := fmt.Sprintf("/nodes/%s", nodeID)
+func (s *NodeStore) DeleteNode(ctx context.Context, nodeName string) error {
+	key := fmt.Sprintf("/nodes/%s", nodeName)
 	if err := s.store.Delete(ctx, key); err != nil {
 		if errors.Is(err, errs.ErrResourceNotFound) {
 			return errs.ErrResourceNotFound
@@ -71,7 +71,7 @@ func (s *NodeStore) DeleteNode(ctx context.Context, nodeID string) error {
 			errs.ReasonUnknown,
 			"delete node failed",
 			map[string]string{
-				"nodeID": nodeID,
+				"nodeName": nodeName,
 			},
 			err,
 		)
@@ -91,7 +91,7 @@ func (s *NodeStore) CreateNode(ctx context.Context, node *corev1.Node) error {
 		)
 	}
 
-	key := fmt.Sprintf("/nodes/%s", node.Metadata.ID)
+	key := fmt.Sprintf("/nodes/%s", node.Metadata.Name)
 	if err := s.store.Create(ctx, key, val, 0); err != nil {
 		return errs.New(
 			errs.KindInternal,

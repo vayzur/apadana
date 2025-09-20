@@ -46,9 +46,9 @@ var (
 	ErrUserNotFound            = &Error{Kind: KindNotFound, Reason: ReasonUserNotFound, Message: "user not found"}
 	ErrNodeCapacityExceeded    = &Error{Kind: KindCapacityExceeded, Reason: ReasonNodeCapacityExceeded, Message: "node capacity exceeded"}
 	ErrInboundCapacityExceeded = &Error{Kind: KindCapacityExceeded, Reason: ReasonInboundCapacityExceeded, Message: "inbound capacity exceeded"}
-	ErrInvalidNodeID           = &Error{Kind: KindInvalid, Reason: ReasonMissingParam, Message: "nodeID cannot be empty"}
-	ErrInvalidTag              = &Error{Kind: KindInvalid, Reason: ReasonMissingParam, Message: "tag cannot be empty"}
-	ErrInvalidEmail            = &Error{Kind: KindInvalid, Reason: ReasonMissingParam, Message: "email cannot be empty"}
+	ErrInvalidNode             = &Error{Kind: KindInvalid, Reason: ReasonMissingParam, Message: "name cannot be empty"}
+	ErrInvalidInbound          = &Error{Kind: KindInvalid, Reason: ReasonMissingParam, Message: "tag cannot be empty"}
+	ErrInvalidUser             = &Error{Kind: KindInvalid, Reason: ReasonMissingParam, Message: "email cannot be empty"}
 	ErrResourceNotFound        = &Error{Kind: KindNotFound, Reason: ReasonResourceNotFound, Message: "resource not found"}
 )
 

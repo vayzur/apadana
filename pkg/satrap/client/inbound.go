@@ -28,9 +28,9 @@ func (c *Client) AddInbound(node *corev1.Node, inboundConfig *conf.InboundDetour
 		errs.ReasonUnknown,
 		"add inbound failed",
 		map[string]string{
-			"nodeID": node.Metadata.ID,
-			"status": strconv.Itoa(status),
-			"resp":   string(resp),
+			"nodeName": node.Metadata.Name,
+			"status":   strconv.Itoa(status),
+			"resp":     string(resp),
 		},
 		nil,
 	)
@@ -38,7 +38,7 @@ func (c *Client) AddInbound(node *corev1.Node, inboundConfig *conf.InboundDetour
 
 func (c *Client) RemoveInbound(node *corev1.Node, tag string) error {
 	if tag == "" {
-		return errs.ErrInvalidTag
+		return errs.ErrInvalidInbound
 	}
 	path := fmt.Sprintf("/api/v1/inbounds/%s", tag)
 	url := node.URL(path)
@@ -57,10 +57,10 @@ func (c *Client) RemoveInbound(node *corev1.Node, tag string) error {
 		errs.ReasonUnknown,
 		"remove inbound failed",
 		map[string]string{
-			"nodeID": node.Metadata.ID,
-			"tag":    tag,
-			"status": strconv.Itoa(status),
-			"resp":   string(resp),
+			"nodeName": node.Metadata.Name,
+			"tag":      tag,
+			"status":   strconv.Itoa(status),
+			"resp":     string(resp),
 		},
 		nil,
 	)
@@ -68,7 +68,7 @@ func (c *Client) RemoveInbound(node *corev1.Node, tag string) error {
 
 func (c *Client) AddUser(node *corev1.Node, tag string, user *satrapv1.InboundUser) error {
 	if tag == "" {
-		return errs.ErrInvalidTag
+		return errs.ErrInvalidInbound
 	}
 	path := fmt.Sprintf("/api/v1/inbounds/%s/users", tag)
 	url := node.URL(path)
@@ -87,10 +87,10 @@ func (c *Client) AddUser(node *corev1.Node, tag string, user *satrapv1.InboundUs
 		errs.ReasonUnknown,
 		"add user failed",
 		map[string]string{
-			"nodeID": node.Metadata.ID,
-			"tag":    tag,
-			"status": strconv.Itoa(status),
-			"resp":   string(resp),
+			"nodeName": node.Metadata.Name,
+			"tag":      tag,
+			"status":   strconv.Itoa(status),
+			"resp":     string(resp),
 		},
 		nil,
 	)
@@ -98,10 +98,10 @@ func (c *Client) AddUser(node *corev1.Node, tag string, user *satrapv1.InboundUs
 
 func (c *Client) RemoveUser(node *corev1.Node, tag, email string) error {
 	if tag == "" {
-		return errs.ErrInvalidTag
+		return errs.ErrInvalidInbound
 	}
 	if email == "" {
-		return errs.ErrInvalidEmail
+		return errs.ErrInvalidUser
 	}
 	path := fmt.Sprintf("/api/v1/inbounds/%s/users/%s", tag, email)
 	url := node.URL(path)
@@ -120,11 +120,11 @@ func (c *Client) RemoveUser(node *corev1.Node, tag, email string) error {
 		errs.ReasonUnknown,
 		"remove user failed",
 		map[string]string{
-			"nodeID": node.Metadata.ID,
-			"tag":    tag,
-			"email":  email,
-			"status": strconv.Itoa(status),
-			"resp":   string(resp),
+			"nodeName": node.Metadata.Name,
+			"tag":      tag,
+			"email":    email,
+			"status":   strconv.Itoa(status),
+			"resp":     string(resp),
 		},
 		nil,
 	)

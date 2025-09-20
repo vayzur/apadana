@@ -15,7 +15,7 @@ type TLSConfig struct {
 }
 
 type SatrapConfig struct {
-	NodeID                    string                       `mapstructure:"nodeID" yaml:"nodeID"`
+	Name                      string                       `mapstructure:"name" yaml:"name"`
 	BindAddress               string                       `mapstructure:"bindAddress" yaml:"bindAddress"`
 	Port                      uint16                       `mapstructure:"port" yaml:"port"`
 	Prefork                   bool                         `mapstructure:"prefork" yaml:"prefork"`
