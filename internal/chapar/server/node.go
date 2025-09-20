@@ -3,8 +3,10 @@ package server
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
 	zlog "github.com/rs/zerolog/log"
 	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
 	"github.com/vayzur/apadana/pkg/errs"
@@ -52,12 +54,15 @@ func (s *Server) GetNode(c fiber.Ctx) error {
 func (s *Server) CreateNode(c fiber.Ctx) error {
 	node := &corev1.Node{}
 	if err := c.Bind().JSON(node); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
+		return c.Status(fiber.StatusBadRequest).JSON(&errs.Error{
+			Kind:    errs.KindInvalid,
+			Reason:  errs.ReasonUnmarshalFailed,
+			Message: err.Error(),
+		})
 	}
+
+	node.Metadata.ID = uuid.NewString()
+	node.Metadata.CreationTimestamp = time.Now()
 
 	if err := s.nodeService.CreateNode(c.RequestCtx(), node); err != nil {
 		return errs.HandleAPIError(c, err)
