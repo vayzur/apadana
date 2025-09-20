@@ -70,7 +70,7 @@ func (s *NodeService) UpdateNodeStatus(ctx context.Context, nodeName string, sta
 	}
 
 	node.Status = *status
-	return s.CreateNode(ctx, node)
+	return s.store.CreateNode(ctx, node)
 }
 
 func (s *NodeService) UpdateNodeMetadata(ctx context.Context, nodeName string, metadata *corev1.NodeMetadata) error {
@@ -84,7 +84,7 @@ func (s *NodeService) UpdateNodeMetadata(ctx context.Context, nodeName string, m
 	metadata.CreationTimestamp = node.Metadata.CreationTimestamp
 
 	node.Metadata = *metadata
-	return s.CreateNode(ctx, node)
+	return s.store.CreateNode(ctx, node)
 }
 
 func (s *NodeService) UpdateNodeSpec(ctx context.Context, nodeName string, spec *corev1.NodeSpec) error {
@@ -94,5 +94,5 @@ func (s *NodeService) UpdateNodeSpec(ctx context.Context, nodeName string, spec 
 	}
 
 	node.Spec = *spec
-	return s.CreateNode(ctx, node)
+	return s.store.CreateNode(ctx, node)
 }
