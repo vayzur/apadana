@@ -19,14 +19,14 @@ func main() {
 		Metadata: corev1.NodeMetadata{
 			Name: "test",
 			Labels: map[string]string{
+				"name":     "my-first-apadana-node",
 				"region":   "eu",
 				"country":  "france",
 				"provider": "ovh",
 				"purpose":  "gaming",
 			},
 			Annotations: map[string]string{
-				"fakeHost": "www.speedtest.net",
-				"sni":      "gate.domain.tld",
+				"sni": "gate.domain.tld",
 			},
 		},
 		Spec: corev1.NodeSpec{
