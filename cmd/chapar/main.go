@@ -59,7 +59,7 @@ func main() {
 	nodeService := service.NewNodeService(nodeStore)
 	inboundService := service.NewInboundService(inboundStore, nodeService, satrapClient)
 
-	serverAddr := fmt.Sprintf("%s:%d", cfg.BindAddress, cfg.Port)
+	serverAddr := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
 	app := server.NewServer(serverAddr, cfg.Token, cfg.Prefork, inboundService, nodeService)
 
 	if cfg.TLS.Enabled {

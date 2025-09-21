@@ -3,7 +3,7 @@ package v1
 import (
 	"time"
 
-	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
+	corev1 "github.com/vayzur/apadana/pkg/apis/core/v1"
 	chaparconfigv1 "github.com/vayzur/apadana/pkg/chapar/config/v1"
 	xrayconfigv1 "github.com/vayzur/apadana/pkg/satrap/xray/config/v1"
 )
@@ -16,10 +16,11 @@ type TLSConfig struct {
 
 type SatrapConfig struct {
 	Name                      string                       `mapstructure:"name" yaml:"name"`
-	BindAddress               string                       `mapstructure:"bindAddress" yaml:"bindAddress"`
+	Address                   string                       `mapstructure:"address" yaml:"address"`
 	Port                      uint16                       `mapstructure:"port" yaml:"port"`
 	Prefork                   bool                         `mapstructure:"prefork" yaml:"prefork"`
 	Token                     string                       `mapstructure:"token" yaml:"token"`
+	RegisterNode              bool                         `mapstructure:"registerNode" yaml:"registerNode"`
 	Addresses                 []corev1.NodeAddress         `mapstructure:"addresses" yaml:"addresses"`
 	TLS                       TLSConfig                    `mapstructure:"tls" yaml:"tls"`
 	Xray                      xrayconfigv1.XrayConfig      `mapstructure:"xray" yaml:"xray"`
