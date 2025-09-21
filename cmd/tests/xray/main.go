@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
+	satrapv1 "github.com/vayzur/apadana/pkg/apis/satrap/v1"
 	"github.com/xtls/xray-core/infra/conf"
 
 	xray "github.com/vayzur/apadana/pkg/satrap/xray/client"

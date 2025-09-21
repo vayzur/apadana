@@ -6,7 +6,7 @@ import (
 	"time"
 
 	zlog "github.com/rs/zerolog/log"
-	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
+	satrapv1 "github.com/vayzur/apadana/pkg/apis/satrap/v1"
 )
 
 func (m *SyncManager) Run(ctx context.Context, nodeName string) {
@@ -55,7 +55,7 @@ func (m *SyncManager) Run(ctx context.Context, nodeName string) {
 				if err != nil {
 					continue
 				}
-				if err := m.xrayClient.AddUser(ctx, user.InboundTag, user.Email, account); err != nil {
+				if err := m.xrayClient.AddUser(ctx, user.Spec.InboundTag, user.Spec.Email, account); err != nil {
 					continue
 				}
 			}
@@ -65,7 +65,7 @@ func (m *SyncManager) Run(ctx context.Context, nodeName string) {
 	for range m.concurrentUserGCSyncs {
 		go func() {
 			for user := range gcUserCh {
-				if err := m.xrayClient.RemoveUser(ctx, user.InboundTag, user.Email); err != nil {
+				if err := m.xrayClient.RemoveUser(ctx, user.Spec.InboundTag, user.Spec.Email); err != nil {
 					continue
 				}
 			}
@@ -136,21 +136,26 @@ func (m *SyncManager) Run(ctx context.Context, nodeName string) {
 
 					for _, user := range desiredUsers {
 						if user != nil {
-							desiredUsersMap[user.Email] = user
+							desiredUsersMap[user.Spec.Email] = user
 						}
 					}
 
 					uwg.Go(func() {
 						for email := range currentUsers {
 							if _, ok := desiredUsersMap[email]; !ok {
-								gcUserCh <- &satrapv1.InboundUser{InboundTag: inbound.Spec.Config.Tag, Email: email}
+								gcUserCh <- &satrapv1.InboundUser{
+									Spec: satrapv1.InboundUserSpec{
+										InboundTag: inbound.Spec.Config.Tag,
+										Email:      email,
+									},
+								}
 							}
 						}
 					})
 
 					uwg.Go(func() {
 						for _, user := range desiredUsers {
-							if _, ok := currentUsers[user.Email]; !ok {
+							if _, ok := currentUsers[user.Spec.Email]; !ok {
 								createUserCh <- user
 							}
 						}

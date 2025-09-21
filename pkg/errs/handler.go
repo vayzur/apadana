@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
-	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
+	satrapv1 "github.com/vayzur/apadana/pkg/apis/satrap/v1"
 	"google.golang.org/grpc/status"
 )
 

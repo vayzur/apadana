@@ -5,7 +5,7 @@ import (
 	"time"
 
 	zlog "github.com/rs/zerolog/log"
-	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
+	corev1 "github.com/vayzur/apadana/pkg/apis/core/v1"
 )
 
 func (c *Spasaka) RunNodeMonitor(ctx context.Context, concurrentNodeSyncs int, nodeMonitorPeriod, nodeMonitorGracePeriod time.Duration) {

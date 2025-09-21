@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
-	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
+	corev1 "github.com/vayzur/apadana/pkg/apis/core/v1"
+	satrapv1 "github.com/vayzur/apadana/pkg/apis/satrap/v1"
 	"github.com/vayzur/apadana/pkg/errs"
 	"github.com/xtls/xray-core/infra/conf"
 )

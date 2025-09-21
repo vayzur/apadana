@@ -5,7 +5,8 @@ import (
 	"log"
 	"time"
 
-	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
+	corev1 "github.com/vayzur/apadana/pkg/apis/core/v1"
+	metav1 "github.com/vayzur/apadana/pkg/apis/meta/v1"
 
 	apadana "github.com/vayzur/apadana/pkg/client"
 )
@@ -16,7 +17,7 @@ func main() {
 	apadanaClient := apadana.New(clusterAddress, clusterToken, time.Second*5)
 
 	n := &corev1.Node{
-		Metadata: corev1.NodeMetadata{
+		Metadata: metav1.ObjectMeta{
 			Name: "test",
 			Labels: map[string]string{
 				"name":     "my-first-apadana-node",
