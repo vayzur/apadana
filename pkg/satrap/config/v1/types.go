@@ -3,6 +3,7 @@ package v1
 import (
 	"time"
 
+	"github.com/google/uuid"
 	corev1 "github.com/vayzur/apadana/pkg/apis/core/v1"
 	chaparconfigv1 "github.com/vayzur/apadana/pkg/chapar/config/v1"
 	xrayconfigv1 "github.com/vayzur/apadana/pkg/satrap/xray/config/v1"
@@ -32,4 +33,20 @@ type SatrapConfig struct {
 	ConcurrentUserSyncs       uint32                       `mapstructure:"concurrentUserSyncs" yaml:"concurrentUserSyncs"`
 	ConcurrentUserGCSyncs     uint32                       `mapstructure:"concurrentUserGCSyncs" yaml:"concurrentUserGCSyncs"`
 	MaxInbounds               uint32                       `mapstructure:"maxInbounds" yaml:"maxInbounds"`
+}
+
+func (c *SatrapConfig) GetToken() string {
+	// If user explicitly set a token, always use it (both standalone and cluster mode)
+	if c.Token != "" {
+		return c.Token
+	}
+
+	// No token provided by user
+	if c.Cluster.Enabled && c.RegisterNode {
+		// Cluster mode: generate random token for auto-registration security
+		token := uuid.NewString()
+		return token
+	}
+
+	return ""
 }

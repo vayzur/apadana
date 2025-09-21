@@ -9,7 +9,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
 	"github.com/vayzur/apadana/internal/config"
@@ -50,8 +49,13 @@ func main() {
 		}
 	}()
 
+	authToken := cfg.GetToken()
+	if authToken == "" {
+		zlog.Fatal().Str("component", "satrap").Msg("auth token must be set in config for standalone mode")
+	}
+
 	serverAddr := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
-	app := server.NewServer(serverAddr, cfg.Token, cfg.Prefork, xrayClient)
+	app := server.NewServer(serverAddr, authToken, cfg.Prefork, xrayClient)
 
 	var scheme string
 
@@ -113,7 +117,7 @@ func main() {
 					},
 				},
 				Spec: corev1.NodeSpec{
-					Token: uuid.NewString(),
+					Token: authToken,
 				},
 			}
 
