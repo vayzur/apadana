@@ -240,7 +240,7 @@ func (c *Client) UpdateInboundMetadata(nodeName, tag string, newMetadata *metav1
 	if tag == "" {
 		return errs.ErrInvalidInbound
 	}
-	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds/%s/renew", c.address, nodeName, tag)
+	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds/%s/metadata", c.address, nodeName, tag)
 	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, newMetadata)
 	if err != nil {
 		zlog.Error().Err(err).Str("component", "client").Str("resource", "inbound").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Msg("failed")
@@ -261,6 +261,45 @@ func (c *Client) UpdateInboundMetadata(nodeName, tag string, newMetadata *metav1
 			errs.KindInternal,
 			errs.ReasonUnknown,
 			"update inbound metadata failed",
+			map[string]string{
+				"nodeName": nodeName,
+				"tag":      tag,
+				"status":   strconv.Itoa(status),
+				"resp":     string(resp),
+			},
+			nil,
+		)
+	}
+}
+
+func (c *Client) UpdateInboundSpec(nodeName, tag string, newSpec *satrapv1.InboundSpec) error {
+	if nodeName == "" {
+		return errs.ErrInvalidNode
+	}
+	if tag == "" {
+		return errs.ErrInvalidInbound
+	}
+	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds/%s/spec", c.address, nodeName, tag)
+	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, newSpec)
+	if err != nil {
+		zlog.Error().Err(err).Str("component", "client").Str("resource", "inbound").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Msg("failed")
+		return err
+	}
+
+	if status == http.StatusOK {
+		return nil
+	}
+
+	zlog.Error().Str("component", "apadana").Str("resource", "inbound").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
+
+	switch status {
+	case http.StatusNotFound:
+		return errs.ErrInboundNotFound
+	default:
+		return errs.New(
+			errs.KindInternal,
+			errs.ReasonUnknown,
+			"update inbound spec failed",
 			map[string]string{
 				"nodeName": nodeName,
 				"tag":      tag,
@@ -417,7 +456,7 @@ func (c *Client) UpdateInboundUserMetadata(nodeName, tag, email string, newMetad
 	if email == "" {
 		return errs.ErrInvalidUser
 	}
-	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds/%s/users/%s/renew", c.address, nodeName, tag, email)
+	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds/%s/users/%s/spec", c.address, nodeName, tag, email)
 	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, newMetadata)
 	if err != nil {
 		zlog.Error().Err(err).Str("component", "client").Str("resource", "inboundUser").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Str("email", email).Msg("failed")
@@ -438,6 +477,49 @@ func (c *Client) UpdateInboundUserMetadata(nodeName, tag, email string, newMetad
 			errs.KindInternal,
 			errs.ReasonUnknown,
 			"update inbound user metadata failed",
+			map[string]string{
+				"nodeName": nodeName,
+				"tag":      tag,
+				"email":    email,
+				"status":   strconv.Itoa(status),
+				"resp":     string(resp),
+			},
+			nil,
+		)
+	}
+}
+
+func (c *Client) UpdateInboundUserSpec(nodeName, tag, email string, newSpec *satrapv1.InboundUserSpec) error {
+	if nodeName == "" {
+		return errs.ErrInvalidNode
+	}
+	if tag == "" {
+		return errs.ErrInvalidInbound
+	}
+	if email == "" {
+		return errs.ErrInvalidUser
+	}
+	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds/%s/users/%s/spec", c.address, nodeName, tag, email)
+	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, newSpec)
+	if err != nil {
+		zlog.Error().Err(err).Str("component", "client").Str("resource", "inboundUser").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Str("email", email).Msg("failed")
+		return err
+	}
+
+	if status == http.StatusOK {
+		return nil
+	}
+
+	zlog.Error().Str("component", "apadana").Str("resource", "inboundUser").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Str("email", email).Int("status", status).Str("resp", string(resp)).Msg("failed")
+
+	switch status {
+	case http.StatusNotFound:
+		return errs.ErrUserNotFound
+	default:
+		return errs.New(
+			errs.KindInternal,
+			errs.ReasonUnknown,
+			"update inbound user spec failed",
 			map[string]string{
 				"nodeName": nodeName,
 				"tag":      tag,
