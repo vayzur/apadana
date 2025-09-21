@@ -3,6 +3,18 @@ package v1
 import (
 	"fmt"
 	"time"
+
+	metav1 "github.com/vayzur/apadana/pkg/apis/meta/v1"
+)
+
+const (
+	LabelHostname = "hostname"
+	LabelOS       = "os"
+	LabelArch     = "arch"
+)
+
+const (
+	AnnotationSNI = "sni"
 )
 
 type NodeAddressType string
@@ -12,21 +24,13 @@ const (
 	ExternalAddress NodeAddressType = "ExternalAddress"
 )
 
-type NodeMetadata struct {
-	Name              string            `json:"name"`
-	UID               string            `json:"uid"`
-	CreationTimestamp time.Time         `json:"creationTimestamp"`
-	Labels            map[string]string `json:"labels,omitempty"`
-	Annotations       map[string]string `json:"annotations,omitempty"`
-}
-
 type NodeSpec struct {
 	Token string `json:"token"`
 }
 
 type NodeAddress struct {
-	Type NodeAddressType `json:"type"`
-	Host string          `json:"host"`
+	Type    NodeAddressType `json:"type"`
+	Address string          `json:"address"`
 }
 
 type NodeCapacity struct {
@@ -39,29 +43,29 @@ type NodeConnectionConfig struct {
 }
 
 type NodeStatus struct {
-	Addresses         []NodeAddress        `json:"addresses"`
 	Capacity          NodeCapacity         `json:"capacity"`
+	Addresses         []NodeAddress        `json:"addresses"`
 	Ready             bool                 `json:"ready"`
 	LastHeartbeatTime time.Time            `json:"lastHeartbeatTime"`
 	ConnectionConfig  NodeConnectionConfig `json:"connectionConfig"`
 }
 
 type Node struct {
-	Metadata NodeMetadata `json:"metadata"`
-	Spec     NodeSpec     `json:"spec"`
-	Status   NodeStatus   `json:"status"`
+	Metadata metav1.ObjectMeta `json:"metadata"`
+	Spec     NodeSpec          `json:"spec"`
+	Status   NodeStatus        `json:"status"`
 }
 
-func getPreferredAddress(addresses []NodeAddress) string {
+func GetPreferredAddress(addresses []NodeAddress, addressType NodeAddressType) string {
 	for _, addr := range addresses {
-		if addr.Type == InternalAddress {
-			return addr.Host
+		if addr.Type == addressType {
+			return addr.Address
 		}
 	}
-	return addresses[0].Host
+	return addresses[0].Address
 }
 
 func (n *Node) URL(path string) string {
-	host := getPreferredAddress(n.Status.Addresses)
+	host := GetPreferredAddress(n.Status.Addresses, InternalAddress)
 	return fmt.Sprintf("%s://%s:%d%s", n.Status.ConnectionConfig.Scheme, host, n.Status.ConnectionConfig.Port, path)
 }
