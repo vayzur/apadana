@@ -9,7 +9,8 @@ import (
 	"github.com/vayzur/apadana/pkg/errs"
 
 	zlog "github.com/rs/zerolog/log"
-	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
+	corev1 "github.com/vayzur/apadana/pkg/apis/core/v1"
+	metav1 "github.com/vayzur/apadana/pkg/apis/meta/v1"
 )
 
 func (c *Client) UpdateNodeStatus(nodeName string, nodeStatus *corev1.NodeStatus) error {
@@ -48,7 +49,7 @@ func (c *Client) UpdateNodeStatus(nodeName string, nodeStatus *corev1.NodeStatus
 
 }
 
-func (c *Client) UpdateNodeMetadata(nodeName string, nodeMetadata *corev1.NodeMetadata) error {
+func (c *Client) UpdateNodeMetadata(nodeName string, nodeMetadata *metav1.ObjectMeta) error {
 	if nodeName == "" {
 		return errs.ErrInvalidNode
 	}

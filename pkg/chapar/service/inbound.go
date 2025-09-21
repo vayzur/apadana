@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 
-	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
-	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
+	corev1 "github.com/vayzur/apadana/pkg/apis/core/v1"
+	metav1 "github.com/vayzur/apadana/pkg/apis/meta/v1"
+	satrapv1 "github.com/vayzur/apadana/pkg/apis/satrap/v1"
 	"github.com/vayzur/apadana/pkg/errs"
 	"golang.org/x/sync/errgroup"
 
@@ -150,46 +151,57 @@ func (s *InboundService) GetUsers(ctx context.Context, nodeName, tag string) ([]
 	return s.store.GetUsers(ctx, nodeName, tag)
 }
 
-func (s *InboundService) RenewInbound(ctx context.Context, nodeName, tag string, renew *satrapv1.Renew) error {
+func (s *InboundService) UpdateInboundMetadata(ctx context.Context, nodeName, tag string, newMetadata *metav1.ObjectMeta) error {
 	inbound, err := s.GetInbound(ctx, nodeName, tag)
 	if err != nil {
 		return err
 	}
-	inbound.Metadata.TTL = renew.TTL
-	if err := s.store.CreateInbound(ctx, nodeName, inbound); err != nil {
-		return err
-	}
-	return nil
-}
 
-func (s *InboundService) RenewInboundUser(ctx context.Context, nodeName, tag, email string, renew *satrapv1.Renew) error {
-	user, err := s.GetUser(ctx, nodeName, tag, email)
-	if err != nil {
-		return err
-	}
-	user.Metadata.TTL = renew.TTL
-	if err := s.store.CreateUser(ctx, nodeName, tag, user); err != nil {
-		return err
-	}
-	return nil
-}
+	newMetadata.Name = inbound.Metadata.Name
+	newMetadata.UID = inbound.Metadata.UID
+	newMetadata.CreationTimestamp = inbound.Metadata.CreationTimestamp
 
-func (s *InboundService) UpdateInboundMetadata(ctx context.Context, nodeName, tag string, metadata *satrapv1.Metadata) error {
-	inbound, err := s.GetInbound(ctx, nodeName, tag)
-	if err != nil {
-		return err
-	}
-	metadata.CreationTimestamp = inbound.Metadata.CreationTimestamp
-	inbound.Metadata = *metadata
+	inbound.Metadata = *newMetadata
 	return s.store.CreateInbound(ctx, nodeName, inbound)
 }
 
-func (s *InboundService) UpdateUserMetadata(ctx context.Context, nodeName, tag, email string, metadata *satrapv1.Metadata) error {
+func (s *InboundService) UpdateInboundSpec(ctx context.Context, nodeName, tag string, newSpec *satrapv1.InboundSpec) error {
+	inbound, err := s.GetInbound(ctx, nodeName, tag)
+	if err != nil {
+		return err
+	}
+
+	newSpec.Config = inbound.Spec.Config
+
+	inbound.Spec = *newSpec
+	return s.store.CreateInbound(ctx, nodeName, inbound)
+}
+
+func (s *InboundService) UpdateUserMetadata(ctx context.Context, nodeName, tag, email string, newMetadata *metav1.ObjectMeta) error {
 	user, err := s.GetUser(ctx, nodeName, tag, email)
 	if err != nil {
 		return err
 	}
-	metadata.CreationTimestamp = user.Metadata.CreationTimestamp
-	user.Metadata = *metadata
+
+	newMetadata.Name = user.Metadata.Name
+	newMetadata.UID = user.Metadata.UID
+	newMetadata.CreationTimestamp = user.Metadata.CreationTimestamp
+
+	user.Metadata = *newMetadata
+	return s.store.CreateUser(ctx, nodeName, tag, user)
+}
+
+func (s *InboundService) UpdateUserSpec(ctx context.Context, nodeName, tag, email string, newSpec *satrapv1.InboundUserSpec) error {
+	user, err := s.GetUser(ctx, nodeName, tag, email)
+	if err != nil {
+		return err
+	}
+
+	newSpec.Type = user.Spec.Type
+	newSpec.InboundTag = user.Spec.InboundTag
+	newSpec.Email = user.Spec.Email
+	newSpec.Account = user.Spec.Account
+
+	user.Spec = *newSpec
 	return s.store.CreateUser(ctx, nodeName, tag, user)
 }

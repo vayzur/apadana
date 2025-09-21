@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
+	corev1 "github.com/vayzur/apadana/pkg/apis/core/v1"
+	metav1 "github.com/vayzur/apadana/pkg/apis/meta/v1"
 	"github.com/vayzur/apadana/pkg/chapar/storage/resources"
 )
 
@@ -26,16 +27,16 @@ func (s *NodeService) DeleteNode(ctx context.Context, nodeName string) error {
 }
 
 func (s *NodeService) CreateNode(ctx context.Context, node *corev1.Node) error {
-	existing, _ := s.GetNode(ctx, node.Metadata.Name)
-	if existing == nil {
+	existingNode, _ := s.GetNode(ctx, node.Metadata.Name)
+	if existingNode == nil {
 		node.Metadata.UID = uuid.NewString()
 		node.Metadata.CreationTimestamp = time.Now()
 		return s.store.CreateNode(ctx, node)
 	}
 
-	node.Metadata.Name = existing.Metadata.Name
-	node.Metadata.UID = existing.Metadata.UID
-	node.Metadata.CreationTimestamp = existing.Metadata.CreationTimestamp
+	node.Metadata.Name = existingNode.Metadata.Name
+	node.Metadata.UID = existingNode.Metadata.UID
+	node.Metadata.CreationTimestamp = existingNode.Metadata.CreationTimestamp
 
 	return s.store.CreateNode(ctx, node)
 }
@@ -73,17 +74,17 @@ func (s *NodeService) UpdateNodeStatus(ctx context.Context, nodeName string, sta
 	return s.store.CreateNode(ctx, node)
 }
 
-func (s *NodeService) UpdateNodeMetadata(ctx context.Context, nodeName string, metadata *corev1.NodeMetadata) error {
+func (s *NodeService) UpdateNodeMetadata(ctx context.Context, nodeName string, newMetadata *metav1.ObjectMeta) error {
 	node, err := s.GetNode(ctx, nodeName)
 	if err != nil {
 		return err
 	}
 
-	metadata.Name = node.Metadata.Name
-	metadata.UID = node.Metadata.UID
-	metadata.CreationTimestamp = node.Metadata.CreationTimestamp
+	newMetadata.Name = node.Metadata.Name
+	newMetadata.UID = node.Metadata.UID
+	newMetadata.CreationTimestamp = node.Metadata.CreationTimestamp
 
-	node.Metadata = *metadata
+	node.Metadata = *newMetadata
 	return s.store.CreateNode(ctx, node)
 }
 

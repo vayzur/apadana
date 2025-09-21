@@ -61,14 +61,14 @@ func (s *Server) setupRoutes() {
 	inbounds.Get("/count", s.CountInbounds)
 	inbounds.Get("/:tag", s.GetInbound)
 	inbounds.Delete("/:tag", s.DeleteInbound)
-	inbounds.Patch("/:tag/renew", s.RenewInbound)
+	inbounds.Patch("/:tag/metadata", s.UpdateInboundMetadata)
 
 	inboundUsers := inbounds.Group("/:tag/users")
 	inboundUsers.Get("", s.GetInboundUsers)
 	inboundUsers.Get("/count", s.CountInboundUsers)
 	inboundUsers.Post("", s.CreateUser)
 	inboundUsers.Delete("/:email", s.DeleteUser)
-	inboundUsers.Patch("/:email/renew", s.RenewInboundUser)
+	inboundUsers.Patch("/:email/metadata", s.UpdateInboundUserMetadata)
 }
 
 func (s *Server) StartTLS(certFilePath, keyFilePath string) error {

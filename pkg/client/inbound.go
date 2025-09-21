@@ -7,7 +7,8 @@ import (
 	"strconv"
 
 	zlog "github.com/rs/zerolog/log"
-	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
+	metav1 "github.com/vayzur/apadana/pkg/apis/meta/v1"
+	satrapv1 "github.com/vayzur/apadana/pkg/apis/satrap/v1"
 	"github.com/vayzur/apadana/pkg/errs"
 )
 
@@ -232,7 +233,7 @@ func (c *Client) GetInbounds(nodeName string) ([]*satrapv1.Inbound, error) {
 	)
 }
 
-func (c *Client) RenewInbound(nodeName, tag string, renew *satrapv1.Renew) error {
+func (c *Client) UpdateInboundMetadata(nodeName, tag string, newMetadata *metav1.ObjectMeta) error {
 	if nodeName == "" {
 		return errs.ErrInvalidNode
 	}
@@ -240,46 +241,7 @@ func (c *Client) RenewInbound(nodeName, tag string, renew *satrapv1.Renew) error
 		return errs.ErrInvalidInbound
 	}
 	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds/%s/renew", c.address, nodeName, tag)
-	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, renew)
-	if err != nil {
-		zlog.Error().Err(err).Str("component", "client").Str("resource", "inbound").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Msg("failed")
-		return err
-	}
-
-	if status == http.StatusOK {
-		return nil
-	}
-
-	zlog.Error().Str("component", "apadana").Str("resource", "inbound").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Int("status", status).Str("resp", string(resp)).Msg("failed")
-
-	switch status {
-	case http.StatusNotFound:
-		return errs.ErrInboundNotFound
-	default:
-		return errs.New(
-			errs.KindInternal,
-			errs.ReasonUnknown,
-			"renew inbound failed",
-			map[string]string{
-				"nodeName": nodeName,
-				"tag":      tag,
-				"status":   strconv.Itoa(status),
-				"resp":     string(resp),
-			},
-			nil,
-		)
-	}
-}
-
-func (c *Client) UpdateInboundMetadata(nodeName, tag string, metadata *satrapv1.Metadata) error {
-	if nodeName == "" {
-		return errs.ErrInvalidNode
-	}
-	if tag == "" {
-		return errs.ErrInvalidInbound
-	}
-	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds/%s/renew", c.address, nodeName, tag)
-	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, metadata)
+	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, newMetadata)
 	if err != nil {
 		zlog.Error().Err(err).Str("component", "client").Str("resource", "inbound").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Msg("failed")
 		return err
@@ -445,7 +407,7 @@ func (c *Client) DeleteInboundUser(nodeName, tag, email string) error {
 
 }
 
-func (c *Client) RenewInboundUser(nodeName, tag, email string, renew *satrapv1.Renew) error {
+func (c *Client) UpdateInboundUserMetadata(nodeName, tag, email string, newMetadata *metav1.ObjectMeta) error {
 	if nodeName == "" {
 		return errs.ErrInvalidNode
 	}
@@ -456,51 +418,7 @@ func (c *Client) RenewInboundUser(nodeName, tag, email string, renew *satrapv1.R
 		return errs.ErrInvalidUser
 	}
 	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds/%s/users/%s/renew", c.address, nodeName, tag, email)
-	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, renew)
-	if err != nil {
-		zlog.Error().Err(err).Str("component", "client").Str("resource", "inboundUser").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Str("email", email).Msg("failed")
-		return err
-	}
-
-	if status == http.StatusOK {
-		return nil
-	}
-
-	zlog.Error().Str("component", "apadana").Str("resource", "inboundUser").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Str("email", email).Int("status", status).Str("resp", string(resp)).Msg("failed")
-
-	switch status {
-	case http.StatusNotFound:
-		return errs.ErrUserNotFound
-	default:
-		return errs.New(
-			errs.KindInternal,
-			errs.ReasonUnknown,
-			"renew inbound user failed",
-			map[string]string{
-				"nodeName": nodeName,
-				"tag":      tag,
-				"email":    email,
-				"status":   strconv.Itoa(status),
-				"resp":     string(resp),
-			},
-			nil,
-		)
-	}
-
-}
-
-func (c *Client) UpdateInboundUserMetadata(nodeName, tag, email string, metadata *satrapv1.Metadata) error {
-	if nodeName == "" {
-		return errs.ErrInvalidNode
-	}
-	if tag == "" {
-		return errs.ErrInvalidInbound
-	}
-	if email == "" {
-		return errs.ErrInvalidUser
-	}
-	url := fmt.Sprintf("%s/api/v1/nodes/%s/inbounds/%s/users/%s/renew", c.address, nodeName, tag, email)
-	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, metadata)
+	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, newMetadata)
 	if err != nil {
 		zlog.Error().Err(err).Str("component", "client").Str("resource", "inboundUser").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Str("email", email).Msg("failed")
 		return err

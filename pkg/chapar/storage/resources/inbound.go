@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	zlog "github.com/rs/zerolog/log"
-	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
+	satrapv1 "github.com/vayzur/apadana/pkg/apis/satrap/v1"
 	"github.com/vayzur/apadana/pkg/chapar/storage"
 	"github.com/vayzur/apadana/pkg/errs"
 )
@@ -83,7 +83,7 @@ func (s *InboundStore) CreateInbound(ctx context.Context, nodeName string, inbou
 	}
 
 	key := fmt.Sprintf("/inbounds/%s/%s", nodeName, inbound.Spec.Config.Tag)
-	if err := s.store.Create(ctx, key, val, uint64(inbound.Metadata.TTL.Seconds())); err != nil {
+	if err := s.store.Create(ctx, key, val, uint64(inbound.Spec.TTL.Seconds())); err != nil {
 		return errs.New(
 			errs.KindInternal,
 			errs.ReasonUnknown,
@@ -219,14 +219,14 @@ func (s *InboundStore) CreateUser(ctx context.Context, nodeName, tag string, inb
 			map[string]string{
 				"nodeName": nodeName,
 				"tag":      tag,
-				"email":    inboundUser.Email,
+				"email":    inboundUser.Spec.Email,
 			},
 			err,
 		)
 	}
 
-	key := fmt.Sprintf("/inboundUsers/%s/%s/%s", nodeName, tag, inboundUser.Email)
-	if err := s.store.Create(ctx, key, val, uint64(inboundUser.Metadata.TTL.Seconds())); err != nil {
+	key := fmt.Sprintf("/inboundUsers/%s/%s/%s", nodeName, tag, inboundUser.Spec.Email)
+	if err := s.store.Create(ctx, key, val, uint64(inboundUser.Spec.TTL.Seconds())); err != nil {
 		return errs.New(
 			errs.KindInternal,
 			errs.ReasonUnknown,
@@ -234,7 +234,7 @@ func (s *InboundStore) CreateUser(ctx context.Context, nodeName, tag string, inb
 			map[string]string{
 				"nodeName": nodeName,
 				"tag":      tag,
-				"email":    inboundUser.Email,
+				"email":    inboundUser.Spec.Email,
 			},
 			err,
 		)

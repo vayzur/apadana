@@ -6,7 +6,8 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	zlog "github.com/rs/zerolog/log"
-	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
+	corev1 "github.com/vayzur/apadana/pkg/apis/core/v1"
+	metav1 "github.com/vayzur/apadana/pkg/apis/meta/v1"
 	"github.com/vayzur/apadana/pkg/errs"
 )
 
@@ -95,8 +96,8 @@ func (s *Server) UpdateNodeStatus(c fiber.Ctx) error {
 		)
 	}
 
-	nodeStatus := &corev1.NodeStatus{}
-	if err := c.Bind().JSON(nodeStatus); err != nil {
+	newStatus := &corev1.NodeStatus{}
+	if err := c.Bind().JSON(newStatus); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
 				"error": err.Error(),
@@ -104,7 +105,7 @@ func (s *Server) UpdateNodeStatus(c fiber.Ctx) error {
 		)
 	}
 
-	if err := s.nodeService.UpdateNodeStatus(c.RequestCtx(), nodeName, nodeStatus); err != nil {
+	if err := s.nodeService.UpdateNodeStatus(c.RequestCtx(), nodeName, newStatus); err != nil {
 		return errs.HandleAPIError(c, err)
 	}
 
@@ -122,8 +123,8 @@ func (s *Server) UpdateNodeMetadata(c fiber.Ctx) error {
 		)
 	}
 
-	metadata := &corev1.NodeMetadata{}
-	if err := c.Bind().JSON(metadata); err != nil {
+	newMetadata := &metav1.ObjectMeta{}
+	if err := c.Bind().JSON(newMetadata); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
 				"error": err.Error(),
@@ -131,7 +132,7 @@ func (s *Server) UpdateNodeMetadata(c fiber.Ctx) error {
 		)
 	}
 
-	if err := s.nodeService.UpdateNodeMetadata(c.RequestCtx(), nodeName, metadata); err != nil {
+	if err := s.nodeService.UpdateNodeMetadata(c.RequestCtx(), nodeName, newMetadata); err != nil {
 		return errs.HandleAPIError(c, err)
 	}
 
@@ -149,8 +150,8 @@ func (s *Server) UpdateNodeSpec(c fiber.Ctx) error {
 		)
 	}
 
-	spec := &corev1.NodeSpec{}
-	if err := c.Bind().JSON(spec); err != nil {
+	newSpec := &corev1.NodeSpec{}
+	if err := c.Bind().JSON(newSpec); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
 				"error": err.Error(),
@@ -158,7 +159,7 @@ func (s *Server) UpdateNodeSpec(c fiber.Ctx) error {
 		)
 	}
 
-	if err := s.nodeService.UpdateNodeSpec(c.RequestCtx(), nodeName, spec); err != nil {
+	if err := s.nodeService.UpdateNodeSpec(c.RequestCtx(), nodeName, newSpec); err != nil {
 		return errs.HandleAPIError(c, err)
 	}
 

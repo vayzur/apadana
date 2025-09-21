@@ -3,7 +3,8 @@ package server
 import (
 	"github.com/gofiber/fiber/v3"
 	zlog "github.com/rs/zerolog/log"
-	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
+	metav1 "github.com/vayzur/apadana/pkg/apis/meta/v1"
+	satrapv1 "github.com/vayzur/apadana/pkg/apis/satrap/v1"
 	"github.com/vayzur/apadana/pkg/errs"
 )
 
@@ -128,8 +129,8 @@ func (s *Server) CreateUser(c fiber.Ctx) error {
 		)
 	}
 
-	email := user.Email
-	proto := user.Type
+	proto := user.Spec.Type
+	email := user.Spec.Email
 
 	if err := s.inboundService.CreateUser(c.RequestCtx(), nodeName, tag, user); err != nil {
 		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "create").Str("nodeName", nodeName).Str("tag", tag).Str("protocol", proto).Str("email", email).Msg("failed")
@@ -186,68 +187,6 @@ func (s *Server) GetInboundUsers(c fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(users)
 }
 
-func (s *Server) RenewInbound(c fiber.Ctx) error {
-	params, err := s.requiredParams(c, "nodeName", "tag")
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(&errs.Error{
-			Kind:    errs.KindInvalid,
-			Reason:  errs.ReasonMissingParam,
-			Message: err.Error(),
-		})
-	}
-
-	nodeName := params["nodeName"]
-	tag := params["tag"]
-
-	renew := &satrapv1.Renew{}
-	if err := c.Bind().JSON(renew); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
-	}
-
-	if err := s.inboundService.RenewInbound(c.RequestCtx(), nodeName, tag, renew); err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Msg("failed")
-		return errs.HandleAPIError(c, err)
-	}
-
-	zlog.Info().Str("component", "chapar").Str("resource", "inbound").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Msg("updated")
-	return c.SendStatus(fiber.StatusOK)
-}
-
-func (s *Server) RenewInboundUser(c fiber.Ctx) error {
-	params, err := s.requiredParams(c, "nodeName", "tag", "email")
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(&errs.Error{
-			Kind:    errs.KindInvalid,
-			Reason:  errs.ReasonMissingParam,
-			Message: err.Error(),
-		})
-	}
-
-	nodeName := params["nodeName"]
-	tag := params["tag"]
-
-	renew := &satrapv1.Renew{}
-	if err := c.Bind().JSON(renew); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
-	}
-
-	if err := s.inboundService.RenewInboundUser(c.RequestCtx(), nodeName, tag, params["email"], renew); err != nil {
-		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Msg("failed")
-		return errs.HandleAPIError(c, err)
-	}
-
-	zlog.Info().Str("component", "chapar").Str("resource", "inboundUser").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Msg("updated")
-	return c.SendStatus(fiber.StatusOK)
-}
-
 func (s *Server) UpdateInboundMetadata(c fiber.Ctx) error {
 	params, err := s.requiredParams(c, "nodeName", "tag")
 	if err != nil {
@@ -261,8 +200,8 @@ func (s *Server) UpdateInboundMetadata(c fiber.Ctx) error {
 	nodeName := params["nodeName"]
 	tag := params["tag"]
 
-	metadata := &satrapv1.Metadata{}
-	if err := c.Bind().JSON(metadata); err != nil {
+	newMetadata := &metav1.ObjectMeta{}
+	if err := c.Bind().JSON(newMetadata); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
 				"error": err.Error(),
@@ -270,7 +209,7 @@ func (s *Server) UpdateInboundMetadata(c fiber.Ctx) error {
 		)
 	}
 
-	if err := s.inboundService.UpdateInboundMetadata(c.RequestCtx(), nodeName, tag, metadata); err != nil {
+	if err := s.inboundService.UpdateInboundMetadata(c.RequestCtx(), nodeName, tag, newMetadata); err != nil {
 		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inbound").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Msg("failed")
 		return errs.HandleAPIError(c, err)
 	}
@@ -293,8 +232,8 @@ func (s *Server) UpdateInboundUserMetadata(c fiber.Ctx) error {
 	tag := params["tag"]
 	email := params["email"]
 
-	metadata := &satrapv1.Metadata{}
-	if err := c.Bind().JSON(metadata); err != nil {
+	newMetadata := &metav1.ObjectMeta{}
+	if err := c.Bind().JSON(newMetadata); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
 				"error": err.Error(),
@@ -302,7 +241,7 @@ func (s *Server) UpdateInboundUserMetadata(c fiber.Ctx) error {
 		)
 	}
 
-	if err := s.inboundService.UpdateUserMetadata(c.RequestCtx(), nodeName, tag, email, metadata); err != nil {
+	if err := s.inboundService.UpdateUserMetadata(c.RequestCtx(), nodeName, tag, email, newMetadata); err != nil {
 		zlog.Error().Err(err).Str("component", "chapar").Str("resource", "inboundUser").Str("action", "update").Str("nodeName", nodeName).Str("tag", tag).Str("email", email).Msg("failed")
 		return errs.HandleAPIError(c, err)
 	}

@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	zlog "github.com/rs/zerolog/log"
-	corev1 "github.com/vayzur/apadana/pkg/api/core/v1"
+	corev1 "github.com/vayzur/apadana/pkg/apis/core/v1"
 	"github.com/vayzur/apadana/pkg/chapar/storage"
 	"github.com/vayzur/apadana/pkg/errs"
 )

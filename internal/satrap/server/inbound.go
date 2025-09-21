@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	zlog "github.com/rs/zerolog/log"
-	satrapv1 "github.com/vayzur/apadana/pkg/api/satrap/v1"
+	satrapv1 "github.com/vayzur/apadana/pkg/apis/satrap/v1"
 	"github.com/xtls/xray-core/infra/conf"
 
 	"github.com/gofiber/fiber/v3"
@@ -73,7 +73,7 @@ func (s *Server) AddUser(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
-	if err := s.xrayClient.AddUser(c.RequestCtx(), tag, user.Email, account); err != nil {
+	if err := s.xrayClient.AddUser(c.RequestCtx(), tag, user.Spec.Email, account); err != nil {
 		zlog.Error().Err(err).Str("component", "satrap").Str("resource", "user").Str("action", "create").Str("tag", tag).Msg("failed")
 		if errors.Is(err, errs.ErrUserConflict) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
