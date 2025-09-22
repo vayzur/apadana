@@ -6,6 +6,7 @@ import (
 
 	corev1 "github.com/vayzur/apadana/pkg/apis/core/v1"
 
+	zlog "github.com/rs/zerolog/log"
 	apadana "github.com/vayzur/apadana/pkg/client"
 )
 
@@ -34,10 +35,12 @@ func (r *RegisterManager) RegisterWithAPIServer(ctx context.Context, node *corev
 				step = 7 * time.Second
 			}
 
+			zlog.Info().Str("component", "registerManager").Interface("node", node).Msg("attempting to register node")
 			_, err := r.apadanaClient.CreateNode(node)
 			if err != nil {
 				continue
 			}
+			zlog.Info().Str("component", "registerManager").Interface("node", node).Msg("successfully registered node")
 			return nil
 		}
 	}

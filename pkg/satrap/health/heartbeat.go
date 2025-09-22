@@ -32,7 +32,7 @@ func (h *HeartbeatManager) Run(ctx context.Context, nodeName string) {
 	ticker := time.NewTicker(h.nodeStatusUpdateFrequency)
 	defer ticker.Stop()
 
-	zlog.Info().Str("component", "heartbeat").Msg("started")
+	zlog.Info().Str("component", "heartbeatManager").Msg("started")
 	for {
 		select {
 		case <-ctx.Done():
@@ -41,7 +41,7 @@ func (h *HeartbeatManager) Run(ctx context.Context, nodeName string) {
 			h.nodeStatus.LastHeartbeatTime = time.Now()
 
 			if err := h.apadanaClient.UpdateNodeStatus(nodeName, h.nodeStatus); err != nil {
-				zlog.Error().Err(err).Str("component", "health").Str("resource", "node").Str("action", "heartbeat").Str("nodeName", nodeName).Msg("failed")
+				zlog.Error().Err(err).Str("component", "heartbeatManager").Str("resource", "node").Str("action", "heartbeat").Str("nodeName", nodeName).Msg("failed")
 				continue
 			}
 		}
