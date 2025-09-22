@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
+	"github.com/google/uuid"
 	corev1 "github.com/vayzur/apadana/pkg/apis/core/v1"
 	metav1 "github.com/vayzur/apadana/pkg/apis/meta/v1"
 	satrapv1 "github.com/vayzur/apadana/pkg/apis/satrap/v1"
@@ -54,6 +56,11 @@ func (s *InboundService) DeleteInbound(ctx context.Context, nodeName, tag string
 }
 
 func (s *InboundService) CreateInbound(ctx context.Context, nodeName string, inbound *satrapv1.Inbound) error {
+	existingInbound, _ := s.GetInbound(ctx, nodeName, inbound.Spec.Config.Tag)
+	if existingInbound != nil {
+		return errs.ErrInboundConflict
+	}
+
 	node, err := s.nodeService.GetNode(ctx, nodeName)
 	if err != nil {
 		return err
@@ -68,6 +75,10 @@ func (s *InboundService) CreateInbound(ctx context.Context, nodeName string, inb
 	if err := s.satrapClient.AddInbound(node, &inbound.Spec.Config); err != nil {
 		return err
 	}
+
+	inbound.Metadata.UID = uuid.NewString()
+	inbound.Metadata.CreationTimestamp = time.Now()
+
 	if err := s.store.CreateInbound(ctx, nodeName, inbound); err != nil {
 		if rerr := s.satrapClient.RemoveInbound(node, inbound.Spec.Config.Tag); rerr != nil {
 			return rerr
@@ -104,6 +115,11 @@ func (s *InboundService) DeleteUser(ctx context.Context, nodeName, tag, email st
 }
 
 func (s *InboundService) CreateUser(ctx context.Context, nodeName, tag string, user *satrapv1.InboundUser) error {
+	existingUser, _ := s.GetUser(ctx, nodeName, user.Spec.InboundTag, user.Spec.Email)
+	if existingUser != nil {
+		return errs.ErrUserConflict
+	}
+
 	var (
 		node       *corev1.Node
 		inb        *satrapv1.Inbound
@@ -135,6 +151,9 @@ func (s *InboundService) CreateUser(ctx context.Context, nodeName, tag string, u
 	if usersCount >= inb.Spec.Capacity.MaxUsers {
 		return errs.ErrInboundCapacityExceeded
 	}
+
+	user.Metadata.UID = uuid.NewString()
+	user.Metadata.CreationTimestamp = time.Now()
 
 	if err := s.store.CreateUser(ctx, nodeName, tag, user); err != nil {
 		return err
