@@ -51,7 +51,7 @@ func main() {
 
 	authToken := cfg.GetToken()
 	if authToken == "" {
-		zlog.Fatal().Str("component", "satrap").Msg("auth token must be set in config for standalone mode")
+		zlog.Fatal().Str("component", "satrap").Msg("auth token must be set in config file")
 	}
 
 	serverAddr := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
@@ -84,25 +84,19 @@ func main() {
 			time.Second*5,
 		)
 
-		nodeName := cfg.Name
+		nodeName := cfg.GetName()
 
 		if nodeName == "" {
-			hostname, err := os.Hostname()
-			if err != nil {
-				zlog.Fatal().
-					Err(err).
-					Str("component", "registerManager").
-					Msg("failed to get node name: cfg.Name not set and system hostname unavailable")
-			}
-			nodeName = hostname
+			zlog.Fatal().
+				Err(err).
+				Str("component", "registerManager").
+				Msg("failed to get node name: cfg.Name not set and system hostname unavailable")
 		}
 
 		if cfg.RegisterNode {
 			registerManager := satrapRegisterManager.NewRegisterManager(
 				apadanaClient,
 			)
-
-			nodeExternalAddress := corev1.GetPreferredAddress(cfg.Addresses, corev1.ExternalAddress)
 
 			node := &corev1.Node{
 				Metadata: metav1.ObjectMeta{
@@ -111,9 +105,6 @@ func main() {
 						corev1.LabelHostname: nodeName,
 						corev1.LabelOS:       runtime.GOOS,
 						corev1.LabelArch:     runtime.GOARCH,
-					},
-					Annotations: map[string]string{
-						corev1.AnnotationSNI: nodeExternalAddress,
 					},
 				},
 				Spec: corev1.NodeSpec{
