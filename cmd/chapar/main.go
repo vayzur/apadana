@@ -13,7 +13,6 @@ import (
 	"github.com/vayzur/apadana/internal/config"
 	chaparconfigv1 "github.com/vayzur/apadana/pkg/chapar/config/v1"
 	"github.com/vayzur/apadana/pkg/chapar/service"
-	satrap "github.com/vayzur/apadana/pkg/satrap/client"
 
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
@@ -55,9 +54,8 @@ func main() {
 
 	inboundStore := resources.NewInboundStore(etcdStorage)
 	nodeStore := resources.NewNodeStore(etcdStorage)
-	satrapClient := satrap.New(time.Second * 5)
 	nodeService := service.NewNodeService(nodeStore)
-	inboundService := service.NewInboundService(inboundStore, nodeService, satrapClient)
+	inboundService := service.NewInboundService(inboundStore)
 
 	serverAddr := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
 	app := server.NewServer(serverAddr, cfg.Token, cfg.Prefork, inboundService, nodeService)
