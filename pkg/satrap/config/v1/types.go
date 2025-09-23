@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -49,4 +50,15 @@ func (c *SatrapConfig) GetToken() string {
 	}
 
 	return ""
+}
+
+func (c *SatrapConfig) GetName() string {
+	if c.Name != "" {
+		return c.Name
+	}
+	hostname, err := os.Hostname()
+	if err != nil {
+		return ""
+	}
+	return hostname
 }
