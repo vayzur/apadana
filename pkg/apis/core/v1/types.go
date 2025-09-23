@@ -11,10 +11,9 @@ const (
 	LabelHostname = "hostname"
 	LabelOS       = "os"
 	LabelArch     = "arch"
-)
-
-const (
-	AnnotationSNI = "sni"
+	LabelCountry  = "country"
+	LabelRegion   = "region"
+	LabelProvider = "provider"
 )
 
 type NodeAddressType string
