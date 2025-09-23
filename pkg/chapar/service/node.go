@@ -28,15 +28,15 @@ func (s *NodeService) DeleteNode(ctx context.Context, nodeName string) error {
 
 func (s *NodeService) CreateNode(ctx context.Context, node *corev1.Node) error {
 	existingNode, _ := s.GetNode(ctx, node.Metadata.Name)
-	if existingNode == nil {
-		node.Metadata.UID = uuid.NewString()
-		node.Metadata.CreationTimestamp = time.Now()
+	if existingNode != nil {
+		node.Metadata.Name = existingNode.Metadata.Name
+		node.Metadata.UID = existingNode.Metadata.UID
+		node.Metadata.CreationTimestamp = existingNode.Metadata.CreationTimestamp
 		return s.store.CreateNode(ctx, node)
 	}
 
-	node.Metadata.Name = existingNode.Metadata.Name
-	node.Metadata.UID = existingNode.Metadata.UID
-	node.Metadata.CreationTimestamp = existingNode.Metadata.CreationTimestamp
+	node.Metadata.UID = uuid.NewString()
+	node.Metadata.CreationTimestamp = time.Now()
 
 	return s.store.CreateNode(ctx, node)
 }
@@ -51,9 +51,10 @@ func (s *NodeService) GetActiveNodes(ctx context.Context) ([]*corev1.Node, error
 		return nil, err
 	}
 
-	activeNodes := make([]*corev1.Node, 0, len(nodes)) // preallocated, no zeroing
-
 	n := len(nodes)
+
+	activeNodes := make([]*corev1.Node, 0, n) // preallocated, no zeroing
+
 	for i := 0; i < n; i++ {
 		node := nodes[i]
 		if node.Status.Ready {
@@ -64,13 +65,13 @@ func (s *NodeService) GetActiveNodes(ctx context.Context) ([]*corev1.Node, error
 	return activeNodes, nil
 }
 
-func (s *NodeService) UpdateNodeStatus(ctx context.Context, nodeName string, status *corev1.NodeStatus) error {
+func (s *NodeService) UpdateNodeStatus(ctx context.Context, nodeName string, newStatus *corev1.NodeStatus) error {
 	node, err := s.GetNode(ctx, nodeName)
 	if err != nil {
 		return err
 	}
 
-	node.Status = *status
+	node.Status = *newStatus
 	return s.store.CreateNode(ctx, node)
 }
 
