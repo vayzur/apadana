@@ -64,7 +64,7 @@ func (s *NodeStore) DeleteNode(ctx context.Context, nodeName string) error {
 	key := fmt.Sprintf("/nodes/%s", nodeName)
 	if err := s.store.Delete(ctx, key); err != nil {
 		if errors.Is(err, errs.ErrResourceNotFound) {
-			return errs.ErrResourceNotFound
+			return errs.ErrNodeNotFound
 		}
 		return errs.New(
 			errs.KindInternal,
