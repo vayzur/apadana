@@ -17,6 +17,7 @@ type TLSConfig struct {
 }
 
 type SatrapConfig struct {
+	EnableServer              bool                         `mapstructure:"enableServer" yaml:"enableServer"`
 	Name                      string                       `mapstructure:"name" yaml:"name"`
 	Address                   string                       `mapstructure:"address" yaml:"address"`
 	Port                      uint16                       `mapstructure:"port" yaml:"port"`
