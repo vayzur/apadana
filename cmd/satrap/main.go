@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 	"runtime"
@@ -12,7 +11,6 @@ import (
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
 	"github.com/vayzur/apadana/internal/config"
-	"github.com/vayzur/apadana/internal/satrap/server"
 	corev1 "github.com/vayzur/apadana/pkg/apis/core/v1"
 	metav1 "github.com/vayzur/apadana/pkg/apis/meta/v1"
 	satrapconfigv1 "github.com/vayzur/apadana/pkg/satrap/config/v1"
@@ -48,45 +46,6 @@ func main() {
 			zlog.Error().Err(err).Msg("xray client close failed")
 		}
 	}()
-
-	var scheme string
-
-	if cfg.EnableServer {
-		authToken := cfg.GetToken()
-		if authToken == "" {
-			zlog.Fatal().Str("component", "satrap").Msg("auth token must be set in config file")
-		}
-
-		serverAddr := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
-		app := server.NewServer(serverAddr, authToken, cfg.Prefork, xrayClient)
-
-		if cfg.TLS.Enabled {
-			scheme = "https"
-			go func() {
-				if err := app.StartTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile); err != nil {
-					zlog.Fatal().Err(err).Str("component", "satrap").Msg("server failed")
-				}
-			}()
-		} else {
-			scheme = "http"
-			go func() {
-				if err := app.Start(); err != nil {
-					zlog.Fatal().Err(err).Str("component", "satrap").Msg("server failed")
-				}
-			}()
-		}
-
-		zlog.Info().Str("component", "satrap").Str("addr", serverAddr).Msg("server started")
-
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer shutdownCancel()
-
-		defer func() {
-			zlog.Info().Str("component", "satrap").Str("addr", serverAddr).Msg("shutting down server")
-			app.Shutdown(shutdownCtx)
-			zlog.Info().Str("component", "satrap").Msg("shutdown complete")
-		}()
-	}
 
 	if cfg.Cluster.Enabled {
 		apadanaClient := apadana.New(
@@ -131,11 +90,7 @@ func main() {
 		nodeStatus := &corev1.NodeStatus{
 			Addresses: cfg.Addresses,
 			Capacity:  corev1.NodeCapacity{MaxInbounds: cfg.MaxInbounds},
-			ConnectionConfig: corev1.NodeConnectionConfig{
-				Scheme: scheme,
-				Port:   cfg.Port,
-			},
-			Ready: true,
+			Ready:     true,
 		}
 
 		hb := satrapHeartbeatManager.NewHeartbeatManager(
