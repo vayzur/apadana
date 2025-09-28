@@ -30,9 +30,6 @@ func main() {
 				"sni": "gate.domain.tld",
 			},
 		},
-		Spec: corev1.NodeSpec{
-			Token: "satrap-shared-token",
-		},
 	}
 	node, err := apadanaClient.CreateNode(n)
 	if err != nil {
