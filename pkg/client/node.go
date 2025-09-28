@@ -84,41 +84,6 @@ func (c *Client) UpdateNodeMetadata(nodeName string, nodeMetadata *metav1.Object
 	}
 }
 
-func (c *Client) UpdateNodeSpec(nodeName string, nodeSpec *corev1.NodeSpec) error {
-	if nodeName == "" {
-		return errs.ErrInvalidNode
-	}
-	url := fmt.Sprintf("%s/api/v1/nodes/%s/spec", c.address, nodeName)
-	status, resp, err := c.httpClient.Do(http.MethodPatch, url, c.token, nodeSpec)
-	if err != nil {
-		zlog.Error().Err(err).Str("component", "client").Str("resource", "node").Str("action", "update").Str("nodeName", nodeName).Msg("failed")
-		return err
-	}
-
-	if status == http.StatusOK {
-		return nil
-	}
-
-	zlog.Error().Str("component", "apadana").Str("resource", "node").Str("action", "update").Str("nodeName", nodeName).Int("status", status).Str("resp", string(resp)).Msg("failed")
-
-	switch status {
-	case http.StatusNotFound:
-		return errs.ErrNodeNotFound
-	default:
-		return errs.New(
-			errs.KindInternal,
-			errs.ReasonUnknown,
-			"update node spec failed",
-			map[string]string{
-				"nodeName": nodeName,
-				"status":   strconv.Itoa(status),
-				"resp":     string(resp),
-			},
-			nil,
-		)
-	}
-}
-
 func (c *Client) GetNode(nodeName string) (*corev1.Node, error) {
 	if nodeName == "" {
 		return nil, errs.ErrInvalidNode

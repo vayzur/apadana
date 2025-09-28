@@ -88,13 +88,3 @@ func (s *NodeService) UpdateNodeMetadata(ctx context.Context, nodeName string, n
 	node.Metadata = *newMetadata
 	return s.store.CreateNode(ctx, node)
 }
-
-func (s *NodeService) UpdateNodeSpec(ctx context.Context, nodeName string, spec *corev1.NodeSpec) error {
-	node, err := s.GetNode(ctx, nodeName)
-	if err != nil {
-		return err
-	}
-
-	node.Spec = *spec
-	return s.store.CreateNode(ctx, node)
-}

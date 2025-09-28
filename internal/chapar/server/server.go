@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/healthcheck"
-	"github.com/vayzur/apadana/internal/auth"
+	"github.com/vayzur/apadana/pkg/chapar/authentication"
 	"github.com/vayzur/apadana/pkg/chapar/service"
 )
 
@@ -53,7 +53,6 @@ func (s *Server) setupRoutes() {
 	nodes.Delete("/:nodeName", s.DeleteNode)
 	nodes.Patch("/:nodeName/status", s.UpdateNodeStatus)
 	nodes.Patch("/:nodeName/metadata", s.UpdateNodeMetadata)
-	nodes.Patch("/:nodeName/spec", s.UpdateNodeSpec)
 
 	inbounds := nodes.Group("/:nodeName/inbounds")
 	inbounds.Get("", s.GetInbounds)
@@ -99,7 +98,7 @@ func (s *Server) authMiddleware(c fiber.Ctx) error {
 		return fiber.ErrUnauthorized
 	}
 
-	if err := auth.VerifyHMAC(h, s.token); err != nil {
+	if err := authentication.VerifyHMAC(h, s.token); err != nil {
 		return fiber.ErrUnauthorized
 	}
 	return c.Next()

@@ -139,30 +139,3 @@ func (s *Server) UpdateNodeMetadata(c fiber.Ctx) error {
 	zlog.Info().Str("component", "chapar").Str("resource", "node").Str("action", "update").Str("nodeName", nodeName).Msg("updated")
 	return c.SendStatus(fiber.StatusOK)
 }
-
-func (s *Server) UpdateNodeSpec(c fiber.Ctx) error {
-	nodeName := c.Params("nodeName")
-	if nodeName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			fiber.Map{
-				"error": errs.ErrInvalidNode,
-			},
-		)
-	}
-
-	newSpec := &corev1.NodeSpec{}
-	if err := c.Bind().JSON(newSpec); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			fiber.Map{
-				"error": err.Error(),
-			},
-		)
-	}
-
-	if err := s.nodeService.UpdateNodeSpec(c.RequestCtx(), nodeName, newSpec); err != nil {
-		return errs.HandleAPIError(c, err)
-	}
-
-	zlog.Info().Str("component", "chapar").Str("resource", "node").Str("action", "update").Str("nodeName", nodeName).Msg("updated")
-	return c.SendStatus(fiber.StatusOK)
-}
