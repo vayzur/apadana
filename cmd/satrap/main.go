@@ -49,33 +49,44 @@ func main() {
 		}
 	}()
 
-	authToken := cfg.GetToken()
-	if authToken == "" {
-		zlog.Fatal().Str("component", "satrap").Msg("auth token must be set in config file")
-	}
-
-	serverAddr := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
-	app := server.NewServer(serverAddr, authToken, cfg.Prefork, xrayClient)
-
 	var scheme string
 
-	if cfg.TLS.Enabled {
-		scheme = "https"
-		go func() {
-			if err := app.StartTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile); err != nil {
-				zlog.Fatal().Err(err).Msg("server failed")
-			}
-		}()
-	} else {
-		scheme = "http"
-		go func() {
-			if err := app.Start(); err != nil {
-				zlog.Fatal().Err(err).Msg("server failed")
-			}
+	if cfg.EnableServer {
+		authToken := cfg.GetToken()
+		if authToken == "" {
+			zlog.Fatal().Str("component", "satrap").Msg("auth token must be set in config file")
+		}
+
+		serverAddr := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
+		app := server.NewServer(serverAddr, authToken, cfg.Prefork, xrayClient)
+
+		if cfg.TLS.Enabled {
+			scheme = "https"
+			go func() {
+				if err := app.StartTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile); err != nil {
+					zlog.Fatal().Err(err).Str("component", "satrap").Msg("server failed")
+				}
+			}()
+		} else {
+			scheme = "http"
+			go func() {
+				if err := app.Start(); err != nil {
+					zlog.Fatal().Err(err).Str("component", "satrap").Msg("server failed")
+				}
+			}()
+		}
+
+		zlog.Info().Str("component", "satrap").Str("addr", serverAddr).Msg("server started")
+
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer shutdownCancel()
+
+		defer func() {
+			zlog.Info().Str("component", "satrap").Str("addr", serverAddr).Msg("shutting down server")
+			app.Shutdown(shutdownCtx)
+			zlog.Info().Str("component", "satrap").Msg("shutdown complete")
 		}()
 	}
-
-	zlog.Info().Str("addr", serverAddr).Msg("server started")
 
 	if cfg.Cluster.Enabled {
 		apadanaClient := apadana.New(
@@ -106,9 +117,6 @@ func main() {
 						corev1.LabelOS:       runtime.GOOS,
 						corev1.LabelArch:     runtime.GOARCH,
 					},
-				},
-				Spec: corev1.NodeSpec{
-					Token: authToken,
 				},
 			}
 
@@ -159,16 +167,6 @@ func main() {
 		}
 	}
 
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer shutdownCancel()
-
-	defer func() {
-		zlog.Info().Str("addr", serverAddr).Msg("shutting down server")
-		if err := app.Shutdown(shutdownCtx); err != nil {
-			zlog.Error().Err(err).Str("addr", serverAddr).Msg("server shutdown error")
-		}
-		zlog.Info().Msg("shutdown complete")
-	}()
-
+	zlog.Info().Str("component", "satrap").Msg("started")
 	<-ctx.Done()
 }
