@@ -9,9 +9,8 @@ type TLSConfig struct {
 }
 
 type ClusterConfig struct {
-	Enabled bool   `mapstructure:"enabled" yaml:"enabled"`
-	Server  string `mapstructure:"server" yaml:"server"`
-	Token   string `mapstructure:"token" yaml:"token"`
+	Server string `mapstructure:"server" yaml:"server"`
+	Token  string `mapstructure:"token" yaml:"token"`
 }
 
 type ChaparConfig struct {

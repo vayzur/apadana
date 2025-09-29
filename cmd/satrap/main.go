@@ -43,89 +43,86 @@ func main() {
 	}
 	defer func() {
 		if err := xrayClient.Close(); err != nil {
-			zlog.Error().Err(err).Msg("xray client close failed")
+			zlog.Error().Err(err).Msg("failed to close xray client")
 		}
 	}()
 
-	if cfg.Cluster.Enabled {
-		apadanaClient := apadana.New(
-			cfg.Cluster.Server,
-			cfg.Cluster.Token,
-			time.Second*5,
-		)
+	apadanaClient := apadana.New(
+		cfg.Cluster.Server,
+		cfg.Cluster.Token,
+		time.Second*5,
+	)
 
-		nodeName := cfg.GetName()
+	nodeName := cfg.GetName()
+	if nodeName == "" {
+		zlog.Fatal().
+			Err(err).
+			Str("component", "registerManager").
+			Msg("failed to get node name: cfg.Name not set and system hostname unavailable")
+	}
 
-		if nodeName == "" {
-			zlog.Fatal().
-				Err(err).
-				Str("component", "registerManager").
-				Msg("failed to get node name: cfg.Name not set and system hostname unavailable")
-		}
-
-		if cfg.RegisterNode {
-			registerManager := satrapRegisterManager.NewRegisterManager(
-				apadanaClient,
-			)
-
-			labels := map[string]string{
-				corev1.LabelHostname: nodeName,
-				corev1.LabelOS:       runtime.GOOS,
-				corev1.LabelArch:     runtime.GOARCH,
-			}
-
-			for k, v := range cfg.Labels {
-				labels[k] = v
-			}
-
-			node := &corev1.Node{
-				Metadata: metav1.ObjectMeta{
-					Name:   nodeName,
-					Labels: labels,
-				},
-			}
-
-			rlock := flock.NewFlock("/tmp/satrap-register-manager.lock")
-			if err := rlock.TryLock(); err == nil {
-				// block until register node
-				registerManager.RegisterWithAPIServer(ctx, node)
-				defer rlock.Unlock()
-			}
-		}
-
-		nodeStatus := &corev1.NodeStatus{
-			Addresses: cfg.Addresses,
-			Capacity:  corev1.NodeCapacity{MaxInbounds: cfg.MaxInbounds},
-			Ready:     true,
-		}
-
-		hb := satrapHeartbeatManager.NewHeartbeatManager(
+	if cfg.RegisterNode {
+		registerManager := satrapRegisterManager.NewRegisterManager(
 			apadanaClient,
-			cfg.NodeStatusUpdateFrequency,
-			nodeStatus,
 		)
 
-		syncManager := satrapSyncManager.NewSyncManager(
-			xrayClient,
-			apadanaClient,
-			cfg.SyncFrequency,
-			cfg.ConcurrentInboundSyncs,
-			cfg.ConcurrentInboundGCSyncs,
-			cfg.ConcurrentUserSyncs,
-			cfg.ConcurrentUserGCSyncs,
-		)
-
-		hlock := flock.NewFlock("/tmp/satrap-heartbeat.lock")
-		if err := hlock.TryLock(); err == nil {
-			go hb.Run(ctx, nodeName)
-			defer hlock.Unlock()
+		labels := map[string]string{
+			corev1.LabelHostname: nodeName,
+			corev1.LabelOS:       runtime.GOOS,
+			corev1.LabelArch:     runtime.GOARCH,
 		}
 
-		slock := flock.NewFlock("/tmp/satrap-sync-manager.lock")
-		if err := slock.TryLock(); err == nil {
-			go syncManager.Run(ctx, nodeName)
-			defer slock.Unlock()
+		for k, v := range cfg.Labels {
+			labels[k] = v
 		}
+
+		node := &corev1.Node{
+			Metadata: metav1.ObjectMeta{
+				Name:   nodeName,
+				Labels: labels,
+			},
+		}
+
+		rlock := flock.NewFlock("/tmp/satrap-register-manager.lock")
+		if err := rlock.TryLock(); err == nil {
+			// block until register node
+			registerManager.RegisterWithAPIServer(ctx, node)
+			defer rlock.Unlock()
+		}
+	}
+
+	nodeStatus := &corev1.NodeStatus{
+		Addresses: cfg.Addresses,
+		Capacity:  corev1.NodeCapacity{MaxInbounds: cfg.MaxInbounds},
+		Ready:     true,
+	}
+
+	hb := satrapHeartbeatManager.NewHeartbeatManager(
+		apadanaClient,
+		cfg.NodeStatusUpdateFrequency,
+		nodeStatus,
+	)
+
+	syncManager := satrapSyncManager.NewSyncManager(
+		xrayClient,
+		apadanaClient,
+		cfg.SyncFrequency,
+		cfg.ConcurrentInboundSyncs,
+		cfg.ConcurrentInboundGCSyncs,
+		cfg.ConcurrentUserSyncs,
+		cfg.ConcurrentUserGCSyncs,
+	)
+
+	hlock := flock.NewFlock("/tmp/satrap-heartbeat.lock")
+	if err := hlock.TryLock(); err == nil {
+		go hb.Run(ctx, nodeName)
+		defer hlock.Unlock()
+	}
+
+	slock := flock.NewFlock("/tmp/satrap-sync-manager.lock")
+	if err := slock.TryLock(); err == nil {
+		go syncManager.Run(ctx, nodeName)
+		defer slock.Unlock()
 	}
 
 	zlog.Info().Str("component", "satrap").Msg("started")
