@@ -68,14 +68,20 @@ func main() {
 				apadanaClient,
 			)
 
+			labels := map[string]string{
+				corev1.LabelHostname: nodeName,
+				corev1.LabelOS:       runtime.GOOS,
+				corev1.LabelArch:     runtime.GOARCH,
+			}
+
+			for k, v := range cfg.Labels {
+				labels[k] = v
+			}
+
 			node := &corev1.Node{
 				Metadata: metav1.ObjectMeta{
-					Name: nodeName,
-					Labels: map[string]string{
-						corev1.LabelHostname: nodeName,
-						corev1.LabelOS:       runtime.GOOS,
-						corev1.LabelArch:     runtime.GOARCH,
-					},
+					Name:   nodeName,
+					Labels: labels,
 				},
 			}
 
