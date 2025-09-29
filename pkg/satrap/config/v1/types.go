@@ -11,6 +11,7 @@ import (
 
 type SatrapConfig struct {
 	Name                      string                       `mapstructure:"name" yaml:"name"`
+	Labels                    map[string]string            `mapstructure:"labels" yaml:"labels"`
 	RegisterNode              bool                         `mapstructure:"registerNode" yaml:"registerNode"`
 	Addresses                 []corev1.NodeAddress         `mapstructure:"addresses" yaml:"addresses"`
 	Xray                      xrayconfigv1.XrayConfig      `mapstructure:"xray" yaml:"xray"`
