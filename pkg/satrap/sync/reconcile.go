@@ -20,6 +20,9 @@ func (m *SyncManager) Run(ctx context.Context, nodeName string) {
 		go func() {
 			for inb := range createInboundCh {
 				if err := m.xrayClient.AddInbound(ctx, &inb.Spec.Config); err != nil {
+					zlog.Error().Err(err).Str("component", "syncManager").
+						Str("resource", "inbound").Str("action", "create").
+						Str("nodeName", nodeName).Str("tag", inb.Spec.Config.Tag).Msg("failed")
 					continue
 				}
 
@@ -39,7 +42,7 @@ func (m *SyncManager) Run(ctx context.Context, nodeName string) {
 		go func() {
 			for tag := range gcInboundCh {
 				if err := m.xrayClient.RemoveInbound(ctx, tag); err != nil {
-					zlog.Error().Err(err).Str("component", "syncManager").Str("controller", "gc").
+					zlog.Error().Err(err).Str("component", "syncManager").
 						Str("resource", "inbound").Str("action", "delete").
 						Str("nodeName", nodeName).Str("tag", tag).Msg("failed")
 					continue
@@ -56,6 +59,9 @@ func (m *SyncManager) Run(ctx context.Context, nodeName string) {
 					continue
 				}
 				if err := m.xrayClient.AddUser(ctx, user.Spec.InboundTag, user.Spec.Email, account); err != nil {
+					zlog.Error().Err(err).Str("component", "syncManager").
+						Str("resource", "inboundUser").Str("action", "create").
+						Str("nodeName", nodeName).Str("tag", user.Spec.InboundTag).Str("email", user.Spec.Email).Msg("failed")
 					continue
 				}
 			}
@@ -66,6 +72,9 @@ func (m *SyncManager) Run(ctx context.Context, nodeName string) {
 		go func() {
 			for user := range gcUserCh {
 				if err := m.xrayClient.RemoveUser(ctx, user.Spec.InboundTag, user.Spec.Email); err != nil {
+					zlog.Error().Err(err).Str("component", "syncManager").
+						Str("resource", "inboundUser").Str("action", "delete").
+						Str("nodeName", nodeName).Str("tag", user.Spec.InboundTag).Msg("failed")
 					continue
 				}
 			}
