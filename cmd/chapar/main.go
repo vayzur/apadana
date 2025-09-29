@@ -47,7 +47,6 @@ func main() {
 	}()
 
 	etcdStorage := etcd.NewEtcdStorage(etcdClient)
-
 	if err := etcdStorage.ReadinessCheck(); err != nil {
 		zlog.Fatal().Err(err).Msg("etcd not ready")
 	}
@@ -60,19 +59,17 @@ func main() {
 	serverAddr := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
 	app := server.NewServer(serverAddr, cfg.Token, cfg.Prefork, inboundService, nodeService)
 
-	if cfg.TLS.Enabled {
-		go func() {
-			if err := app.StartTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile); err != nil {
-				zlog.Fatal().Err(err).Msg("server failed")
-			}
-		}()
-	} else {
-		go func() {
-			if err := app.Start(); err != nil {
-				zlog.Fatal().Err(err).Msg("server failed")
-			}
-		}()
-	}
+	go func() {
+		var err error
+		if cfg.TLS.Enabled {
+			err = app.StartTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile)
+		} else {
+			err = app.Start()
+		}
+		if err != nil {
+			zlog.Fatal().Err(err).Msg("failed to start server")
+		}
+	}()
 
 	zlog.Info().Str("addr", serverAddr).Msg("server started")
 

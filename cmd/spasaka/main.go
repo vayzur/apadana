@@ -27,7 +27,6 @@ func main() {
 	flag.Parse()
 
 	cfg := spasakaconfigv1.SpasakaConfig{}
-
 	if err := config.Load(*configPath, &cfg); err != nil {
 		zlog.Fatal().Err(err).Msg("failed to load config")
 	}
@@ -39,7 +38,6 @@ func main() {
 	if err != nil {
 		zlog.Fatal().Err(err).Msg("failed to connect etcd")
 	}
-
 	defer func() {
 		zlog.Info().Msg("closing etcd client")
 		if err := etcdClient.Close(); err != nil {
@@ -64,7 +62,7 @@ func main() {
 
 	val := "spasaka"
 
-	var wg sync.WaitGroup
+	wg := &sync.WaitGroup{}
 
 	wg.Add(1)
 	go func() {
