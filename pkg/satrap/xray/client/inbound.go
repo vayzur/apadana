@@ -12,7 +12,9 @@ import (
 )
 
 func (c *Client) ListInbounds(ctx context.Context) (map[string]struct{}, error) {
-	resp, err := c.hsClient.ListInbounds(ctx, &command.ListInboundsRequest{
+	reqCtx, cancel := c.withTimeout(ctx)
+	defer cancel()
+	resp, err := c.hsClient.ListInbounds(reqCtx, &command.ListInboundsRequest{
 		IsOnlyTags: true,
 	})
 	if err != nil {
@@ -38,21 +40,28 @@ func (c *Client) AddInbound(ctx context.Context, conf *conf.InboundDetourConfig)
 		return errs.New(errs.KindInvalid, errs.ReasonUnknown, "inbound config build failed", nil, err)
 	}
 
-	_, err = c.hsClient.AddInbound(ctx, &command.AddInboundRequest{
+	reqCtx, cancel := c.withTimeout(ctx)
+	defer cancel()
+
+	_, err = c.hsClient.AddInbound(reqCtx, &command.AddInboundRequest{
 		Inbound: config,
 	})
 	return errs.HandleXrayError(err, satrapv1.ResourceInbound)
 }
 
 func (c *Client) RemoveInbound(ctx context.Context, tag string) error {
-	_, err := c.hsClient.RemoveInbound(ctx, &command.RemoveInboundRequest{
+	reqCtx, cancel := c.withTimeout(ctx)
+	defer cancel()
+	_, err := c.hsClient.RemoveInbound(reqCtx, &command.RemoveInboundRequest{
 		Tag: tag,
 	})
 	return errs.HandleXrayError(err, satrapv1.ResourceInbound)
 }
 
 func (c *Client) AddUser(ctx context.Context, tag, email string, account satrapv1.Account) error {
-	_, err := c.hsClient.AlterInbound(ctx, &command.AlterInboundRequest{
+	reqCtx, cancel := c.withTimeout(ctx)
+	defer cancel()
+	_, err := c.hsClient.AlterInbound(reqCtx, &command.AlterInboundRequest{
 		Tag: tag,
 		Operation: serial.ToTypedMessage(&command.AddUserOperation{
 			User: &protocol.User{
@@ -65,7 +74,9 @@ func (c *Client) AddUser(ctx context.Context, tag, email string, account satrapv
 }
 
 func (c *Client) RemoveUser(ctx context.Context, tag, email string) error {
-	_, err := c.hsClient.AlterInbound(ctx, &command.AlterInboundRequest{
+	reqCtx, cancel := c.withTimeout(ctx)
+	defer cancel()
+	_, err := c.hsClient.AlterInbound(reqCtx, &command.AlterInboundRequest{
 		Tag: tag,
 		Operation: serial.ToTypedMessage(&command.RemoveUserOperation{
 			Email: email,
@@ -75,7 +86,9 @@ func (c *Client) RemoveUser(ctx context.Context, tag, email string) error {
 }
 
 func (c *Client) ListUsers(ctx context.Context, tag string) (map[string]struct{}, error) {
-	resp, err := c.hsClient.GetInboundUsers(ctx, &command.GetInboundUserRequest{
+	reqCtx, cancel := c.withTimeout(ctx)
+	defer cancel()
+	resp, err := c.hsClient.GetInboundUsers(reqCtx, &command.GetInboundUserRequest{
 		Tag: tag,
 	})
 	if err != nil {

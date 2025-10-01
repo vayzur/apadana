@@ -1,7 +1,9 @@
 package client
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	xrayconfigv1 "github.com/vayzur/apadana/pkg/satrap/xray/config/v1"
 	"github.com/xtls/xray-core/app/proxyman/command"
@@ -10,8 +12,9 @@ import (
 )
 
 type Client struct {
-	conn     *grpc.ClientConn
-	hsClient command.HandlerServiceClient
+	conn                  *grpc.ClientConn
+	hsClient              command.HandlerServiceClient
+	runtimeRequestTimeout time.Duration
 }
 
 func New(cfg *xrayconfigv1.XrayConfig) (*Client, error) {
@@ -22,11 +25,19 @@ func New(cfg *xrayconfigv1.XrayConfig) (*Client, error) {
 	}
 
 	return &Client{
-		conn:     conn,
-		hsClient: command.NewHandlerServiceClient(conn),
+		conn:                  conn,
+		hsClient:              command.NewHandlerServiceClient(conn),
+		runtimeRequestTimeout: cfg.RuntimeRequestTimeout,
 	}, nil
 }
 
 func (c *Client) Close() error {
 	return c.conn.Close()
+}
+
+func (c *Client) withTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
+	if _, ok := ctx.Deadline(); ok {
+		return ctx, func() {}
+	}
+	return context.WithTimeout(ctx, c.runtimeRequestTimeout)
 }
