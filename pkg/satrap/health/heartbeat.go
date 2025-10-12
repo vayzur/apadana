@@ -41,7 +41,7 @@ func (h *HeartbeatManager) Run(ctx context.Context, nodeName string) {
 			h.nodeStatus.LastHeartbeatTime = time.Now()
 
 			if err := h.apadanaClient.UpdateNodeStatus(nodeName, h.nodeStatus); err != nil {
-				zlog.Error().Err(err).Str("component", "heartbeatManager").Str("resource", "node").Str("action", "heartbeat").Str("nodeName", nodeName).Msg("failed")
+				zlog.Error().Err(err).Str("component", "heartbeatManager").Str("resource", "node").Str("action", "update").Str("nodeName", nodeName).Msg("failed")
 				continue
 			}
 		}

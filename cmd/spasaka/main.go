@@ -26,9 +26,13 @@ func main() {
 	configPath := flag.String("config", "", "Path to config file")
 	flag.Parse()
 
-	cfg := spasakaconfigv1.SpasakaConfig{}
-	if err := config.Load(*configPath, &cfg); err != nil {
-		zlog.Fatal().Err(err).Msg("failed to load config")
+	cfg := &spasakaconfigv1.SpasakaConfig{}
+	if err := config.Load(*configPath, cfg); err != nil {
+		zlog.Fatal().
+			Err(err).
+			Str("component", "config").
+			Str("path", *configPath).
+			Msg("failed to load configuration")
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -36,24 +40,39 @@ func main() {
 
 	etcdClient, err := etcd.NewClient(&cfg.Etcd, ctx)
 	if err != nil {
-		zlog.Fatal().Err(err).Msg("failed to connect etcd")
+		zlog.Fatal().
+			Err(err).
+			Str("component", "etcd").
+			Msg("failed to connect")
 	}
 	defer func() {
-		zlog.Info().Msg("closing etcd client")
+		zlog.Info().
+			Str("component", "etcd").
+			Msg("closing client")
 		if err := etcdClient.Close(); err != nil {
-			zlog.Error().Err(err).Msg("etcd client close error")
+			zlog.Error().
+				Err(err).
+				Str("component", "etcd").
+				Msg("client close error")
 		}
 	}()
 
 	etcdSession, err := concurrency.NewSession(etcdClient, concurrency.WithTTL(10), concurrency.WithContext(ctx))
 	if err != nil {
-		zlog.Error().Err(err).Msg("etcd new session failed")
+		zlog.Error().
+			Err(err).
+			Str("component", "etcd").
+			Msg("failed to create session")
 	}
-
 	defer func() {
-		zlog.Info().Msg("closing etcd session")
+		zlog.Info().
+			Str("component", "etcd").
+			Msg("closing session")
 		if err := etcdSession.Close(); err != nil {
-			zlog.Error().Err(err).Msg("etcd session close error")
+			zlog.Error().
+				Err(err).
+				Str("component", "etcd").
+				Msg("session close error")
 		}
 	}()
 
@@ -68,14 +87,24 @@ func main() {
 	go func() {
 		defer wg.Done()
 		if err := leader.Run(ctx, etcdSession, "/lock/node-controller", val, func(leaderCtx context.Context) {
+			zlog.Info().
+				Str("component", "nodeController").
+				Msg("acquired leadership, starting node monitor")
 			spasakaManager.RunNodeMonitor(leaderCtx, cfg.ConcurrentNodeSyncs, cfg.NodeMonitorPeriod, cfg.NodeMonitorGracePeriod)
 		}); err != nil && ctx.Err() == nil {
-			zlog.Error().Err(err).Msg("failed to start node controller")
+			zlog.Error().
+				Err(err).
+				Str("component", "nodeController").
+				Msg("failed to run leader election")
 		}
 	}()
 
 	<-ctx.Done()
-	zlog.Info().Msg("shutting down")
+	zlog.Info().
+		Str("component", "spasaka").
+		Msg("shutting down")
 	wg.Wait()
-	zlog.Info().Msg("shutdown complete")
+	zlog.Info().
+		Str("component", "spasaka").
+		Msg("shutdown complete")
 }

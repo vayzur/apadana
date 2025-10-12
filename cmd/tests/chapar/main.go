@@ -26,9 +26,6 @@ func main() {
 				"provider": "ovh",
 				"purpose":  "gaming",
 			},
-			Annotations: map[string]string{
-				"sni": "gate.domain.tld",
-			},
 		},
 	}
 	node, err := apadanaClient.CreateNode(n)

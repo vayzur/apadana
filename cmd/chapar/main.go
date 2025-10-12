@@ -26,9 +26,13 @@ func main() {
 	configPath := flag.String("config", "", "Path to config file")
 	flag.Parse()
 
-	cfg := chaparconfigv1.ChaparConfig{}
-	if err := config.Load(*configPath, &cfg); err != nil {
-		zlog.Fatal().Err(err).Msg("failed to load config")
+	cfg := &chaparconfigv1.ChaparConfig{}
+	if err := config.Load(*configPath, cfg); err != nil {
+		zlog.Fatal().
+			Err(err).
+			Str("component", "config").
+			Str("path", *configPath).
+			Msg("failed to load configuration")
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -36,19 +40,29 @@ func main() {
 
 	etcdClient, err := etcd.NewClient(&cfg.Etcd, ctx)
 	if err != nil {
-		zlog.Fatal().Err(err).Msg("failed to connect etcd")
+		zlog.Fatal().
+			Err(err).
+			Str("component", "etcd").
+			Msg("failed to connect")
 	}
-
 	defer func() {
-		zlog.Info().Msg("closing etcd client")
+		zlog.Info().
+			Str("component", "etcd").
+			Msg("closing client")
 		if err := etcdClient.Close(); err != nil {
-			zlog.Error().Err(err).Msg("etcd client close error")
+			zlog.Error().
+				Err(err).
+				Str("component", "etcd").
+				Msg("client close error")
 		}
 	}()
 
 	etcdStorage := etcd.NewEtcdStorage(etcdClient)
 	if err := etcdStorage.ReadinessCheck(); err != nil {
-		zlog.Fatal().Err(err).Msg("etcd not ready")
+		zlog.Error().
+			Err(err).
+			Str("component", "etcd").
+			Msg("readiness check failed: not ready")
 	}
 
 	inboundStore := resources.NewInboundStore(etcdStorage)
@@ -67,21 +81,37 @@ func main() {
 			err = app.Start()
 		}
 		if err != nil {
-			zlog.Fatal().Err(err).Msg("failed to start server")
+			zlog.Fatal().
+				Err(err).
+				Str("component", "server").
+				Str("addr", serverAddr).
+				Msg("failed to start")
 		}
 	}()
 
-	zlog.Info().Str("addr", serverAddr).Msg("server started")
+	zlog.Info().
+		Str("component", "server").
+		Str("addr", serverAddr).
+		Msg("started successfully")
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 
 	defer func() {
-		zlog.Info().Str("addr", serverAddr).Msg("shutting down server")
+		zlog.Info().
+			Str("component", "server").
+			Str("addr", serverAddr).
+			Msg("shutting down")
 		if err := app.Shutdown(shutdownCtx); err != nil {
-			zlog.Error().Err(err).Str("addr", serverAddr).Msg("server shutdown error")
+			zlog.Error().
+				Err(err).
+				Str("component", "server").
+				Str("addr", serverAddr).
+				Msg("shutdown error")
 		}
-		zlog.Info().Msg("shutdown complete")
+		zlog.Info().
+			Str("component", "server").
+			Msg("shutdown complete")
 	}()
 
 	<-ctx.Done()

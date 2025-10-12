@@ -31,7 +31,11 @@ func main() {
 
 	cfg := &satrapconfigv1.SatrapConfig{}
 	if err := config.Load(*configPath, cfg); err != nil {
-		zlog.Fatal().Err(err).Msg("failed to load config")
+		zlog.Fatal().
+			Err(err).
+			Str("component", "config").
+			Str("path", *configPath).
+			Msg("failed to load configuration")
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -39,11 +43,17 @@ func main() {
 
 	xrayClient, err := xray.New(&cfg.Xray)
 	if err != nil {
-		zlog.Fatal().Err(err).Msg("failed to connect xray")
+		zlog.Fatal().
+			Err(err).
+			Str("component", "xray").
+			Msg("failed to initialize client")
 	}
 	defer func() {
 		if err := xrayClient.Close(); err != nil {
-			zlog.Error().Err(err).Msg("failed to close xray client")
+			zlog.Error().
+				Err(err).
+				Str("component", "xray").
+				Msg("failed to close client")
 		}
 	}()
 
@@ -56,9 +66,8 @@ func main() {
 	nodeName := cfg.GetName()
 	if nodeName == "" {
 		zlog.Fatal().
-			Err(err).
 			Str("component", "registerManager").
-			Msg("failed to get node name: cfg.Name not set and system hostname unavailable")
+			Msg("node name unavailable: cfg.Name not set and system hostname lookup failed")
 	}
 
 	if cfg.RegisterNode {
@@ -125,6 +134,8 @@ func main() {
 		defer slock.Unlock()
 	}
 
-	zlog.Info().Str("component", "satrap").Msg("started")
+	zlog.Info().
+		Str("component", "satrap").
+		Msg("started successfully")
 	<-ctx.Done()
 }

@@ -21,7 +21,7 @@ func New(cfg *xrayconfigv1.XrayConfig) (*Client, error) {
 	addr := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, fmt.Errorf("xray connect failed: %w", err)
+		return nil, err
 	}
 
 	return &Client{

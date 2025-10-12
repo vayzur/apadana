@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	satrapv1 "github.com/vayzur/apadana/pkg/apis/satrap/v1"
 	"github.com/xtls/xray-core/infra/conf"
@@ -15,8 +16,9 @@ import (
 
 func main() {
 	xrayConf := xrayconfigv1.XrayConfig{
-		Address: "127.0.0.1",
-		Port:    8080,
+		Address:               "127.0.0.1",
+		Port:                  8080,
+		RuntimeRequestTimeout: time.Second * 5,
 	}
 	xrayCli, _ := xray.New(&xrayConf)
 
@@ -82,7 +84,7 @@ func main() {
 	}
 
 	if err := xrayCli.AddInbound(context.Background(), conf); err != nil {
-		log.Printf("failed: %v", err)
+		log.Printf("add inbound failed: %v", err)
 	}
 
 	email := "user@domain.tld"
@@ -92,10 +94,10 @@ func main() {
 	}
 
 	if err := xrayCli.AddUser(context.Background(), tag, email, a); err != nil {
-		log.Printf("failed: %v", err)
+		log.Printf("add user failed: %v", err)
 	}
 
 	if err := xrayCli.RemoveUser(context.Background(), tag, email); err != nil {
-		log.Printf("failed: %v", err)
+		log.Printf("remove user failed: %v", err)
 	}
 }
