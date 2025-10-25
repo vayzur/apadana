@@ -56,6 +56,9 @@ func (m *SyncManager) Run(ctx context.Context, nodeName string) {
 			for user := range createUserCh {
 				account, err := user.ToAccount()
 				if err != nil {
+					zlog.Error().Err(err).Str("component", "syncManager").
+						Str("resource", "inboundUser").Str("action", "create").
+						Str("nodeName", nodeName).Str("tag", user.Spec.InboundTag).Str("email", user.Spec.Email).Msg("failed")
 					continue
 				}
 				if err := m.xrayClient.AddUser(ctx, user.Spec.InboundTag, user.Spec.Email, account); err != nil {
